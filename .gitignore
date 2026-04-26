@@ -1,0 +1,4 @@
+build/*/obj/
+*.idb
+ida/
+calc.exe

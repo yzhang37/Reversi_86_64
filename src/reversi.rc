@@ -1,0 +1,255 @@
+#include <windows.h>
+#include "resource.h"
+
+#pragma code_page(65001)
+
+#define VER_FILE_VERSION             1,0,0,0
+#define VER_FILE_VERSION_STR         "1.0.0.0"
+#define VER_PRODUCT_VERSION          1,0,0,0
+#define VER_PRODUCT_VERSION_STR      "1.0.0.0"
+
+IDI_REVERSI ICON "src\\reversi.ico"
+IDC_REVERSI_CROSS CURSOR "src\\reversi.cur"
+IDR_VISUAL_STYLES_MANIFEST RT_MANIFEST "src\\visualstyles.manifest"
+
+IDR_MAINACCEL ACCELERATORS
+BEGIN
+    VK_BACK, IDM_HINT, VIRTKEY
+    VK_F1, IDM_HELP_CONTENTS, VIRTKEY
+    VK_F2, IDM_NEW, VIRTKEY
+END
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Game"
+    BEGIN
+        MENUITEM "&New\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Pass", IDM_PASS
+        MENUITEM "&Hint\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit", IDM_EXIT
+    END
+    POPUP "&Options"
+    BEGIN
+        MENUITEM "&Beginner", IDM_BEGINNER
+        MENUITEM "I&ntermediate", IDM_INTERMEDIATE
+        MENUITEM "&Expert", IDM_EXPERT
+        MENUITEM "&Master", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Disabled Animation", IDM_ANIM_NONE
+        MENUITEM "&Slow Animation", IDM_ANIM_SLOW
+        MENUITEM "&Fast Animation", IDM_ANIM_FAST
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Contents\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Search for Help On...", IDM_HELP_SEARCH
+        MENUITEM "&How to Use Help", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&About Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Reversi Practice Game"
+    IDS_PASS_TEXT "Pass"
+    IDS_MUST_PASS "You have no open square to move to and must pass."
+    IDS_DRAW "Draw"
+    IDS_LOST_FMT "You lost %d"
+    IDS_WON_FMT "You won %d"
+    IDS_ABOUT_MENU "About..."
+    IDS_INVALID_MOVE "You can move only where the mouse pointer changes to a cross."
+    IDS_CANNOT_PASS "You cannot pass. Move the mouse pointer to a square where it changes to a cross."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Reversi rules: trap the computer's circles in a horizontal, vertical, or diagonal line to turn them into your color.\n\nYour circles are red. The computer's circles are blue. You can move only where the cursor changes to a cross."
+    IDS_HELP_SEARCH_TEXT "The 16-bit version opens reversi.hlp here. This native build keeps the command and built-in help text."
+    IDS_HELP_USING_TEXT "Shortcuts: F2 starts a new game, Backspace shows a hint, and F1 opens help. If you have no legal move, use Game -> Pass."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Unable to register window class."
+    IDS_CREATE_FAIL "Unable to create window."
+    IDS_FILE_DESCRIPTION "Microsoft Windows Reversi Application"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Reversi Help"
+END
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "游戏(&G)"
+    BEGIN
+        MENUITEM "开局(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "让棋(&P)", IDM_PASS
+        MENUITEM "提示(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "退出(&X)", IDM_EXIT
+    END
+    POPUP "选项(&O)"
+    BEGIN
+        MENUITEM "初级(&B)", IDM_BEGINNER
+        MENUITEM "中级(&N)", IDM_INTERMEDIATE
+        MENUITEM "高级(&E)", IDM_EXPERT
+        MENUITEM "大师(&M)", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "无动画(&D)", IDM_ANIM_NONE
+        MENUITEM "慢动画(&S)", IDM_ANIM_SLOW
+        MENUITEM "快动画(&F)", IDM_ANIM_FAST
+    END
+    POPUP "帮助(&H)"
+    BEGIN
+        MENUITEM "目录(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "搜索帮助内容(&S)...", IDM_HELP_SEARCH
+        MENUITEM "如何使用帮助(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "关于翻转棋(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "翻转棋"
+    IDS_PRACTICE_TITLE "翻转棋练习赛"
+    IDS_PASS_TEXT "让棋"
+    IDS_MUST_PASS "您没有空位下棋，必须让棋"
+    IDS_DRAW "平局"
+    IDS_LOST_FMT "您输了 %d"
+    IDS_WON_FMT "您赢了 %d"
+    IDS_ABOUT_MENU "关于..."
+    IDS_INVALID_MOVE "您只能在鼠标光标显示成十字准心的位置下棋。"
+    IDS_CANNOT_PASS "您不能让棋。请将鼠标光标移动到显示十字准心的位置。"
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "翻转棋规则：在一条横、竖或斜线上夹住电脑棋子，就可以把它们翻成你的颜色。\n\n你的棋子是红色，电脑棋子是蓝色。只有鼠标光标变成十字准心的位置才能落子。"
+    IDS_HELP_SEARCH_TEXT "原 16 位版本会在这里打开 reversi.hlp。这个原生版本保留命令，并内置常用帮助文本。"
+    IDS_HELP_USING_TEXT "快捷键：F2 开局，Backspace 提示，F1 帮助。没有合法落子时，请使用 游戏 -> 让棋。"
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "无法注册窗口类。"
+    IDS_CREATE_FAIL "无法创建窗口。"
+    IDS_FILE_DESCRIPTION "Microsoft Windows Reversi Application"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "翻转棋帮助"
+END
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "遊戲(&G)"
+    BEGIN
+        MENUITEM "開局(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "讓棋(&P)", IDM_PASS
+        MENUITEM "提示(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "結束(&X)", IDM_EXIT
+    END
+    POPUP "選項(&O)"
+    BEGIN
+        MENUITEM "初級(&B)", IDM_BEGINNER
+        MENUITEM "中級(&N)", IDM_INTERMEDIATE
+        MENUITEM "高級(&E)", IDM_EXPERT
+        MENUITEM "大師(&M)", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "無動畫(&D)", IDM_ANIM_NONE
+        MENUITEM "慢動畫(&S)", IDM_ANIM_SLOW
+        MENUITEM "快動畫(&F)", IDM_ANIM_FAST
+    END
+    POPUP "說明(&H)"
+    BEGIN
+        MENUITEM "目錄(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "搜尋說明內容(&S)...", IDM_HELP_SEARCH
+        MENUITEM "如何使用說明(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "關於翻轉棋(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "翻轉棋"
+    IDS_PRACTICE_TITLE "翻轉棋練習賽"
+    IDS_PASS_TEXT "讓棋"
+    IDS_MUST_PASS "您沒有空位下棋，必須讓棋"
+    IDS_DRAW "平手"
+    IDS_LOST_FMT "您輸了 %d"
+    IDS_WON_FMT "您贏了 %d"
+    IDS_ABOUT_MENU "關於..."
+    IDS_INVALID_MOVE "您只能在滑鼠游標顯示成十字準心的位置下棋。"
+    IDS_CANNOT_PASS "您不能讓棋。請將滑鼠游標移到顯示十字準心的位置。"
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "翻轉棋規則：在一條橫、直或斜線上夾住電腦棋子，就可以把它們翻成你的顏色。\n\n你的棋子是紅色，電腦棋子是藍色。只有滑鼠游標變成十字準心的位置才能落子。"
+    IDS_HELP_SEARCH_TEXT "原 16 位元版本會在這裡開啟 reversi.hlp。這個原生版本保留命令，並內建常用說明文字。"
+    IDS_HELP_USING_TEXT "快速鍵：F2 開局，Backspace 提示，F1 說明。沒有合法落子時，請使用 遊戲 -> 讓棋。"
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "無法註冊視窗類別。"
+    IDS_CREATE_FAIL "無法建立視窗。"
+    IDS_FILE_DESCRIPTION "Microsoft Windows Reversi Application"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "翻轉棋說明"
+END
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+1 VERSIONINFO
+ FILEVERSION VER_FILE_VERSION
+ PRODUCTVERSION VER_PRODUCT_VERSION
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Microsoft Windows Reversi Application"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Microsoft Windows Reversi Application"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "040404b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Microsoft Windows Reversi Application"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1200, 0x0804, 1200, 0x0404, 1200
+    END
+END
