@@ -165,10 +165,19 @@ def keyboard_table():
 
 
 def related(items):
-    body = subheading("相关主题")
-    for title, topic_id in items:
-        body += link(title, topic_id)
-    return body
+    keywords = ";".join(topic_id for _, topic_id in items)
+    macro = f'AL("{keywords}")'
+    return (
+        subheading("相关主题")
+        + r"\pard\sb35\sl-235\li115\ri125\tx295 \f1\fs18 "
+        + r"\{button ,"
+        + macro
+        + r"\} \uldb "
+        + rtf_text("相关主题")
+        + r"\plain\f1\fs18 {\v %!"
+        + macro
+        + "}\n\\par\n"
+    )
 
 
 def topic(topic_id, title, keywords, body):
@@ -176,8 +185,9 @@ def topic(topic_id, title, keywords, body):
         footnote("$", title)
         + footnote("#", topic_id)
         + footnote(">", "proc4")
-        + title_line(title)
         + footnote("K", ";".join(keywords))
+        + footnote("A", topic_id)
+        + title_line(title)
         + body
         + "\n\\page\n"
     )
@@ -194,10 +204,10 @@ def popup_topic(topic_id, body):
 
 def hidden_contents():
     return (
-        footnote("!", "NS(), FD()")
+        footnote("!", "NoShow();Search()")
         + footnote("#", "JP.RLA")
         + r"\pard\sb45\sl-235\li295\ri125\fi-185\tx295 \f1\fs18 "
-        + rtf_text("单击“帮助主题”返回到主题列表。")
+        + rtf_text("如果没有目录文件，请使用“索引”查找帮助主题。")
         + "\n\\par\n\\par\n\\page\n"
     )
 
@@ -548,7 +558,6 @@ def build_hpj():
 TITLE=“翻转棋”帮助
 CONTENTS=JP.RLA
 LCID=0x804 0x0 0x0
-CNT=REVERSI.cnt
 COMPRESS=0
 
 [WINDOWS]
