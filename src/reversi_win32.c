@@ -10,6 +10,7 @@
 #define BLUE 2
 
 #define TIMER_FLASH 0x29A
+#define MIN_TRACK_SIZE 200
 #define PROCESS_SYSTEM_DPI_AWARE_LOCAL 1
 #define HH_DISPLAY_TOPIC_LOCAL 0x0000
 #define HH_DISPLAY_TOC_LOCAL 0x0001
@@ -24,6 +25,12 @@
 #define SM_YVIRTUALSCREEN 77
 #define SM_CXVIRTUALSCREEN 78
 #define SM_CYVIRTUALSCREEN 79
+#endif
+
+#if defined(_MSC_VER)
+#define APP_NOINLINE __declspec(noinline)
+#else
+#define APP_NOINLINE
 #endif
 
 #ifdef UNICODE
@@ -922,6 +929,33 @@ static int ScaleForDpi(int value)
     return g_enableSystemScaling ? MulDiv(value, g_systemDpi, 96) : value;
 }
 
+static int CurrentWindowDpi(void)
+{
+    return g_enableSystemScaling && g_systemDpi > 0 ? g_systemDpi : 96;
+}
+
+static LONG ScaleWindowValueForDpi(LONG value, int from_dpi, int to_dpi)
+{
+    if (from_dpi <= 0 || to_dpi <= 0 || from_dpi == to_dpi) {
+        return value;
+    }
+    return (LONG)MulDiv(value, to_dpi, from_dpi);
+}
+
+static LONG WindowValueToRegistry(LONG value)
+{
+    return ScaleWindowValueForDpi(value, CurrentWindowDpi(), 96);
+}
+
+static LONG WindowValueFromRegistry(DWORD value, DWORD saved_dpi)
+{
+    LONG signed_value = (LONG)value;
+    if (saved_dpi < 24 || saved_dpi > 960) {
+        return signed_value;
+    }
+    return ScaleWindowValueForDpi(signed_value, (int)saved_dpi, CurrentWindowDpi());
+}
+
 static int AppStringContains(const APP_CHAR *text, const APP_CHAR *needle)
 {
     if (!text || !needle || !needle[0]) {
@@ -1101,8 +1135,12 @@ static BOOL AppHtmlHelp(HWND hwnd, const APP_CHAR *path, UINT command)
         HtmlHelpWProc html_help = (HtmlHelpWProc)GetProcAddress(module, "HtmlHelpW");
         if (html_help) {
             WCHAR wide_path[MAX_PATH];
-            AppToWide(path, wide_path, MAX_PATH);
-            return html_help(hwnd, wide_path, command, 0) != NULL;
+            LPCWSTR use_path = NULL;
+            if (path) {
+                AppToWide(path, wide_path, MAX_PATH);
+                use_path = wide_path;
+            }
+            return html_help(hwnd, use_path, command, 0) != NULL;
         }
     }
 
@@ -1182,44 +1220,32 @@ static BOOL AppWinHelp(HWND hwnd, const APP_CHAR *path, UINT command, ULONG_PTR 
     return FALSE;
 }
 
-static int OpenLocalChmHelp(HWND hwnd, UINT command)
+static APP_NOINLINE int OpenLocalChmHelp(HWND hwnd, UINT command)
 {
     APP_CHAR help_path[MAX_PATH];
     return AppResolveLocalHelpFile(IDS_HELP_CHM_FILE, help_path, MAX_PATH) &&
         AppHtmlHelp(hwnd, help_path, command);
 }
 
-static int OpenWindowsChmHelp(HWND hwnd, UINT command)
+static APP_NOINLINE int OpenWindowsChmHelp(HWND hwnd, UINT command)
 {
     APP_CHAR help_path[MAX_PATH];
     return AppResolveWindowsHelpFile(IDS_WINDOWS_CHM_FILE, help_path, MAX_PATH) &&
         AppHtmlHelp(hwnd, help_path, command);
 }
 
-static int OpenHelpViewerChmHelp(HWND hwnd)
+static APP_NOINLINE int OpenHelpViewerChmHelp(HWND hwnd)
 {
     APP_CHAR help_path[MAX_PATH];
-    if (AppResolveWindowsHelpFile(IDS_HELP_VIEWER_CHM_FILE, help_path, MAX_PATH) &&
-        AppHtmlHelp(hwnd, help_path, HH_DISPLAY_TOC_LOCAL)) {
-        return 1;
-    }
-
-    return AppResolveWindowsHelpFile(IDS_HELP_VIEWER_ALT_CHM_FILE, help_path, MAX_PATH) &&
+    return AppResolveWindowsHelpFile(IDS_HELP_VIEWER_CHM_FILE, help_path, MAX_PATH) &&
         AppHtmlHelp(hwnd, help_path, HH_DISPLAY_TOC_LOCAL);
 }
 
-static int OpenLocalWinHelp(HWND hwnd, UINT command, ULONG_PTR data)
+static APP_NOINLINE int OpenLocalWinHelp(HWND hwnd, UINT command, ULONG_PTR data)
 {
     APP_CHAR help_path[MAX_PATH];
     return AppResolveLocalHelpFile(IDS_HELP_FILE, help_path, MAX_PATH) &&
         AppWinHelp(hwnd, help_path, command, data);
-}
-
-static int OpenWindowsWinHelp(HWND hwnd)
-{
-    APP_CHAR help_path[MAX_PATH];
-    return AppResolveWindowsHelpFile(IDS_WINDOWS_HELP_FILE, help_path, MAX_PATH) &&
-        AppWinHelp(hwnd, help_path, HELP_CONTENTS, 0);
 }
 
 static void CloseLegacyWinHelp(HWND hwnd)
@@ -1411,7 +1437,7 @@ static int IsSavedWindowRectUsable(const RECT *rect)
     RECT desktop;
     GetDesktopBounds(&desktop);
 
-    if (width < ScaleForDpi(220) || height < ScaleForDpi(220)) {
+    if (width < ScaleForDpi(MIN_TRACK_SIZE) || height < ScaleForDpi(MIN_TRACK_SIZE)) {
         return 0;
     }
     if (desktop.right <= desktop.left || desktop.bottom <= desktop.top) {
@@ -1431,6 +1457,7 @@ static void LoadGameSettings(void)
     DWORD y;
     DWORD width;
     DWORD height;
+    DWORD dpi;
     HKEY key;
 
     g_configSkillCmd = IDM_INTERMEDIATE;
@@ -1452,11 +1479,15 @@ static void LoadGameSettings(void)
         QuerySettingsDword(key, IDS_WINDOW_Y_KEY, &y) &&
         QuerySettingsDword(key, IDS_WINDOW_WIDTH_KEY, &width) &&
         QuerySettingsDword(key, IDS_WINDOW_HEIGHT_KEY, &height)) {
+        DWORD saved_dpi = 0;
         RECT saved;
-        saved.left = (LONG)x;
-        saved.top = (LONG)y;
-        saved.right = saved.left + (LONG)width;
-        saved.bottom = saved.top + (LONG)height;
+        if (QuerySettingsDword(key, IDS_WINDOW_DPI_KEY, &dpi)) {
+            saved_dpi = dpi;
+        }
+        saved.left = WindowValueFromRegistry(x, saved_dpi);
+        saved.top = WindowValueFromRegistry(y, saved_dpi);
+        saved.right = saved.left + WindowValueFromRegistry(width, saved_dpi);
+        saved.bottom = saved.top + WindowValueFromRegistry(height, saved_dpi);
         if (IsSavedWindowRectUsable(&saved)) {
             g_configWindowRect = saved;
             g_configHasWindowRect = 1;
@@ -1493,10 +1524,11 @@ static void SaveGameSettings(HWND hwnd)
     if (hwnd && IsWindow(hwnd)) {
         RECT rect;
         if (GetWindowRectToSave(hwnd, &rect)) {
-            SetSettingsDword(key, IDS_WINDOW_X_KEY, (DWORD)rect.left);
-            SetSettingsDword(key, IDS_WINDOW_Y_KEY, (DWORD)rect.top);
-            SetSettingsDword(key, IDS_WINDOW_WIDTH_KEY, (DWORD)(rect.right - rect.left));
-            SetSettingsDword(key, IDS_WINDOW_HEIGHT_KEY, (DWORD)(rect.bottom - rect.top));
+            SetSettingsDword(key, IDS_WINDOW_X_KEY, (DWORD)WindowValueToRegistry(rect.left));
+            SetSettingsDword(key, IDS_WINDOW_Y_KEY, (DWORD)WindowValueToRegistry(rect.top));
+            SetSettingsDword(key, IDS_WINDOW_WIDTH_KEY, (DWORD)WindowValueToRegistry(rect.right - rect.left));
+            SetSettingsDword(key, IDS_WINDOW_HEIGHT_KEY, (DWORD)WindowValueToRegistry(rect.bottom - rect.top));
+            SetSettingsDword(key, IDS_WINDOW_DPI_KEY, 96);
         }
     }
 
@@ -2536,14 +2568,11 @@ static void ShowHelp(HWND hwnd, int cmd)
     const APP_CHAR empty_keyword[] = APP_TEXT("");
 
     if (cmd == IDM_HELP_USING) {
-        if (!force_chm) {
-            opened = AppWinHelp(hwnd, NULL, HELP_HELPONHELP, 0);
-        }
-        if (!opened && prefer_chm) {
+        if (force_chm) {
             opened = OpenHelpViewerChmHelp(hwnd);
         }
         if (!opened && !force_chm) {
-            opened = OpenWindowsWinHelp(hwnd);
+            opened = AppWinHelp(hwnd, NULL, HELP_HELPONHELP, 0);
         }
     } else if (cmd == IDM_HELP_SEARCH) {
         if (prefer_chm) {
@@ -2571,8 +2600,8 @@ static void ShowHelp(HWND hwnd, int cmd)
     } else if (cmd == IDM_HELP_USING) {
         text_id = IDS_HELP_USING_TEXT;
     }
-    APP_CHAR text[512];
-    APP_CHAR title[64];
+    static APP_CHAR text[512];
+    static APP_CHAR title[64];
     LoadText(text_id, text, 512);
     LoadText(IDS_HELP_TITLE, title, 64);
     APP_MESSAGE_BOX(hwnd, text, title, MB_OK | MB_ICONINFORMATION);
@@ -2754,6 +2783,14 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             return 0;
         }
         break;
+
+    case WM_GETMINMAXINFO: {
+        MINMAXINFO *mmi = (MINMAXINFO *)lparam;
+        int min_track = ScaleForDpi(MIN_TRACK_SIZE);
+        mmi->ptMinTrackSize.x = min_track;
+        mmi->ptMinTrackSize.y = min_track;
+        return 0;
+    }
 
     case WM_SIZE:
         InvalidateRect(hwnd, NULL, TRUE);
