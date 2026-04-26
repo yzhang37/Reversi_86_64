@@ -8,6 +8,22 @@
 #define VER_PRODUCT_VERSION          4,0,0,0
 #define VER_PRODUCT_VERSION_STR      "4.0.0.0"
 
+#ifndef LANG_UKRAINIAN
+#define LANG_UKRAINIAN 0x22
+#endif
+
+#ifndef LANG_HEBREW
+#define LANG_HEBREW 0x0d
+#endif
+
+#ifndef SUBLANG_PORTUGUESE
+#define SUBLANG_PORTUGUESE 0x02
+#endif
+
+#ifndef SUBLANG_SWEDISH
+#define SUBLANG_SWEDISH 0x01
+#endif
+
 IDI_REVERSI ICON "src\\reversi.ico"
 IDR_VISUAL_STYLES_MANIFEST RT_MANIFEST "src\\visualstyles.manifest"
 
@@ -243,6 +259,981 @@ BEGIN
     IDS_BACKGROUND_KEY "shift xyzzy"
 END
 
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "ゲーム(&G)"
+    BEGIN
+        MENUITEM "新規(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "パス(&P)", IDM_PASS
+        MENUITEM "ヒント(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "終了(&X)", IDM_EXIT
+    END
+    POPUP "オプション(&O)"
+    BEGIN
+        MENUITEM "初級(&B)", IDM_BEGINNER
+        MENUITEM "中級(&N)", IDM_INTERMEDIATE
+        MENUITEM "上級(&E)", IDM_EXPERT
+        MENUITEM "達人(&M)", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "アニメーションなし(&D)", IDM_ANIM_NONE
+        MENUITEM "遅いアニメーション(&S)", IDM_ANIM_SLOW
+        MENUITEM "速いアニメーション(&F)", IDM_ANIM_FAST
+    END
+    POPUP "ヘルプ(&H)"
+    BEGIN
+        MENUITEM "目次(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "ヘルプの検索(&S)...", IDM_HELP_SEARCH
+        MENUITEM "ヘルプの使い方(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "リバーシのバージョン情報(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "リバーシ"
+    IDS_PRACTICE_TITLE "リバーシ練習ゲーム"
+    IDS_PASS_TEXT "パス"
+    IDS_MUST_PASS "置ける空きマスがないため、パスする必要があります。"
+    IDS_DRAW "引き分け"
+    IDS_LOST_FMT "%d 石差で負けました"
+    IDS_WON_FMT "%d 石差で勝ちました"
+    IDS_ABOUT_MENU "バージョン情報..."
+    IDS_INVALID_MOVE "マウスポインターが十字に変わる場所にだけ置けます。"
+    IDS_CANNOT_PASS "パスできません。マウスポインターが十字に変わるマスへ移動してください。"
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "リバーシ プログラムの簡単な説明です。\n\nリバーシのルール: 横、縦、または斜めの列でコンピューターの石をはさむと、その石を自分の色に返せます。\n\nあなたの石は赤、コンピューターの石は青です。マウスポインターが十字に変わる場所にだけ置けます。"
+    IDS_HELP_SEARCH_TEXT "リバーシのヘルプ ファイルが見つかりません。ヘルプ ファイルがインストールされていることを確認して、もう一度お試しください。"
+    IDS_HELP_USING_TEXT "ヘルプの使い方を開けません。Windows ヘルプがインストールされていることを確認して、もう一度お試しください。"
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "ウィンドウ クラスを登録できません。"
+    IDS_CREATE_FAIL "ウィンドウを作成できません。"
+    IDS_FILE_DESCRIPTION "Microsoft Windows リバーシ アプリケーション"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "リバーシ ヘルプ"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "コンピューターに置ける空きマスがないため、パスする必要があります。"
+    IDS_COMPUTER_PASS_TEXT "コンピューターがパスします。"
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "게임(&G)"
+    BEGIN
+        MENUITEM "새 게임(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "패스(&P)", IDM_PASS
+        MENUITEM "힌트(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "끝내기(&X)", IDM_EXIT
+    END
+    POPUP "옵션(&O)"
+    BEGIN
+        MENUITEM "초급(&B)", IDM_BEGINNER
+        MENUITEM "중급(&N)", IDM_INTERMEDIATE
+        MENUITEM "고급(&E)", IDM_EXPERT
+        MENUITEM "마스터(&M)", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "애니메이션 없음(&D)", IDM_ANIM_NONE
+        MENUITEM "느린 애니메이션(&S)", IDM_ANIM_SLOW
+        MENUITEM "빠른 애니메이션(&F)", IDM_ANIM_FAST
+    END
+    POPUP "도움말(&H)"
+    BEGIN
+        MENUITEM "목차(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "도움말 검색(&S)...", IDM_HELP_SEARCH
+        MENUITEM "도움말 사용 방법(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "리버시 정보(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "리버시"
+    IDS_PRACTICE_TITLE "리버시 연습 게임"
+    IDS_PASS_TEXT "패스"
+    IDS_MUST_PASS "둘 수 있는 빈 칸이 없어 패스해야 합니다."
+    IDS_DRAW "무승부"
+    IDS_LOST_FMT "%d개 차이로 졌습니다"
+    IDS_WON_FMT "%d개 차이로 이겼습니다"
+    IDS_ABOUT_MENU "정보..."
+    IDS_INVALID_MOVE "마우스 포인터가 십자 모양으로 바뀌는 곳에만 둘 수 있습니다."
+    IDS_CANNOT_PASS "패스할 수 없습니다. 마우스 포인터가 십자 모양으로 바뀌는 칸으로 이동하십시오."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "리버시 프로그램의 간단한 설명입니다.\n\n리버시 규칙: 가로, 세로 또는 대각선으로 컴퓨터의 말을 끼우면 그 말을 내 색으로 뒤집을 수 있습니다.\n\n내 말은 빨간색이고 컴퓨터 말은 파란색입니다. 마우스 포인터가 십자 모양으로 바뀌는 곳에만 둘 수 있습니다."
+    IDS_HELP_SEARCH_TEXT "리버시 도움말 파일을 찾을 수 없습니다. 도움말 파일이 설치되어 있는지 확인한 후 다시 시도하십시오."
+    IDS_HELP_USING_TEXT "도움말 사용 방법을 열 수 없습니다. Windows 도움말이 설치되어 있는지 확인한 후 다시 시도하십시오."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "창 클래스를 등록할 수 없습니다."
+    IDS_CREATE_FAIL "창을 만들 수 없습니다."
+    IDS_FILE_DESCRIPTION "Microsoft Windows 리버시 응용 프로그램"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "리버시 도움말"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "컴퓨터가 둘 수 있는 빈 칸이 없어 패스해야 합니다."
+    IDS_COMPUTER_PASS_TEXT "컴퓨터가 패스합니다."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
+LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Partie"
+    BEGIN
+        MENUITEM "&Nouvelle\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Passer", IDM_PASS
+        MENUITEM "&Indice\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Quitter", IDM_EXIT
+    END
+    POPUP "&Options"
+    BEGIN
+        MENUITEM "&Débutant", IDM_BEGINNER
+        MENUITEM "&Intermédiaire", IDM_INTERMEDIATE
+        MENUITEM "&Expert", IDM_EXPERT
+        MENUITEM "&Maître", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "Animation &désactivée", IDM_ANIM_NONE
+        MENUITEM "Animation &lente", IDM_ANIM_SLOW
+        MENUITEM "Animation &rapide", IDM_ANIM_FAST
+    END
+    POPUP "&Aide"
+    BEGIN
+        MENUITEM "&Sommaire\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Rechercher dans l'aide...", IDM_HELP_SEARCH
+        MENUITEM "&Utilisation de l'aide", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "À &propos de Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Partie d'entraînement Reversi"
+    IDS_PASS_TEXT "Passer"
+    IDS_MUST_PASS "Vous n'avez aucune case libre où jouer et vous devez passer."
+    IDS_DRAW "Match nul"
+    IDS_LOST_FMT "Vous avez perdu de %d pions"
+    IDS_WON_FMT "Vous avez gagné de %d pions"
+    IDS_ABOUT_MENU "À propos..."
+    IDS_INVALID_MOVE "Vous ne pouvez jouer que là où le pointeur de la souris devient une croix."
+    IDS_CANNOT_PASS "Vous ne pouvez pas passer. Déplacez le pointeur vers une case où il devient une croix."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Voici une brève description du programme Reversi :\n\nRègles du Reversi : encadrez les pions de l'ordinateur sur une ligne horizontale, verticale ou diagonale pour les retourner à votre couleur.\n\nVos pions sont rouges. Les pions de l'ordinateur sont bleus. Vous ne pouvez jouer que là où le pointeur devient une croix."
+    IDS_HELP_SEARCH_TEXT "Le fichier d'aide de Reversi est introuvable. Vérifiez que le fichier d'aide est installé, puis réessayez."
+    IDS_HELP_USING_TEXT "Impossible d'ouvrir l'aide sur l'utilisation de l'aide. Vérifiez que l'aide Windows est installée, puis réessayez."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Impossible d'enregistrer la classe de fenêtre."
+    IDS_CREATE_FAIL "Impossible de créer la fenêtre."
+    IDS_FILE_DESCRIPTION "Application Reversi Microsoft Windows"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Aide de Reversi"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "L'ordinateur n'a aucune case libre où jouer et doit passer."
+    IDS_COMPUTER_PASS_TEXT "L'ordinateur passe."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Spiel"
+    BEGIN
+        MENUITEM "&Neu\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Passen", IDM_PASS
+        MENUITEM "&Hinweis\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Beenden", IDM_EXIT
+    END
+    POPUP "&Optionen"
+    BEGIN
+        MENUITEM "&Anfänger", IDM_BEGINNER
+        MENUITEM "&Mittel", IDM_INTERMEDIATE
+        MENUITEM "&Experte", IDM_EXPERT
+        MENUITEM "&Meister", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "Animation &aus", IDM_ANIM_NONE
+        MENUITEM "&Langsame Animation", IDM_ANIM_SLOW
+        MENUITEM "&Schnelle Animation", IDM_ANIM_FAST
+    END
+    POPUP "&Hilfe"
+    BEGIN
+        MENUITEM "&Inhalt\tF1", IDM_HELP_CONTENTS
+        MENUITEM "In der Hilfe &suchen...", IDM_HELP_SEARCH
+        MENUITEM "&Hilfe verwenden", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Info zu Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Reversi-Übungsspiel"
+    IDS_PASS_TEXT "Passen"
+    IDS_MUST_PASS "Sie haben kein freies Feld für einen Zug und müssen passen."
+    IDS_DRAW "Unentschieden"
+    IDS_LOST_FMT "Sie haben mit %d Steinen verloren"
+    IDS_WON_FMT "Sie haben mit %d Steinen gewonnen"
+    IDS_ABOUT_MENU "Info..."
+    IDS_INVALID_MOVE "Sie können nur dort ziehen, wo der Mauszeiger zu einem Kreuz wird."
+    IDS_CANNOT_PASS "Sie können nicht passen. Bewegen Sie den Mauszeiger auf ein Feld, auf dem er zu einem Kreuz wird."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Dies ist eine kurze Beschreibung des Reversi-Programms:\n\nReversi-Regeln: Schließen Sie die Steine des Computers waagerecht, senkrecht oder diagonal ein, um sie in Ihre Farbe umzudrehen.\n\nIhre Steine sind rot. Die Steine des Computers sind blau. Sie können nur dort ziehen, wo der Mauszeiger zu einem Kreuz wird."
+    IDS_HELP_SEARCH_TEXT "Die Reversi-Hilfedatei wurde nicht gefunden. Stellen Sie sicher, dass die Hilfedatei installiert ist, und versuchen Sie es erneut."
+    IDS_HELP_USING_TEXT "Die Hilfe zur Verwendung der Hilfe konnte nicht geöffnet werden. Stellen Sie sicher, dass die Windows-Hilfe installiert ist, und versuchen Sie es erneut."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Die Fensterklasse konnte nicht registriert werden."
+    IDS_CREATE_FAIL "Das Fenster konnte nicht erstellt werden."
+    IDS_FILE_DESCRIPTION "Microsoft Windows Reversi-Anwendung"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Reversi-Hilfe"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "Der Computer hat kein freies Feld für einen Zug und muss passen."
+    IDS_COMPUTER_PASS_TEXT "Der Computer passt."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
+LANGUAGE LANG_SPANISH, SUBLANG_SPANISH
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Juego"
+    BEGIN
+        MENUITEM "&Nuevo\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Pasar", IDM_PASS
+        MENUITEM "&Pista\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Salir", IDM_EXIT
+    END
+    POPUP "&Opciones"
+    BEGIN
+        MENUITEM "&Principiante", IDM_BEGINNER
+        MENUITEM "&Intermedio", IDM_INTERMEDIATE
+        MENUITEM "&Experto", IDM_EXPERT
+        MENUITEM "&Maestro", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Sin animación", IDM_ANIM_NONE
+        MENUITEM "Animación &lenta", IDM_ANIM_SLOW
+        MENUITEM "Animación &rápida", IDM_ANIM_FAST
+    END
+    POPUP "A&yuda"
+    BEGIN
+        MENUITEM "&Contenido\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Buscar en la ayuda...", IDM_HELP_SEARCH
+        MENUITEM "&Cómo usar la ayuda", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Acerca de Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_SPANISH, SUBLANG_SPANISH
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Partida de práctica de Reversi"
+    IDS_PASS_TEXT "Pasar"
+    IDS_MUST_PASS "No tiene ninguna casilla libre donde mover y debe pasar."
+    IDS_DRAW "Empate"
+    IDS_LOST_FMT "Ha perdido por %d fichas"
+    IDS_WON_FMT "Ha ganado por %d fichas"
+    IDS_ABOUT_MENU "Acerca de..."
+    IDS_INVALID_MOVE "Solo puede mover donde el puntero del mouse cambia a una cruz."
+    IDS_CANNOT_PASS "No puede pasar. Mueva el puntero del mouse a una casilla donde cambie a una cruz."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Esta es una breve descripción del programa Reversi:\n\nReglas de Reversi: atrape las fichas del ordenador en una línea horizontal, vertical o diagonal para cambiarlas a su color.\n\nSus fichas son rojas. Las fichas del ordenador son azules. Solo puede mover donde el puntero cambia a una cruz."
+    IDS_HELP_SEARCH_TEXT "No se encontró el archivo de ayuda de Reversi. Asegúrese de que el archivo de ayuda esté instalado e inténtelo de nuevo."
+    IDS_HELP_USING_TEXT "No se pudo abrir la ayuda sobre cómo usar la ayuda. Asegúrese de que la Ayuda de Windows esté instalada e inténtelo de nuevo."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "No se pudo registrar la clase de ventana."
+    IDS_CREATE_FAIL "No se pudo crear la ventana."
+    IDS_FILE_DESCRIPTION "Aplicación Reversi de Microsoft Windows"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Ayuda de Reversi"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "El ordenador no tiene ninguna casilla libre donde mover y debe pasar."
+    IDS_COMPUTER_PASS_TEXT "El ordenador pasa."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
+LANGUAGE LANG_SWEDISH, SUBLANG_SWEDISH
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Spel"
+    BEGIN
+        MENUITEM "&Nytt\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Passa", IDM_PASS
+        MENUITEM "&Tips\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Avsluta", IDM_EXIT
+    END
+    POPUP "&Alternativ"
+    BEGIN
+        MENUITEM "&Nybörjare", IDM_BEGINNER
+        MENUITEM "&Medel", IDM_INTERMEDIATE
+        MENUITEM "&Expert", IDM_EXPERT
+        MENUITEM "&Mästare", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Ingen animering", IDM_ANIM_NONE
+        MENUITEM "&Långsam animering", IDM_ANIM_SLOW
+        MENUITEM "&Snabb animering", IDM_ANIM_FAST
+    END
+    POPUP "&Hjälp"
+    BEGIN
+        MENUITEM "&Innehåll\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Sök i Hjälp...", IDM_HELP_SEARCH
+        MENUITEM "&Använda Hjälp", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Om Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_SWEDISH, SUBLANG_SWEDISH
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Övningsspel i Reversi"
+    IDS_PASS_TEXT "Passa"
+    IDS_MUST_PASS "Du har ingen ledig ruta att spela på och måste passa."
+    IDS_DRAW "Oavgjort"
+    IDS_LOST_FMT "Du förlorade med %d brickor"
+    IDS_WON_FMT "Du vann med %d brickor"
+    IDS_ABOUT_MENU "Om..."
+    IDS_INVALID_MOVE "Du kan bara spela där muspekaren ändras till ett kors."
+    IDS_CANNOT_PASS "Du kan inte passa. Flytta muspekaren till en ruta där den ändras till ett kors."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Här är en kort beskrivning av Reversi:\n\nRegler för Reversi: fånga datorns brickor i en vågrät, lodrät eller diagonal rad för att vända dem till din färg.\n\nDina brickor är röda. Datorns brickor är blå. Du kan bara spela där pekaren ändras till ett kors."
+    IDS_HELP_SEARCH_TEXT "Hjälpfilen för Reversi hittades inte. Kontrollera att hjälpfilen är installerad och försök igen."
+    IDS_HELP_USING_TEXT "Hjälpen om hur Hjälp används kunde inte öppnas. Kontrollera att Windows Hjälp är installerad och försök igen."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Det gick inte att registrera fönsterklassen."
+    IDS_CREATE_FAIL "Det gick inte att skapa fönstret."
+    IDS_FILE_DESCRIPTION "Microsoft Windows Reversi-program"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Hjälp för Reversi"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "Datorn har ingen ledig ruta att spela på och måste passa."
+    IDS_COMPUTER_PASS_TEXT "Datorn passar."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
+LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Peli"
+    BEGIN
+        MENUITEM "&Uusi\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Passaa", IDM_PASS
+        MENUITEM "&Vihje\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Lopeta", IDM_EXIT
+    END
+    POPUP "&Asetukset"
+    BEGIN
+        MENUITEM "&Aloittelija", IDM_BEGINNER
+        MENUITEM "&Keskitaso", IDM_INTERMEDIATE
+        MENUITEM "A&siantuntija", IDM_EXPERT
+        MENUITEM "&Mestari", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Ei animaatiota", IDM_ANIM_NONE
+        MENUITEM "&Hidas animaatio", IDM_ANIM_SLOW
+        MENUITEM "&Nopea animaatio", IDM_ANIM_FAST
+    END
+    POPUP "&Ohje"
+    BEGIN
+        MENUITEM "&Sisältö\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Etsi ohjeesta...", IDM_HELP_SEARCH
+        MENUITEM "&Ohjeen käyttäminen", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Tietoja Reversistä...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Reversi-harjoituspeli"
+    IDS_PASS_TEXT "Passaa"
+    IDS_MUST_PASS "Sinulla ei ole vapaata ruutua siirtoa varten, joten sinun on passattava."
+    IDS_DRAW "Tasapeli"
+    IDS_LOST_FMT "Hävisit %d kiekolla"
+    IDS_WON_FMT "Voitit %d kiekolla"
+    IDS_ABOUT_MENU "Tietoja..."
+    IDS_INVALID_MOVE "Voit siirtää vain kohtaan, jossa hiiriosoitin muuttuu ristiksi."
+    IDS_CANNOT_PASS "Et voi passata. Siirrä hiiriosoitin ruutuun, jossa se muuttuu ristiksi."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Tässä on lyhyt kuvaus Reversi-ohjelmasta:\n\nReversin säännöt: sulje tietokoneen kiekot vaakasuoraan, pystysuoraan tai vinoon riviin, jolloin ne kääntyvät sinun värisi puolelle.\n\nSinun kiekot ovat punaisia. Tietokoneen kiekot ovat sinisiä. Voit siirtää vain kohtaan, jossa osoitin muuttuu ristiksi."
+    IDS_HELP_SEARCH_TEXT "Reversin ohjetiedostoa ei löytynyt. Varmista, että ohjetiedosto on asennettu, ja yritä uudelleen."
+    IDS_HELP_USING_TEXT "Ohjeen käyttämisen ohjetta ei voitu avata. Varmista, että Windowsin ohje on asennettu, ja yritä uudelleen."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Ikkunaluokkaa ei voi rekisteröidä."
+    IDS_CREATE_FAIL "Ikkunaa ei voi luoda."
+    IDS_FILE_DESCRIPTION "Microsoft Windows Reversi -sovellus"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Reversin ohje"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "Tietokoneella ei ole vapaata ruutua siirtoa varten, joten sen on passattava."
+    IDS_COMPUTER_PASS_TEXT "Tietokone passaa."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Jogo"
+    BEGIN
+        MENUITEM "&Novo\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Passar", IDM_PASS
+        MENUITEM "&Sugestão\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Sair", IDM_EXIT
+    END
+    POPUP "&Opções"
+    BEGIN
+        MENUITEM "&Principiante", IDM_BEGINNER
+        MENUITEM "&Intermédio", IDM_INTERMEDIATE
+        MENUITEM "&Perito", IDM_EXPERT
+        MENUITEM "&Mestre", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Sem animação", IDM_ANIM_NONE
+        MENUITEM "Animação &lenta", IDM_ANIM_SLOW
+        MENUITEM "Animação &rápida", IDM_ANIM_FAST
+    END
+    POPUP "&Ajuda"
+    BEGIN
+        MENUITEM "&Conteúdo\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Procurar na Ajuda...", IDM_HELP_SEARCH
+        MENUITEM "&Como utilizar a Ajuda", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Acerca do Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Jogo de treino Reversi"
+    IDS_PASS_TEXT "Passar"
+    IDS_MUST_PASS "Não tem nenhuma casa livre onde jogar e tem de passar."
+    IDS_DRAW "Empate"
+    IDS_LOST_FMT "Perdeu por %d peças"
+    IDS_WON_FMT "Ganhou por %d peças"
+    IDS_ABOUT_MENU "Acerca de..."
+    IDS_INVALID_MOVE "Só pode jogar onde o ponteiro do rato muda para uma cruz."
+    IDS_CANNOT_PASS "Não pode passar. Mova o ponteiro do rato para uma casa onde mude para uma cruz."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Segue-se uma breve descrição do programa Reversi:\n\nRegras do Reversi: cerque as peças do computador numa linha horizontal, vertical ou diagonal para as virar para a sua cor.\n\nAs suas peças são vermelhas. As peças do computador são azuis. Só pode jogar onde o ponteiro muda para uma cruz."
+    IDS_HELP_SEARCH_TEXT "Não foi possível encontrar o ficheiro de Ajuda do Reversi. Certifique-se de que o ficheiro de Ajuda está instalado e tente novamente."
+    IDS_HELP_USING_TEXT "Não foi possível abrir a Ajuda sobre como utilizar a Ajuda. Certifique-se de que a Ajuda do Windows está instalada e tente novamente."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Não foi possível registar a classe da janela."
+    IDS_CREATE_FAIL "Não foi possível criar a janela."
+    IDS_FILE_DESCRIPTION "Aplicação Reversi do Microsoft Windows"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Ajuda do Reversi"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "O computador não tem nenhuma casa livre onde jogar e tem de passar."
+    IDS_COMPUTER_PASS_TEXT "O computador passa."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
+LANGUAGE LANG_ITALIAN, SUBLANG_ITALIAN
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Partita"
+    BEGIN
+        MENUITEM "&Nuova\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Passa", IDM_PASS
+        MENUITEM "&Suggerimento\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Esci", IDM_EXIT
+    END
+    POPUP "&Opzioni"
+    BEGIN
+        MENUITEM "&Principiante", IDM_BEGINNER
+        MENUITEM "&Intermedio", IDM_INTERMEDIATE
+        MENUITEM "&Esperto", IDM_EXPERT
+        MENUITEM "&Maestro", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Nessuna animazione", IDM_ANIM_NONE
+        MENUITEM "Animazione &lenta", IDM_ANIM_SLOW
+        MENUITEM "Animazione &veloce", IDM_ANIM_FAST
+    END
+    POPUP "&Guida"
+    BEGIN
+        MENUITEM "&Sommario\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Cerca nella Guida...", IDM_HELP_SEARCH
+        MENUITEM "&Uso della Guida", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Informazioni su Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_ITALIAN, SUBLANG_ITALIAN
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Partita di pratica di Reversi"
+    IDS_PASS_TEXT "Passa"
+    IDS_MUST_PASS "Non ci sono caselle libere in cui muovere: devi passare."
+    IDS_DRAW "Pareggio"
+    IDS_LOST_FMT "Hai perso per %d pedine"
+    IDS_WON_FMT "Hai vinto per %d pedine"
+    IDS_ABOUT_MENU "Informazioni..."
+    IDS_INVALID_MOVE "Puoi muovere solo dove il puntatore del mouse diventa una croce."
+    IDS_CANNOT_PASS "Non puoi passare. Sposta il puntatore del mouse su una casella in cui diventa una croce."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Questa è una breve descrizione del programma Reversi:\n\nRegole di Reversi: racchiudi le pedine del computer in una riga orizzontale, verticale o diagonale per girarle nel tuo colore.\n\nLe tue pedine sono rosse. Le pedine del computer sono blu. Puoi muovere solo dove il puntatore diventa una croce."
+    IDS_HELP_SEARCH_TEXT "Il file della Guida di Reversi non è stato trovato. Verificare che il file della Guida sia installato, quindi riprovare."
+    IDS_HELP_USING_TEXT "Impossibile aprire la Guida sull'uso della Guida. Verificare che la Guida di Windows sia installata, quindi riprovare."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Impossibile registrare la classe della finestra."
+    IDS_CREATE_FAIL "Impossibile creare la finestra."
+    IDS_FILE_DESCRIPTION "Applicazione Reversi per Microsoft Windows"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Guida di Reversi"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "Il computer non ha caselle libere in cui muovere e deve passare."
+    IDS_COMPUTER_PASS_TEXT "Il computer passa."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Игра"
+    BEGIN
+        MENUITEM "&Новая\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Пас", IDM_PASS
+        MENUITEM "Подсказка(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Выход", IDM_EXIT
+    END
+    POPUP "&Параметры"
+    BEGIN
+        MENUITEM "&Новичок", IDM_BEGINNER
+        MENUITEM "&Средний", IDM_INTERMEDIATE
+        MENUITEM "&Эксперт", IDM_EXPERT
+        MENUITEM "&Мастер", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Без анимации", IDM_ANIM_NONE
+        MENUITEM "&Медленная анимация", IDM_ANIM_SLOW
+        MENUITEM "&Быстрая анимация", IDM_ANIM_FAST
+    END
+    POPUP "&Справка"
+    BEGIN
+        MENUITEM "&Содержание\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Найти в справке...", IDM_HELP_SEARCH
+        MENUITEM "&Как пользоваться справкой", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&О программе Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Реверси"
+    IDS_PRACTICE_TITLE "Тренировочная игра Реверси"
+    IDS_PASS_TEXT "Пас"
+    IDS_MUST_PASS "У вас нет свободной клетки для хода, необходимо пропустить ход."
+    IDS_DRAW "Ничья"
+    IDS_LOST_FMT "Вы проиграли с отставанием в %d фишек"
+    IDS_WON_FMT "Вы выиграли с перевесом в %d фишек"
+    IDS_ABOUT_MENU "О программе..."
+    IDS_INVALID_MOVE "Ход можно сделать только там, где указатель мыши становится крестиком."
+    IDS_CANNOT_PASS "Вы не можете пропустить ход. Переместите указатель мыши на клетку, где он становится крестиком."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Краткое описание программы Реверси:\n\nПравила Реверси: окружите фишки компьютера по горизонтали, вертикали или диагонали, чтобы перевернуть их в свой цвет.\n\nВаши фишки красные. Фишки компьютера синие. Ход можно сделать только там, где указатель становится крестиком."
+    IDS_HELP_SEARCH_TEXT "Файл справки Реверси не найден. Убедитесь, что файл справки установлен, и повторите попытку."
+    IDS_HELP_USING_TEXT "Не удалось открыть справку по использованию справки. Убедитесь, что справка Windows установлена, и повторите попытку."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Не удалось зарегистрировать класс окна."
+    IDS_CREATE_FAIL "Не удалось создать окно."
+    IDS_FILE_DESCRIPTION "Приложение Microsoft Windows Reversi"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Справка Реверси"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "У компьютера нет свободной клетки для хода, необходимо пропустить ход."
+    IDS_COMPUTER_PASS_TEXT "Компьютер пропускает ход."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
+LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Гра"
+    BEGIN
+        MENUITEM "&Нова\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Пас", IDM_PASS
+        MENUITEM "Підказка(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Вихід", IDM_EXIT
+    END
+    POPUP "&Параметри"
+    BEGIN
+        MENUITEM "&Початківець", IDM_BEGINNER
+        MENUITEM "&Середній", IDM_INTERMEDIATE
+        MENUITEM "&Експерт", IDM_EXPERT
+        MENUITEM "&Майстер", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Без анімації", IDM_ANIM_NONE
+        MENUITEM "&Повільна анімація", IDM_ANIM_SLOW
+        MENUITEM "&Швидка анімація", IDM_ANIM_FAST
+    END
+    POPUP "&Довідка"
+    BEGIN
+        MENUITEM "&Зміст\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Шукати в довідці...", IDM_HELP_SEARCH
+        MENUITEM "&Як користуватися довідкою", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Про Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Реверсі"
+    IDS_PRACTICE_TITLE "Тренувальна гра Реверсі"
+    IDS_PASS_TEXT "Пас"
+    IDS_MUST_PASS "У вас немає вільної клітинки для ходу, тому потрібно пропустити хід."
+    IDS_DRAW "Нічия"
+    IDS_LOST_FMT "Ви програли з відставанням у %d фішок"
+    IDS_WON_FMT "Ви виграли з перевагою у %d фішок"
+    IDS_ABOUT_MENU "Про програму..."
+    IDS_INVALID_MOVE "Хід можна зробити лише там, де вказівник миші стає хрестиком."
+    IDS_CANNOT_PASS "Ви не можете пропустити хід. Перемістіть вказівник миші на клітинку, де він стає хрестиком."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Короткий опис програми Реверсі:\n\nПравила Реверсі: затисніть фішки комп'ютера по горизонталі, вертикалі або діагоналі, щоб перевернути їх у свій колір.\n\nВаші фішки червоні. Фішки комп'ютера сині. Хід можна зробити лише там, де вказівник стає хрестиком."
+    IDS_HELP_SEARCH_TEXT "Файл довідки Реверсі не знайдено. Переконайтеся, що файл довідки встановлено, і повторіть спробу."
+    IDS_HELP_USING_TEXT "Не вдалося відкрити довідку про використання довідки. Переконайтеся, що довідку Windows установлено, і повторіть спробу."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Не вдалося зареєструвати клас вікна."
+    IDS_CREATE_FAIL "Не вдалося створити вікно."
+    IDS_FILE_DESCRIPTION "Програма Microsoft Windows Reversi"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Довідка Реверсі"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "У комп'ютера немає вільної клітинки для ходу, тому потрібно пропустити хід."
+    IDS_COMPUTER_PASS_TEXT "Комп'ютер пропускає хід."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
+LANGUAGE LANG_ARABIC, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "لعبة(&G)"
+    BEGIN
+        MENUITEM "جديد(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "تمرير(&P)", IDM_PASS
+        MENUITEM "تلميح(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "إنهاء(&X)", IDM_EXIT
+    END
+    POPUP "خيارات(&O)"
+    BEGIN
+        MENUITEM "مبتدئ(&B)", IDM_BEGINNER
+        MENUITEM "متوسط(&N)", IDM_INTERMEDIATE
+        MENUITEM "خبير(&E)", IDM_EXPERT
+        MENUITEM "محترف(&M)", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "بدون حركة(&D)", IDM_ANIM_NONE
+        MENUITEM "حركة بطيئة(&S)", IDM_ANIM_SLOW
+        MENUITEM "حركة سريعة(&F)", IDM_ANIM_FAST
+    END
+    POPUP "تعليمات(&H)"
+    BEGIN
+        MENUITEM "المحتويات(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "البحث في التعليمات(&S)...", IDM_HELP_SEARCH
+        MENUITEM "كيفية استخدام التعليمات(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "حول ريفيرسي(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_ARABIC, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "ريفرسي"
+    IDS_PRACTICE_TITLE "لعبة تدريب ريفيرسي"
+    IDS_PASS_TEXT "تمرير"
+    IDS_MUST_PASS "لا توجد خانة فارغة يمكنك اللعب فيها، ويجب أن تمرر الدور."
+    IDS_DRAW "تعادل"
+    IDS_LOST_FMT "خسرت بفارق %d قطعة"
+    IDS_WON_FMT "فزت بفارق %d قطعة"
+    IDS_ABOUT_MENU "حول..."
+    IDS_INVALID_MOVE "يمكنك اللعب فقط حيث يتغير مؤشر الماوس إلى صليب."
+    IDS_CANNOT_PASS "لا يمكنك تمرير الدور. حرّك مؤشر الماوس إلى خانة يتحول فيها إلى صليب."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "فيما يلي وصف موجز لبرنامج ريفيرسي:\n\nقواعد ريفيرسي: أحط قطع الكمبيوتر في خط أفقي أو عمودي أو قطري لتحويلها إلى لونك.\n\nقطعك حمراء. قطع الكمبيوتر زرقاء. يمكنك اللعب فقط حيث يتحول المؤشر إلى صليب."
+    IDS_HELP_SEARCH_TEXT "تعذر العثور على ملف تعليمات ريفيرسي. تأكد من تثبيت ملف التعليمات ثم حاول مرة أخرى."
+    IDS_HELP_USING_TEXT "تعذر فتح تعليمات كيفية استخدام التعليمات. تأكد من تثبيت تعليمات Windows ثم حاول مرة أخرى."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "تعذر تسجيل فئة النافذة."
+    IDS_CREATE_FAIL "تعذر إنشاء النافذة."
+    IDS_FILE_DESCRIPTION "تطبيق ريفيرسي لـ Microsoft Windows"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "تعليمات ريفيرسي"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "لا توجد خانة فارغة يستطيع الكمبيوتر اللعب فيها، ويجب أن يمرر الدور."
+    IDS_COMPUTER_PASS_TEXT "يمرر الكمبيوتر الدور."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "משחק(&G)"
+    BEGIN
+        MENUITEM "חדש(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "דלג(&P)", IDM_PASS
+        MENUITEM "רמז(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "יציאה(&X)", IDM_EXIT
+    END
+    POPUP "אפשרויות(&O)"
+    BEGIN
+        MENUITEM "מתחיל(&B)", IDM_BEGINNER
+        MENUITEM "בינוני(&N)", IDM_INTERMEDIATE
+        MENUITEM "מומחה(&E)", IDM_EXPERT
+        MENUITEM "אמן(&M)", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "ללא הנפשה(&D)", IDM_ANIM_NONE
+        MENUITEM "הנפשה איטית(&S)", IDM_ANIM_SLOW
+        MENUITEM "הנפשה מהירה(&F)", IDM_ANIM_FAST
+    END
+    POPUP "עזרה(&H)"
+    BEGIN
+        MENUITEM "תוכן(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "חיפוש בעזרה(&S)...", IDM_HELP_SEARCH
+        MENUITEM "כיצד להשתמש בעזרה(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "אודות רברסי(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "רברסי"
+    IDS_PRACTICE_TITLE "משחק אימון רברסי"
+    IDS_PASS_TEXT "דלג"
+    IDS_MUST_PASS "אין לך משבצת פנויה למהלך ועליך לדלג על התור."
+    IDS_DRAW "תיקו"
+    IDS_LOST_FMT "הפסדת בהפרש של %d דסקיות"
+    IDS_WON_FMT "ניצחת בהפרש של %d דסקיות"
+    IDS_ABOUT_MENU "אודות..."
+    IDS_INVALID_MOVE "ניתן לבצע מהלך רק במקום שבו מצביע העכבר משתנה לצלב."
+    IDS_CANNOT_PASS "אינך יכול לדלג. העבר את מצביע העכבר למשבצת שבה הוא משתנה לצלב."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "להלן תיאור קצר של תוכנית רברסי:\n\nכללי רברסי: לכוד את דסקיות המחשב בשורה אופקית, אנכית או אלכסונית כדי להפוך אותן לצבע שלך.\n\nהדסקיות שלך אדומות. דסקיות המחשב כחולות. ניתן לבצע מהלך רק במקום שבו המצביע משתנה לצלב."
+    IDS_HELP_SEARCH_TEXT "קובץ העזרה של רברסי לא נמצא. ודא שקובץ העזרה מותקן ולאחר מכן נסה שוב."
+    IDS_HELP_USING_TEXT "לא ניתן לפתוח את העזרה בנושא שימוש בעזרה. ודא שעזרת Windows מותקנת ולאחר מכן נסה שוב."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "לא ניתן לרשום את מחלקת החלון."
+    IDS_CREATE_FAIL "לא ניתן ליצור את החלון."
+    IDS_FILE_DESCRIPTION "יישום רברסי של Microsoft Windows"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "עזרה של רברסי"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "למחשב אין משבצת פנויה למהלך ועליו לדלג על התור."
+    IDS_COMPUTER_PASS_TEXT "המחשב מדלג על התור."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
+
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 1 VERSIONINFO
  FILEVERSION VER_FILE_VERSION
@@ -269,7 +1260,7 @@ BEGIN
         BLOCK "080404b0"
         BEGIN
             VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Microsoft Windows Reversi Application"
+            VALUE "FileDescription", "Microsoft Windows 翻转棋应用程序"
             VALUE "FileVersion", VER_FILE_VERSION_STR
             VALUE "InternalName", "Reversi"
             VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
@@ -280,7 +1271,150 @@ BEGIN
         BLOCK "040404b0"
         BEGIN
             VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Microsoft Windows Reversi Application"
+            VALUE "FileDescription", "Microsoft Windows 翻轉棋應用程式"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "041104b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Microsoft Windows リバーシ アプリケーション"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "041204b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Microsoft Windows 리버시 응용 프로그램"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "040c04b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Application Reversi Microsoft Windows"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "040704b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Microsoft Windows Reversi-Anwendung"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "040a04b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Aplicación Reversi de Microsoft Windows"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "041d04b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Microsoft Windows Reversi-program"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "040b04b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Microsoft Windows Reversi -sovellus"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "081604b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Aplicação Reversi do Microsoft Windows"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "041004b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Applicazione Reversi per Microsoft Windows"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "041904b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Приложение Microsoft Windows Reversi"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "042204b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "Програма Microsoft Windows Reversi"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "040104b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "تطبيق ريفيرسي لـ Microsoft Windows"
+            VALUE "FileVersion", VER_FILE_VERSION_STR
+            VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "OriginalFilename", "REVERSI.EXE"
+            VALUE "ProductName", "Microsoft Windows"
+            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
+        END
+        BLOCK "040d04b0"
+        BEGIN
+            VALUE "CompanyName", "Microsoft Corporation"
+            VALUE "FileDescription", "יישום רברסי של Microsoft Windows"
             VALUE "FileVersion", VER_FILE_VERSION_STR
             VALUE "InternalName", "Reversi"
             VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
@@ -291,6 +1425,6 @@ BEGIN
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x0409, 1200, 0x0804, 1200, 0x0404, 1200
+        VALUE "Translation", 0x0409, 1200, 0x0804, 1200, 0x0404, 1200, 0x0411, 1200, 0x0412, 1200, 0x040c, 1200, 0x0407, 1200, 0x040a, 1200, 0x041d, 1200, 0x040b, 1200, 0x0816, 1200, 0x0410, 1200, 0x0419, 1200, 0x0422, 1200, 0x0401, 1200, 0x040d, 1200
     END
 END
