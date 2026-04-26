@@ -13,6 +13,7 @@
 #define TIMER_FLASH 0x29A
 #define MENU_POS_GAME 0
 #define MENU_POS_OPTIONS 1
+#define MENU_POS_HELP 2
 #define MIN_TRACK_SIZE 200
 #define PROCESS_SYSTEM_DPI_AWARE_LOCAL 1
 #define PROCESS_PER_MONITOR_DPI_AWARE_LOCAL 2
@@ -3043,10 +3044,15 @@ static void UpdateMenuChecks(HWND hwnd)
 
     EnableMenuItem(menu, MENU_POS_GAME, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
     EnableMenuItem(menu, MENU_POS_OPTIONS, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, MENU_POS_HELP, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
     EnableMenuItem(menu, IDM_NEW, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
     EnableMenuItem(menu, IDM_EXIT, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
     EnableMenuItem(menu, IDM_PASS, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
     EnableMenuItem(menu, IDM_HINT, MF_BYCOMMAND | (busy || g_game.game_over ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, IDM_HELP_CONTENTS, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, IDM_HELP_SEARCH, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, IDM_HELP_USING, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, IDM_ABOUT, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
     DrawMenuBar(hwnd);
 }
 
@@ -4320,6 +4326,10 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             case IDM_ANIM_NONE:
             case IDM_ANIM_SLOW:
             case IDM_ANIM_FAST:
+            case IDM_HELP_CONTENTS:
+            case IDM_HELP_SEARCH:
+            case IDM_HELP_USING:
+            case IDM_ABOUT:
                 return 0;
             default:
                 break;
