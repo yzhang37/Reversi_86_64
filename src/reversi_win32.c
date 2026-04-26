@@ -15,6 +15,8 @@
 #define MENU_POS_OPTIONS 1
 #define MENU_POS_HELP 2
 #define MIN_TRACK_SIZE 200
+#define INVALID_MOVE_TIP_REPEAT_COUNT 5
+#define INVALID_MOVE_TIP_REPEAT_MS 5000
 #define PROCESS_SYSTEM_DPI_AWARE_LOCAL 1
 #define PROCESS_PER_MONITOR_DPI_AWARE_LOCAL 2
 #define MDT_EFFECTIVE_DPI_LOCAL 0
@@ -228,7 +230,12 @@ typedef struct Game {
     int animation_cmd;
     int opening_pass_available;
     int practice_title;
-    int invalid_tip_shown;
+    int invalid_tip_count;
+    int invalid_tip_error_mode;
+    DWORD invalid_tip_last_tick;
+    DWORD invalid_click_last_tick;
+    int invalid_click_last_x;
+    int invalid_click_last_y;
     int selected_row;
     int selected_col;
     int flash_ticks;
@@ -4052,7 +4059,92 @@ static int CanPlayerPass(void)
         (g_game.opening_pass_available || !HasLegalMove(RED));
 }
 
-static void PlayerMove(HWND hwnd, int row, int col)
+static int CanAcceptPlayerMoveInput(void)
+{
+    return !g_game.game_over && g_game.turn == RED && !g_game.must_pass;
+}
+
+static void ResetInvalidMoveTip(void)
+{
+    g_game.invalid_tip_count = 0;
+    g_game.invalid_tip_error_mode = 0;
+    g_game.invalid_click_last_tick = 0;
+}
+
+static void ResetInvalidMoveRun(void)
+{
+    g_game.invalid_tip_count = 0;
+    g_game.invalid_click_last_tick = 0;
+}
+
+static int IsInvalidMoveDoubleClick(int x, int y)
+{
+    DWORD now = GetTickCount();
+    DWORD elapsed = now - g_game.invalid_click_last_tick;
+    int max_dx = MaxInt(1, GetSystemMetrics(SM_CXDOUBLECLK));
+    int max_dy = MaxInt(1, GetSystemMetrics(SM_CYDOUBLECLK));
+    int is_double = g_game.invalid_click_last_tick &&
+        elapsed <= GetDoubleClickTime() &&
+        AbsInt(x - g_game.invalid_click_last_x) <= max_dx &&
+        AbsInt(y - g_game.invalid_click_last_y) <= max_dy;
+
+    g_game.invalid_click_last_tick = now;
+    g_game.invalid_click_last_x = x;
+    g_game.invalid_click_last_y = y;
+    return is_double;
+}
+
+static int ShouldShowInvalidMoveTip(int force_tip)
+{
+    DWORD now = GetTickCount();
+
+    ++g_game.invalid_tip_count;
+    if (!g_game.invalid_tip_last_tick) {
+        g_game.invalid_tip_last_tick = now;
+        return 1;
+    }
+
+    if (force_tip) {
+        g_game.invalid_tip_error_mode = 1;
+        g_game.invalid_tip_last_tick = now;
+        return 1;
+    }
+
+    if (g_game.invalid_tip_error_mode) {
+        g_game.invalid_tip_last_tick = now;
+        return 1;
+    }
+
+    if (g_game.invalid_tip_count >= INVALID_MOVE_TIP_REPEAT_COUNT &&
+        (g_game.invalid_tip_count > INVALID_MOVE_TIP_REPEAT_COUNT ||
+            (DWORD)(now - g_game.invalid_tip_last_tick) >= INVALID_MOVE_TIP_REPEAT_MS)) {
+        g_game.invalid_tip_error_mode = 1;
+        g_game.invalid_tip_last_tick = now;
+        return 1;
+    }
+
+    return 0;
+}
+
+static void ShowInvalidMoveTip(HWND hwnd)
+{
+    APP_CHAR message[192];
+    APP_CHAR title[64];
+    LoadText(IDS_INVALID_MOVE, message, 192);
+    LoadText(IDS_APP_TITLE, title, 64);
+    APP_MESSAGE_BOX(hwnd, message, title, MB_OK | MB_ICONINFORMATION);
+}
+
+static void ReportInvalidMove(HWND hwnd, int force_tip)
+{
+    if (ShouldShowInvalidMoveTip(force_tip)) {
+        ShowInvalidMoveTip(hwnd);
+    } else {
+        MessageBeep(MB_OK);
+    }
+}
+
+static void PlayerMove(HWND hwnd, int row, int col, int force_tip)
 {
     if (g_game.game_over || IsGameBusy() || g_game.turn != RED || g_game.must_pass) {
         MessageBeep(MB_ICONWARNING);
@@ -4060,18 +4152,11 @@ static void PlayerMove(HWND hwnd, int row, int col)
     }
 
     if (!ApplyMove(hwnd, row, col, RED, 1)) {
-        MessageBeep(MB_ICONWARNING);
-        if (!g_game.invalid_tip_shown) {
-            APP_CHAR message[192];
-            APP_CHAR title[64];
-            LoadText(IDS_INVALID_MOVE, message, 192);
-            LoadText(IDS_APP_TITLE, title, 64);
-            APP_MESSAGE_BOX(hwnd, message, title, MB_OK | MB_ICONINFORMATION);
-            g_game.invalid_tip_shown = 1;
-        }
+        ReportInvalidMove(hwnd, force_tip);
         return;
     }
 
+    ResetInvalidMoveTip();
     g_game.opening_pass_available = 0;
     g_game.turn = BLUE;
     FinishTurn(hwnd);
@@ -4093,12 +4178,23 @@ static int PointToCell(HWND hwnd, int x, int y, int *row, int *col)
 
 static void HandleClick(HWND hwnd, LPARAM lparam)
 {
+    int x = GET_X_LPARAM(lparam);
+    int y = GET_Y_LPARAM(lparam);
     int row;
     int col;
-    if (PointToCell(hwnd, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), &row, &col)) {
+    if (PointToCell(hwnd, x, y, &row, &col)) {
+        int force_tip = 0;
+        if (CanAcceptPlayerMoveInput() && CollectFlips(row, col, RED, NULL, 0) <= 0) {
+            force_tip = IsInvalidMoveDoubleClick(x, y);
+        }
         g_game.selected_row = row;
         g_game.selected_col = col;
-        PlayerMove(hwnd, row, col);
+        PlayerMove(hwnd, row, col, force_tip);
+    } else if (CanAcceptPlayerMoveInput()) {
+        int force_tip = g_game.invalid_tip_error_mode || IsInvalidMoveDoubleClick(x, y);
+        if (force_tip) {
+            ReportInvalidMove(hwnd, 1);
+        }
     }
 }
 
@@ -4166,6 +4262,7 @@ static void TryPass(HWND hwnd)
 
     g_game.opening_pass_available = 0;
     g_game.must_pass = 0;
+    ResetInvalidMoveRun();
     g_game.turn = BLUE;
     APP_CHAR message[64];
     LoadText(IDS_PASS_TEXT, message, 64);
@@ -4193,6 +4290,7 @@ static void ShowHint(HWND hwnd)
     }
 
     g_game.practice_title = 1;
+    ResetInvalidMoveRun();
     SetTitle(hwnd);
     g_game.selected_row = move.row;
     g_game.selected_col = move.col;
@@ -4318,7 +4416,7 @@ static void HandleKey(HWND hwnd, WPARAM key)
         ShowHint(hwnd);
         break;
     case VK_SPACE:
-        PlayerMove(hwnd, g_game.selected_row, g_game.selected_col);
+        PlayerMove(hwnd, g_game.selected_row, g_game.selected_col, 0);
         break;
     case VK_LEFT:
         MoveSelection(hwnd, 0, -1);

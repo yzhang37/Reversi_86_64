@@ -24,6 +24,13 @@ TOPICS = {
     "multi_direction": "POP_MULTI_DIRECTION",
 }
 
+CONTENTS_FALLBACK_TOPIC = "JP.RLA"
+
+ALINKS = {
+    topic_id: "a-reversi-" + topic_key.replace("_", "-")
+    for topic_key, topic_id in TOPICS.items()
+}
+
 
 def rtf_text(text):
     out = []
@@ -165,7 +172,7 @@ def keyboard_table():
 
 
 def related(items):
-    keywords = ";".join(topic_id for _, topic_id in items)
+    keywords = ";".join(ALINKS.get(topic_id, topic_id) for _, topic_id in items)
     macro = f'AL("{keywords}")'
     return (
         subheading("相关主题")
@@ -186,7 +193,7 @@ def topic(topic_id, title, keywords, body):
         + footnote("#", topic_id)
         + footnote(">", "proc4")
         + footnote("K", ";".join(keywords))
-        + footnote("A", topic_id)
+        + footnote("A", ALINKS[topic_id])
         + title_line(title)
         + body
         + "\n\\page\n"
@@ -198,6 +205,16 @@ def popup_topic(topic_id, body):
         footnote("#", topic_id)
         + r"\pard\sb45\sl-235\li115\ri125 \f1\fs18 "
         + rtf_text(body)
+        + "\n\\par\n\\page\n"
+    )
+
+
+def contents_fallback_topic():
+    return (
+        footnote("!", "NS();FD()")
+        + footnote("#", CONTENTS_FALLBACK_TOPIC)
+        + r"\pard\sb45\sl-235\li295\ri125\fi-185\tx295 \f1\fs18 "
+        + rtf_text("单击“帮助主题”返回到主题列表。")
         + "\n\\par\n\\page\n"
     )
 
@@ -519,6 +536,7 @@ def build_topics():
             "多个方向 是指同一次落子同时在横线、竖线或斜线上形成夹住关系。一步棋可能同时改变棋盘上多条线的归属。",
         )
     )
+    topics.append(contents_fallback_topic())
 
     return topics
 
@@ -545,7 +563,8 @@ def build_rtf():
 def build_hpj():
     return """[OPTIONS]
 TITLE=“翻转棋”帮助
-CONTENTS=TOPIC_OVERVIEW
+CONTENTS=JP.RLA
+CNT=REVERSI.cnt
 LCID=0x804 0x0 0x0
 COMPRESS=0
 
