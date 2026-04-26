@@ -100,7 +100,7 @@ typedef WCHAR APP_CHAR;
 #define APP_DISPATCH_MESSAGE DispatchMessageW
 #define APP_TRANSLATE_ACCELERATOR TranslateAcceleratorW
 #define APP_SET_WINDOW_TEXT SetWindowTextW
-#define APP_MESSAGE_BOX MessageBoxW
+#define APP_MESSAGE_BOX AppMessageBox
 #define APP_SHELL_ABOUT ShellAboutW
 #define APP_GET_TEXT_METRICS GetTextMetricsW
 #define APP_GET_TEXT_EXTENT GetTextExtentPoint32W
@@ -306,6 +306,8 @@ static HFONT g_messageFont = NULL;
 static int g_messageFontDpi = 0;
 static int g_messageFontHeight = 0;
 static HMENU g_testContextMenu = NULL;
+static HHOOK g_messageBoxHook = NULL;
+static HWND g_messageBoxOwner = NULL;
 
 static const int k_dirs[8][2] = {
     {-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
@@ -411,7 +413,113 @@ static FARPROC AppGetProc(const char *module_name, const char *proc_name)
     return module ? GetProcAddress(module, proc_name) : NULL;
 }
 
+static RECT AppVirtualScreenRect(void)
+{
+    RECT rc;
+    int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+    if (width > 0 && height > 0) {
+        rc.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+        rc.top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+        rc.right = rc.left + width;
+        rc.bottom = rc.top + height;
+    } else {
+        rc.left = 0;
+        rc.top = 0;
+        rc.right = GetSystemMetrics(SM_CXSCREEN);
+        rc.bottom = GetSystemMetrics(SM_CYSCREEN);
+    }
+    return rc;
+}
+
+static void CenterDialogOnOwner(HWND dialog, HWND owner)
+{
+    RECT owner_rect;
+    RECT dialog_rect;
+    RECT screen_rect;
+    int width;
+    int height;
+    int x;
+    int y;
+
+    if (!dialog || !owner || !IsWindow(owner)) {
+        return;
+    }
+    if (!GetWindowRect(owner, &owner_rect) || !GetWindowRect(dialog, &dialog_rect)) {
+        return;
+    }
+
+    width = dialog_rect.right - dialog_rect.left;
+    height = dialog_rect.bottom - dialog_rect.top;
+    x = owner_rect.left + ((owner_rect.right - owner_rect.left) - width) / 2;
+    y = owner_rect.top + ((owner_rect.bottom - owner_rect.top) - height) / 2;
+
+    screen_rect = AppVirtualScreenRect();
+    if (x + width > screen_rect.right) {
+        x = screen_rect.right - width;
+    }
+    if (y + height > screen_rect.bottom) {
+        y = screen_rect.bottom - height;
+    }
+    if (x < screen_rect.left) {
+        x = screen_rect.left;
+    }
+    if (y < screen_rect.top) {
+        y = screen_rect.top;
+    }
+
+    SetWindowPos(dialog, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+}
+
+static LRESULT CALLBACK AppMessageBoxCbtProc(int code, WPARAM wparam, LPARAM lparam)
+{
+    HHOOK hook = g_messageBoxHook;
+
+    if (code == HCBT_ACTIVATE) {
+        HWND owner = g_messageBoxOwner;
+        g_messageBoxHook = NULL;
+        g_messageBoxOwner = NULL;
+        if (hook) {
+            UnhookWindowsHookEx(hook);
+        }
+        CenterDialogOnOwner((HWND)wparam, owner);
+    }
+
+    return CallNextHookEx(hook, code, wparam, lparam);
+}
+
+static void BeginMessageBoxCentering(HWND owner)
+{
+    if (!owner || !IsWindow(owner) || g_messageBoxHook) {
+        return;
+    }
+    g_messageBoxOwner = owner;
+    g_messageBoxHook = SetWindowsHookEx(WH_CBT, AppMessageBoxCbtProc, NULL, GetCurrentThreadId());
+    if (!g_messageBoxHook) {
+        g_messageBoxOwner = NULL;
+    }
+}
+
+static void EndMessageBoxCentering(void)
+{
+    if (g_messageBoxHook) {
+        UnhookWindowsHookEx(g_messageBoxHook);
+        g_messageBoxHook = NULL;
+    }
+    g_messageBoxOwner = NULL;
+}
+
 #ifdef UNICODE
+static int AppMessageBox(HWND hwnd, const WCHAR *text, const WCHAR *caption, UINT type)
+{
+    int result;
+
+    BeginMessageBoxCentering(hwnd);
+    result = MessageBoxW(hwnd, text, caption, type);
+    EndMessageBoxCentering();
+    return result;
+}
+
 static HICON AppLoadIconSized(HINSTANCE instance, LPCWSTR name, int cx, int cy)
 {
     if (cx <= 0 || cy <= 0) {
@@ -790,6 +898,9 @@ static BOOL AppSetWindowText(HWND hwnd, const char *text)
 
 static int AppMessageBox(HWND hwnd, const char *text, const char *caption, UINT type)
 {
+    int result;
+
+    BeginMessageBoxCentering(hwnd);
     if (g_useWideCommands) {
         MessageBoxWProc message_box =
             (MessageBoxWProc)AppGetProc("user32.dll", "MessageBoxW");
@@ -798,10 +909,14 @@ static int AppMessageBox(HWND hwnd, const char *text, const char *caption, UINT 
             WCHAR wide_caption[128];
             AppToWide(text, wide_text, 512);
             AppToWide(caption, wide_caption, 128);
-            return message_box(hwnd, wide_text, wide_caption, type);
+            result = message_box(hwnd, wide_text, wide_caption, type);
+            EndMessageBoxCentering();
+            return result;
         }
     }
-    return MessageBoxA(hwnd, text, caption, type);
+    result = MessageBoxA(hwnd, text, caption, type);
+    EndMessageBoxCentering();
+    return result;
 }
 
 static int AppShellAbout(HWND hwnd, const char *title, const char *text, HICON icon)
