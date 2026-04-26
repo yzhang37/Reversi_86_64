@@ -1238,7 +1238,7 @@ static APP_NOINLINE int OpenHelpViewerChmHelp(HWND hwnd)
 {
     APP_CHAR help_path[MAX_PATH];
     return AppResolveWindowsHelpFile(IDS_HELP_VIEWER_CHM_FILE, help_path, MAX_PATH) &&
-        AppHtmlHelp(hwnd, help_path, HH_DISPLAY_TOC_LOCAL);
+        AppHtmlHelp(hwnd, help_path, HH_DISPLAY_TOPIC_LOCAL);
 }
 
 static APP_NOINLINE int OpenLocalWinHelp(HWND hwnd, UINT command, ULONG_PTR data)
@@ -2568,7 +2568,7 @@ static void ShowHelp(HWND hwnd, int cmd)
     const APP_CHAR empty_keyword[] = APP_TEXT("");
 
     if (cmd == IDM_HELP_USING) {
-        if (force_chm) {
+        if (prefer_chm) {
             opened = OpenHelpViewerChmHelp(hwnd);
         }
         if (!opened && !force_chm) {
@@ -2583,7 +2583,7 @@ static void ShowHelp(HWND hwnd, int cmd)
         }
     } else {
         if (prefer_chm) {
-            opened = OpenLocalChmHelp(hwnd, HH_DISPLAY_TOC_LOCAL);
+            opened = OpenLocalChmHelp(hwnd, HH_DISPLAY_TOPIC_LOCAL);
         }
         if (!opened && !force_chm) {
             opened = OpenLocalWinHelp(hwnd, HELP_CONTENTS, 0);
