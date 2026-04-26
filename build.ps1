@@ -38,7 +38,9 @@ function Invoke-Build {
         [Parameter(Mandatory = $true)][string]$Arch,
         [Parameter(Mandatory = $true)][string]$OutputDir,
         [Parameter(Mandatory = $true)][string]$Defines,
+        [string]$Optimization = '/O2',
         [string]$CompilerOptions = '',
+        [string]$LinkerOptions = '',
         [Parameter(Mandatory = $true)][string]$Subsystem,
         [Parameter(Mandatory = $true)][string]$OsVersion
     )
@@ -65,10 +67,10 @@ function Invoke-Build {
 
     if ($Arch -eq 'x86') {
         $cpuCompile =
-            ' && cl /nologo /O2 /W4 /utf-8 /GS- /Zl /arch:IA32 ' + $Defines + ' ' +
+            ' && cl /nologo ' + $Optimization + ' /W4 /utf-8 /GS- /Zl /arch:IA32 ' + $Defines + ' ' +
             '/c /Fo"' + $cpuObj + '" "' + $CpuSource + '"'
         $modernCompile =
-            ' && cl /nologo /O2 /W4 /utf-8 /GS- /Zl /arch:SSE2 ' + $Defines + ' ' +
+            ' && cl /nologo ' + $Optimization + ' /W4 /utf-8 /GS- /Zl /arch:SSE2 ' + $Defines + ' ' +
             '/c /Fo"' + $modernObj + '" "' + $ModernSource + '"'
         $linkObjects += ' "' + $cpuObj + '" "' + $modernObj + '"'
     }
@@ -76,11 +78,12 @@ function Invoke-Build {
     $cmd = '"' + $vcvars + '" ' + $Arch +
         ' && cd /d "' + $Root + '"' +
         ' && rc /nologo /I "' + (Join-Path $Root 'src') + '" /fo "' + $res + '" "' + $Resource + '"' +
-        ' && cl /nologo /O2 /W4 /utf-8 /GS- /Zl ' + $CompilerOptions + ' ' + $Defines + ' ' +
+        ' && cl /nologo ' + $Optimization + ' /W4 /utf-8 /GS- /Zl ' + $CompilerOptions + ' ' + $Defines + ' ' +
         '/c /Fo"' + $mainObj + '" "' + $Source + '"' +
         $cpuCompile +
         $modernCompile +
         ' && link /nologo /NODEFAULTLIB /ENTRY:ReversiEntry /SUBSYSTEM:WINDOWS,' + $Subsystem +
+        ' ' + $LinkerOptions +
         ' /OSVERSION:' + $OsVersion + ' /OUT:"' + $exe + '" ' + $linkObjects +
         ' kernel32.lib user32.lib gdi32.lib shell32.lib advapi32.lib'
 
@@ -139,7 +142,9 @@ Invoke-Build `
     -Arch 'x64' `
     -OutputDir $x64Output `
     -Defines '/DUNICODE /D_UNICODE /DWINVER=0x0600 /D_WIN32_WINNT=0x0600' `
-    -CompilerOptions '' `
+    -Optimization '/O1' `
+    -CompilerOptions '/Gy /Gw' `
+    -LinkerOptions '/OPT:REF /OPT:ICF' `
     -Subsystem '6.0' `
     -OsVersion '6.0'
 Copy-HelpFiles -OutputDir $x64Output

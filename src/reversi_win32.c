@@ -163,12 +163,23 @@ typedef struct AppActCtx {
 } APP_ACTCTX;
 
 #pragma function(memset)
+#pragma function(memcpy)
 void *__cdecl memset(void *dest, int value, UINT_PTR count)
 {
     BYTE *out = (BYTE *)dest;
     BYTE fill = (BYTE)value;
     while (count--) {
         *out++ = fill;
+    }
+    return dest;
+}
+
+void *__cdecl memcpy(void *dest, const void *src, UINT_PTR count)
+{
+    BYTE *out = (BYTE *)dest;
+    const BYTE *in = (const BYTE *)src;
+    while (count--) {
+        *out++ = *in++;
     }
     return dest;
 }
