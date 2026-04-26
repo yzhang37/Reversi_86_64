@@ -253,6 +253,7 @@ BEGIN
             VALUE "FileDescription", "Microsoft Windows Reversi Application"
             VALUE "FileVersion", VER_FILE_VERSION_STR
             VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "© Microsoft Corporation. All rights reserved."
             VALUE "OriginalFilename", "REVERSI.EXE"
             VALUE "ProductName", "Microsoft Windows"
             VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
@@ -263,6 +264,7 @@ BEGIN
             VALUE "FileDescription", "Microsoft Windows Reversi Application"
             VALUE "FileVersion", VER_FILE_VERSION_STR
             VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
             VALUE "OriginalFilename", "REVERSI.EXE"
             VALUE "ProductName", "Microsoft Windows"
             VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
@@ -273,6 +275,7 @@ BEGIN
             VALUE "FileDescription", "Microsoft Windows Reversi Application"
             VALUE "FileVersion", VER_FILE_VERSION_STR
             VALUE "InternalName", "Reversi"
+            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
             VALUE "OriginalFilename", "REVERSI.EXE"
             VALUE "ProductName", "Microsoft Windows"
             VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
