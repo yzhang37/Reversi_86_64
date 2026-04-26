@@ -72,5 +72,4 @@ BEGIN
     IDS_WINDOW_DPI_KEY "WindowDpi"
     IDS_COMPUTER_PASS "컴퓨터가 둘 수 있는 빈 칸이 없어 패스해야 합니다."
     IDS_COMPUTER_PASS_TEXT "컴퓨터가 패스합니다."
-    // IDS_BACKGROUND_KEY "shift xyzzy"
 END

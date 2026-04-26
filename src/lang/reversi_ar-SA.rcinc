@@ -72,5 +72,4 @@ BEGIN
     IDS_WINDOW_DPI_KEY "WindowDpi"
     IDS_COMPUTER_PASS "لا توجد خانة فارغة يستطيع الكمبيوتر اللعب فيها، ويجب أن يمرر الدور."
     IDS_COMPUTER_PASS_TEXT "يمرر الكمبيوتر الدور."
-    // IDS_BACKGROUND_KEY "shift xyzzy"
 END

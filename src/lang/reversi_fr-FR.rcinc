@@ -72,5 +72,4 @@ BEGIN
     IDS_WINDOW_DPI_KEY "WindowDpi"
     IDS_COMPUTER_PASS "L'ordinateur n'a aucune case libre où jouer et doit passer."
     IDS_COMPUTER_PASS_TEXT "L'ordinateur passe."
-    // IDS_BACKGROUND_KEY "shift xyzzy"
 END

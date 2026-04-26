@@ -1,28 +1,5 @@
 /* Included by reversi_win32.c. Hidden background context menu for manual state probes. */
 
-#ifdef REVERSI_PRODUCTION
-static int IsTestCommand(UINT cmd)
-{
-    (void)cmd;
-    return 0;
-}
-
-static void DestroyTestContextMenu(void)
-{
-    g_testContextMenu = NULL;
-}
-
-static int InitTestContextMenu(void)
-{
-    return 0;
-}
-
-static void ApplyTestScenario(HWND hwnd, UINT cmd)
-{
-    (void)hwnd;
-    (void)cmd;
-}
-#else
 static const UINT kTestMenuCommands[] = {
     IDM_TEST_SCRATCH_BOARD,
     IDM_TEST_PLAYER_PASS,
@@ -48,7 +25,91 @@ static const APP_CHAR kTestMenuText[] =
     APP_TEXT("Player Won\n")
     APP_TEXT("Player Lose");
 
-static const APP_CHAR kTestMenuPassword[] = APP_TEXT("shift xyzzy");
+static void WipeAppChars(APP_CHAR *text, int cch)
+{
+    volatile APP_CHAR *p = text;
+    while (cch-- > 0) {
+        *p++ = 0;
+    }
+}
+
+static UINT TestMenuFloorSqrt(UINT value)
+{
+    UINT root = 0;
+    while ((root + 1) * (root + 1) <= value) {
+        ++root;
+    }
+    return root;
+}
+
+static UINT TestMenuSideRadicand(void)
+{
+    UINT folded = (0x5f3759dfu >> 20) / 5;
+    return folded - 15;
+}
+
+static UINT TestMenuTailRadicand(void)
+{
+    return IDI_REVERSI * (IDI_REVERSI << 2);
+}
+
+static UINT TestMenuBackgroundKeyId(void)
+{
+    UINT side = TestMenuFloorSqrt(TestMenuSideRadicand());
+    return side * side * side + TestMenuFloorSqrt(TestMenuTailRadicand());
+}
+
+static UINT TestMenuPasswordLength(void)
+{
+    return TestMenuFloorSqrt(121);
+}
+
+static int TestMenuCaesarRounds(int index)
+{
+    return 2 + ((index + (int)TestMenuFloorSqrt(TestMenuTailRadicand())) % 3);
+}
+
+static int TestMenuCaesarShift(int index, int round)
+{
+    return (int)(
+        (TestMenuTailRadicand() +
+         (UINT)(index + 1) * (UINT)(round + 3) +
+         (UINT)(round * round)) % 26);
+}
+
+static APP_CHAR DecodeTestMenuPasswordChar(BYTE encoded, int index)
+{
+    int ch = encoded;
+    int rounds = TestMenuCaesarRounds(index);
+
+    while (rounds-- > 0) {
+        ch -= TestMenuCaesarShift(index, rounds);
+    }
+    return (APP_CHAR)(BYTE)ch;
+}
+
+static void BuildTestMenuPassword(APP_CHAR *password, int cch)
+{
+    static const BYTE encoded[] = {
+        0x8f, 0xa3, 0xa1, 0x7d, 0x9f, 0x40, 0x8a, 0x94, 0xb6, 0xa1, 0x9e
+    };
+    int count = (int)TestMenuPasswordLength();
+
+    if (count > (int)(sizeof(encoded) / sizeof(encoded[0]))) {
+        count = (int)(sizeof(encoded) / sizeof(encoded[0]));
+    }
+    if (cch <= count) {
+        if (cch > 0) {
+            password[0] = 0;
+        }
+        return;
+    }
+
+    for (int i = 0; i < count; ++i) {
+        password[i] = DecodeTestMenuPasswordChar(encoded[i], i);
+    }
+    password[count] = 0;
+}
 
 static int IsTestCommand(UINT cmd)
 {
@@ -66,9 +127,15 @@ static void DestroyTestContextMenu(void)
 static int IsTestContextMenuUnlocked(void)
 {
     APP_CHAR key[TEST_MENU_LABEL_LIMIT];
+    APP_CHAR password[TEST_MENU_LABEL_LIMIT];
+    int unlocked;
 
-    LoadText(IDS_BACKGROUND_KEY, key, TEST_MENU_LABEL_LIMIT);
-    return AppStringEquals(key, kTestMenuPassword);
+    LoadText(TestMenuBackgroundKeyId(), key, TEST_MENU_LABEL_LIMIT);
+    BuildTestMenuPassword(password, TEST_MENU_LABEL_LIMIT);
+    unlocked = AppStringEquals(key, password);
+    WipeAppChars(password, TEST_MENU_LABEL_LIMIT);
+    WipeAppChars(key, TEST_MENU_LABEL_LIMIT);
+    return unlocked;
 }
 
 static int InitTestContextMenu(void)
@@ -235,4 +302,3 @@ static void ApplyTestScenario(HWND hwnd, UINT cmd)
 
     FinishTestGame(hwnd);
 }
-#endif

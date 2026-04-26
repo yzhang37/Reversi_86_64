@@ -72,5 +72,4 @@ BEGIN
     IDS_WINDOW_DPI_KEY "WindowDpi"
     IDS_COMPUTER_PASS "El ordenador no tiene ninguna casilla libre donde mover y debe pasar."
     IDS_COMPUTER_PASS_TEXT "El ordenador pasa."
-    // IDS_BACKGROUND_KEY "shift xyzzy"
 END

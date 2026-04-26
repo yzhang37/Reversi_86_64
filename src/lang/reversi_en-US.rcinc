@@ -72,5 +72,4 @@ BEGIN
     IDS_WINDOW_DPI_KEY "WindowDpi"
     IDS_COMPUTER_PASS "The computer has no open square to move to and must pass."
     IDS_COMPUTER_PASS_TEXT "The computer passes."
-    // IDS_BACKGROUND_KEY "shift xyzzy"
 END

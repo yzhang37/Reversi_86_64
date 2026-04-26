@@ -98,18 +98,21 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 ## Hidden Debug Context Menu
 
 - The background debug menu is created at runtime, not as an RC `MENU`.
-- It is enabled only when the active language resource's `IDS_BACKGROUND_KEY`
-  in `src/lang/*.rcinc` is exactly:
+- Do not define the debug key in normal RC files. The program tries to read
+  string id 4919 at startup; if it is missing, it is treated as empty and the
+  menu is not created.
+- A post-build Resource Hacker edit can add string id 4919 to unlock the menu.
+  The menu is enabled only when that resource string is:
 
 ```text
 shift xyzzy
 ```
 
+- The C code must not store the unlock phrase or resource id 4919 as obvious
+  plaintext/literals in the EXE. The current code builds the phrase and id at
+  runtime, compares the resource value, then wipes the temporary buffers.
 - If the user explicitly says to publish a formal release or production build,
-  comment out every `IDS_BACKGROUND_KEY "shift xyzzy"` line in
-  `src/lang/*.rcinc` before building, then build with `build.ps1 -Production`.
-- For normal development builds or commits, keep those lines present and
-  uncommented.
+  leave string id 4919 absent from RC, then build with `build.ps1 -Production`.
 - The debug menu opens from right-click on blank client area. Current entries
   include pass/result scenarios and `Scratch Board`.
 

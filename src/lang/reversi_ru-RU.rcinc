@@ -72,5 +72,4 @@ BEGIN
     IDS_WINDOW_DPI_KEY "WindowDpi"
     IDS_COMPUTER_PASS "У компьютера нет свободной клетки для хода, необходимо пропустить ход."
     IDS_COMPUTER_PASS_TEXT "Компьютер пропускает ход."
-    // IDS_BACKGROUND_KEY "shift xyzzy"
 END

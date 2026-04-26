@@ -72,4 +72,5 @@ Before finishing a cleanup:
 2. Build both x86 and x64.
 3. Run both `--self-test` binaries.
 4. Check that resource includes still compile with UTF-8.
-5. Keep release/debug toggles intact, especially `IDS_BACKGROUND_KEY`.
+5. Keep release/debug toggles intact; normal RC files should not define the
+   hidden debug string id 4919.

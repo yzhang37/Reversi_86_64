@@ -184,11 +184,15 @@ defaults rather than preserved.
 
 ## Hidden Debug Menu
 
-The hidden debug menu is development-only.
+The hidden debug menu is normally disabled and can be unlocked by editing the
+string table after build.
 
 - Created at runtime, not as an RC menu.
-- Enabled only by the active language resource's
-  `IDS_BACKGROUND_KEY == "shift xyzzy"` in `src/lang/*.rcinc`.
+- The normal RC files do not define string id 4919. Missing means empty.
+- If string id 4919 is added or changed to the unlock phrase with Resource
+  Hacker, the active language resource enables the menu at startup.
+- The C code builds the unlock phrase and resource id at runtime and wipes the
+  temporary buffers after comparison.
 - Opened by right-clicking blank client area.
 - Labels are hardcoded English and intentionally not localized.
 - `Scratch Board` is a checkbox. When enabled, clicking any board square cycles
