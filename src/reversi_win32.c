@@ -256,8 +256,11 @@ typedef HRESULT (WINAPI *SetProcessDpiAwarenessProc)(int);
 typedef BOOL (WINAPI *SetProcessDPIAwareProc)(void);
 typedef UINT (WINAPI *GetDpiForWindowProc)(HWND);
 typedef UINT (WINAPI *GetDpiForSystemProc)(void);
+typedef int (WINAPI *GetSystemMetricsForDpiProc)(int, UINT);
 typedef HRESULT (WINAPI *GetDpiForMonitorProc)(HMONITOR, int, UINT *, UINT *);
 typedef HMONITOR (WINAPI *MonitorFromWindowProc)(HWND, DWORD);
+typedef HANDLE (WINAPI *LoadImageAProc)(HINSTANCE, LPCSTR, UINT, int, int, UINT);
+typedef HANDLE (WINAPI *LoadImageWProc)(HINSTANCE, LPCWSTR, UINT, int, int, UINT);
 typedef HANDLE (WINAPI *CreateActCtxProc)(const APP_ACTCTX *);
 typedef BOOL (WINAPI *ActivateActCtxProc)(HANDLE, ULONG_PTR *);
 typedef BOOL (WINAPI *DeactivateActCtxProc)(DWORD, ULONG_PTR);
@@ -284,6 +287,23 @@ static FARPROC AppGetProc(const char *module_name, const char *proc_name)
     }
     return module ? GetProcAddress(module, proc_name) : NULL;
 }
+
+#ifdef UNICODE
+static HICON AppLoadIconSized(HINSTANCE instance, LPCWSTR name, int cx, int cy)
+{
+    if (cx <= 0 || cy <= 0) {
+        return LoadIconW(instance, name);
+    }
+
+    LoadImageWProc load_image =
+        (LoadImageWProc)AppGetProc("user32.dll", "LoadImageW");
+    if (load_image) {
+        return (HICON)load_image(
+            instance, name, IMAGE_ICON, cx, cy, LR_DEFAULTCOLOR | LR_SHARED);
+    }
+    return LoadIconW(instance, name);
+}
+#endif
 
 #ifndef UNICODE
 typedef int (WINAPI *LoadStringWProc)(HINSTANCE, UINT, LPWSTR, int);
@@ -453,6 +473,35 @@ static HICON AppLoadIcon(HINSTANCE instance, LPCSTR name)
         }
     }
     return LoadIconA(instance, name);
+}
+
+static HICON AppLoadIconSized(HINSTANCE instance, LPCSTR name, int cx, int cy)
+{
+    if (cx <= 0 || cy <= 0) {
+        return AppLoadIcon(instance, name);
+    }
+
+    if (g_useWideCommands) {
+        LoadImageWProc load_image =
+            (LoadImageWProc)AppGetProc("user32.dll", "LoadImageW");
+        if (load_image) {
+            WCHAR wide_name[128];
+            return (HICON)load_image(
+                instance,
+                AppResourceNameToWide(name, wide_name, 128),
+                IMAGE_ICON,
+                cx,
+                cy,
+                LR_DEFAULTCOLOR | LR_SHARED);
+        }
+    }
+
+    LoadImageAProc load_image = (LoadImageAProc)AppGetProc("user32.dll", "LoadImageA");
+    if (load_image) {
+        return (HICON)load_image(
+            instance, name, IMAGE_ICON, cx, cy, LR_DEFAULTCOLOR | LR_SHARED);
+    }
+    return AppLoadIcon(instance, name);
 }
 
 static HCURSOR AppLoadCursor(HINSTANCE instance, LPCSTR name)
@@ -1066,6 +1115,51 @@ static int ScaleForDpi(int value)
 static int CurrentWindowDpi(void)
 {
     return g_enableSystemScaling && g_currentDpi > 0 ? g_currentDpi : 96;
+}
+
+static int AppSystemMetricForDpi(int metric, int dpi)
+{
+    int value;
+    int system_dpi;
+    GetSystemMetricsForDpiProc get_metric_for_dpi =
+        (GetSystemMetricsForDpiProc)AppGetProc("user32.dll", "GetSystemMetricsForDpi");
+    if (get_metric_for_dpi && IsValidDpi(dpi)) {
+        value = get_metric_for_dpi(metric, (UINT)dpi);
+        if (value > 0) {
+            return value;
+        }
+    }
+
+    value = GetSystemMetrics(metric);
+    if (value <= 0 || !g_enableSystemScaling || !IsValidDpi(dpi)) {
+        return value;
+    }
+
+    system_dpi = QuerySystemDpi();
+    if (!IsValidDpi(system_dpi) || system_dpi == dpi) {
+        return value;
+    }
+    return MulDiv(value, dpi, system_dpi);
+}
+
+static void UpdateWindowIcons(HWND hwnd)
+{
+    int dpi = CurrentWindowDpi();
+    int small_w = AppSystemMetricForDpi(SM_CXSMICON, dpi);
+    int small_h = AppSystemMetricForDpi(SM_CYSMICON, dpi);
+    int big_w = AppSystemMetricForDpi(SM_CXICON, dpi);
+    int big_h = AppSystemMetricForDpi(SM_CYICON, dpi);
+    HICON small_icon = AppLoadIconSized(
+        g_hinst, MAKEINTRESOURCE(IDI_REVERSI), small_w, small_h);
+    HICON big_icon = AppLoadIconSized(
+        g_hinst, MAKEINTRESOURCE(IDI_REVERSI), big_w, big_h);
+
+    if (small_icon) {
+        SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon);
+    }
+    if (big_icon) {
+        SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)big_icon);
+    }
 }
 
 static LONG ScaleWindowValueForDpi(LONG value, int from_dpi, int to_dpi)
@@ -3044,6 +3138,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_CREATE:
         UpdateWindowDpi(hwnd);
         SetMenu(hwnd, APP_LOAD_MENU(g_hinst, MAKEINTRESOURCE(IDR_MAINMENU)));
+        UpdateWindowIcons(hwnd);
         InitGameState();
         SetTitle(hwnd);
         UpdateMenuChecks(hwnd);
@@ -3183,6 +3278,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             dpi = (int)HIWORD(wparam);
         }
         g_currentDpi = NormalizeDpi(dpi);
+        UpdateWindowIcons(hwnd);
         if (suggested) {
             SetWindowPos(
                 hwnd,
@@ -3199,12 +3295,14 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
     case WM_MOVE:
         if (g_perMonitorDpiAware && UpdateWindowDpi(hwnd)) {
+            UpdateWindowIcons(hwnd);
             InvalidateRect(hwnd, NULL, TRUE);
         }
         return 0;
 
     case WM_WINDOWPOSCHANGED:
         if (g_perMonitorDpiAware && UpdateWindowDpi(hwnd)) {
+            UpdateWindowIcons(hwnd);
             InvalidateRect(hwnd, NULL, TRUE);
         }
         break;
@@ -3215,9 +3313,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
     case WM_DISPLAYCHANGE:
         if (g_perMonitorDpiAware) {
-            UpdateWindowDpi(hwnd);
+            if (UpdateWindowDpi(hwnd)) {
+                UpdateWindowIcons(hwnd);
+            }
         } else {
             g_currentDpi = QuerySystemDpi();
+            UpdateWindowIcons(hwnd);
         }
         RefreshClassicColors();
         InvalidateRect(hwnd, NULL, TRUE);
@@ -3226,6 +3327,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_SETTINGCHANGE:
         if (!g_perMonitorDpiAware) {
             g_currentDpi = QuerySystemDpi();
+            UpdateWindowIcons(hwnd);
             InvalidateRect(hwnd, NULL, TRUE);
         }
         break;
@@ -3316,7 +3418,11 @@ static int ReversiMain(HINSTANCE hinst, int show)
     wc.lpfnWndProc = WndProc;
     wc.hInstance = hinst;
     wc.hCursor = APP_LOAD_CURSOR(NULL, IDC_ARROW);
-    wc.hIcon = APP_LOAD_ICON(hinst, MAKEINTRESOURCE(IDI_REVERSI));
+    wc.hIcon = AppLoadIconSized(
+        hinst,
+        MAKEINTRESOURCE(IDI_REVERSI),
+        AppSystemMetricForDpi(SM_CXICON, CurrentWindowDpi()),
+        AppSystemMetricForDpi(SM_CYICON, CurrentWindowDpi()));
     wc.hbrBackground = CreateSolidBrush(g_windowGray);
     wc.lpszClassName = class_name;
 
