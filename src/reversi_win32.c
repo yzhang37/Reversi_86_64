@@ -210,8 +210,6 @@ typedef struct Game {
     int skill_cmd;
     int search_depth;
     int animation_cmd;
-    int hint_row;
-    int hint_col;
     int practice_title;
     int invalid_tip_shown;
     int selected_row;
@@ -243,6 +241,7 @@ static int g_useWideCommands = 0;
 static int g_darkModeSupported = 0;
 static int g_darkModeEnabled = 0;
 static int g_inputLock = 0;
+static int g_hintBlankCursor = 0;
 static int g_cpuHasSse2 = 0;
 static int g_cpuHasAvx = 0;
 static int g_configSkillCmd = IDM_INTERMEDIATE;
@@ -2779,8 +2778,6 @@ static void InitGameState(void)
     g_game.skill_cmd = NormalizeSkillCommand(g_configSkillCmd);
     g_game.search_depth = SkillDepthForCommand(g_game.skill_cmd);
     g_game.animation_cmd = NormalizeAnimationCommand(g_configAnimationCmd);
-    g_game.hint_row = -1;
-    g_game.hint_col = -1;
     g_game.selected_row = 3;
     g_game.selected_col = 4;
 }
@@ -2917,22 +2914,9 @@ static void DrawPiece(HDC hdc, RECT cell, int piece, const AnimCell *anim)
     DeleteObject(black_pen);
 }
 
-static void DrawHint(HDC hdc, RECT rc)
+static void DrawHintPiece(HDC hdc, RECT rc)
 {
-    int w = rc.right - rc.left;
-    int h = rc.bottom - rc.top;
-    int cx = rc.left + w / 2;
-    int cy = rc.top + h / 2;
-    int arm = MinInt(w, h) / 4;
-
-    HPEN pen = CreatePen(PS_SOLID, 1, g_hintColor);
-    HGDIOBJ old_pen = SelectObject(hdc, pen);
-    MoveToEx(hdc, cx - arm, cy, NULL);
-    LineTo(hdc, cx + arm, cy);
-    MoveToEx(hdc, cx, cy - arm, NULL);
-    LineTo(hdc, cx, cy + arm);
-    SelectObject(hdc, old_pen);
-    DeleteObject(pen);
+    DrawPiece(hdc, rc, RED, NULL);
 }
 
 static void DrawMessageLine(HWND hwnd, HDC hdc, const Layout *layout)
@@ -2988,12 +2972,6 @@ static void DrawGame(HWND hwnd, HDC hdc)
                 DrawPiece(hdc, cell, g_game.cells[r][c], anim);
             }
 
-            if (!g_game.game_over && !g_game.thinking &&
-                !(g_placeFlash.active && g_placeFlash.row == r && g_placeFlash.col == c) &&
-                g_game.hint_row == r && g_game.hint_col == c &&
-                g_game.cells[r][c] == EMPTY) {
-                DrawHint(hdc, cell);
-            }
         }
     }
 
@@ -3055,15 +3033,38 @@ static void DrawGame(HWND hwnd, HDC hdc)
     }
 }
 
-static void ClearHint(HWND hwnd)
+static void DrawSingleCell(HWND hwnd, HDC hdc, int row, int col, int hint)
 {
-    if (g_game.hint_row >= 0) {
-        int r = g_game.hint_row;
-        int c = g_game.hint_col;
-        g_game.hint_row = -1;
-        g_game.hint_col = -1;
-        InvalidateCell(hwnd, r, c);
+    Layout layout;
+    RECT cell;
+
+    CalculateLayout(hwnd, &layout);
+    cell = CellRect(&layout, row, col);
+    Draw3DCell(hdc, cell);
+    DrawPiece(hdc, cell, g_game.cells[row][col], NULL);
+    if (hint && g_game.cells[row][col] == EMPTY) {
+        DrawHintPiece(hdc, cell);
     }
+}
+
+static void FlashHintCell(HWND hwnd, int row, int col)
+{
+    HDC hdc = GetDC(hwnd);
+    HCURSOR old_cursor;
+
+    if (!hdc) {
+        return;
+    }
+
+    g_hintBlankCursor = 1;
+    old_cursor = SetCursor(NULL);
+    for (int i = 0; i < 4; ++i) {
+        DrawSingleCell(hwnd, hdc, row, col, (i & 1) == 0);
+        PumpFor(150);
+    }
+    g_hintBlankCursor = 0;
+    SetCursor(old_cursor);
+    ReleaseDC(hwnd, hdc);
 }
 
 static void AnimateFlips(HWND hwnd, Flip *flips, int count, int to_piece)
@@ -3184,8 +3185,6 @@ static void ComputerTurn(HWND hwnd)
 
 static void FinishTurn(HWND hwnd)
 {
-    ClearHint(hwnd);
-
     if (!HasLegalMove(RED) && !HasLegalMove(BLUE)) {
         g_game.game_over = 1;
         SetGameOverMessage(hwnd);
@@ -3228,7 +3227,6 @@ static void PlayerMove(HWND hwnd, int row, int col)
         return;
     }
 
-    ClearHint(hwnd);
     g_game.turn = BLUE;
     FinishTurn(hwnd);
 }
@@ -3282,6 +3280,8 @@ static void TryPass(HWND hwnd)
     FinishTurn(hwnd);
 }
 
+static HCURSOR LoadLegalMoveCursor(void);
+
 static void ShowHint(HWND hwnd)
 {
     if (g_game.game_over || IsGameBusy() || g_game.turn != RED || g_game.must_pass) {
@@ -3289,20 +3289,20 @@ static void ShowHint(HWND hwnd)
         return;
     }
 
+    BeginInputLock(hwnd);
+    SetCursor(APP_LOAD_CURSOR(NULL, IDC_WAIT));
+
     Move move = FindBestMove(RED);
     if (move.row < 0) {
+        EndInputLock(hwnd);
         TryPass(hwnd);
         return;
     }
 
-    ClearHint(hwnd);
     g_game.practice_title = 1;
     SetTitle(hwnd);
-    g_game.hint_row = move.row;
-    g_game.hint_col = move.col;
     g_game.selected_row = move.row;
     g_game.selected_col = move.col;
-    InvalidateCell(hwnd, move.row, move.col);
 
     Layout layout;
     CalculateLayout(hwnd, &layout);
@@ -3312,6 +3312,9 @@ static void ShowHint(HWND hwnd)
     pt.y = rc.top + layout.cell_h / 2;
     ClientToScreen(hwnd, &pt);
     SetCursorPos(pt.x, pt.y);
+    FlashHintCell(hwnd, move.row, move.col);
+    EndInputLock(hwnd);
+    SetCursor(LoadLegalMoveCursor());
 }
 
 static void SetSkill(HWND hwnd, int cmd)
@@ -3550,7 +3553,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_MOUSEMOVE: {
         int row;
         int col;
-        if (!g_game.game_over && !IsGameBusy() && g_game.turn == RED && !g_game.must_pass &&
+        if (g_hintBlankCursor) {
+            SetCursor(NULL);
+        } else if (IsGameBusy()) {
+            SetCursor(APP_LOAD_CURSOR(NULL, IDC_WAIT));
+        } else if (!g_game.game_over && g_game.turn == RED && !g_game.must_pass &&
             PointToCell(hwnd, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), &row, &col) &&
             CollectFlips(row, col, RED, NULL, 0) > 0) {
             SetCursor(LoadLegalMoveCursor());
@@ -3567,7 +3574,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             ScreenToClient(hwnd, &pt);
             int row;
             int col;
-            if (!g_game.game_over && !IsGameBusy() && g_game.turn == RED && !g_game.must_pass &&
+            if (g_hintBlankCursor) {
+                SetCursor(NULL);
+            } else if (IsGameBusy()) {
+                SetCursor(APP_LOAD_CURSOR(NULL, IDC_WAIT));
+            } else if (!g_game.game_over && g_game.turn == RED && !g_game.must_pass &&
                 PointToCell(hwnd, pt.x, pt.y, &row, &col) &&
                 CollectFlips(row, col, RED, NULL, 0) > 0) {
                 SetCursor(LoadLegalMoveCursor());
