@@ -3,6 +3,7 @@
 - Do not run `idaw.exe -?`, `idaw -?`, `idaq.exe -?`, or equivalent GUI IDA help-probing commands. IDA 6.8 may open a blocking GUI process instead of printing usage text.
 - If IDA behavior or command-line options are needed, inspect existing documentation files or use already-known noninteractive commands. Kill any accidentally opened IDA GUI process before continuing.
 - Run git commands with escalated permissions in this workspace. The sandbox may block `.git/index.lock`, so use elevation for staging, committing, and similar git operations.
+- Release toggle for the hidden debug context menu: if the user explicitly says to publish a formal release or production build, comment out every `IDS_BACKGROUND_KEY "shift xyzzy"` line in `src/reversi.rc` before building. For normal development builds or commits, keep those lines present and uncommented.
 
 ## WinHelp Notes
 

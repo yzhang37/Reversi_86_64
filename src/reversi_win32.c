@@ -17,6 +17,7 @@
 #define MIN_TRACK_SIZE 200
 #define INVALID_MOVE_TIP_REPEAT_COUNT 5
 #define INVALID_MOVE_TIP_REPEAT_MS 5000
+#define TEST_MENU_LABEL_LIMIT 64
 #define PROCESS_SYSTEM_DPI_AWARE_LOCAL 1
 #define PROCESS_PER_MONITOR_DPI_AWARE_LOCAL 2
 #define MDT_EFFECTIVE_DPI_LOCAL 0
@@ -304,6 +305,7 @@ static HWND g_mainWindow = NULL;
 static HFONT g_messageFont = NULL;
 static int g_messageFontDpi = 0;
 static int g_messageFontHeight = 0;
+static HMENU g_testContextMenu = NULL;
 
 static const int k_dirs[8][2] = {
     {-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
@@ -1698,6 +1700,18 @@ static int AppStringContains(const APP_CHAR *text, const APP_CHAR *needle)
         }
     }
     return 0;
+}
+
+static int AppStringEquals(const APP_CHAR *left, const APP_CHAR *right)
+{
+    if (!left || !right) {
+        return 0;
+    }
+    while (*left && *right && *left == *right) {
+        ++left;
+        ++right;
+    }
+    return *left == 0 && *right == 0;
 }
 
 static int AppStrLen(const APP_CHAR *text)
@@ -3189,9 +3203,112 @@ static void NewGame(HWND hwnd)
     InvalidateRect(hwnd, NULL, TRUE);
 }
 
+enum {
+    IDM_TEST_PLAYER_PASS = WM_APP + 1,
+    IDM_TEST_COMPUTER_PASS,
+    IDM_TEST_CANNOT_PASS,
+    IDM_TEST_MUST_PASS,
+    IDM_TEST_COMPUTER_MUST_PASS,
+    IDM_TEST_NO_MOVES,
+    IDM_TEST_WIN,
+    IDM_TEST_LOSE
+};
+
+static const UINT kTestMenuCommands[] = {
+    IDM_TEST_PLAYER_PASS,
+    IDM_TEST_COMPUTER_PASS,
+    IDM_TEST_CANNOT_PASS,
+    IDM_TEST_MUST_PASS,
+    IDM_TEST_COMPUTER_MUST_PASS,
+    IDM_TEST_NO_MOVES,
+    IDM_TEST_WIN,
+    IDM_TEST_LOSE
+};
+
+static const APP_CHAR kTestMenuText[] =
+    APP_TEXT("Player Pass\n")
+    APP_TEXT("Computer Pass\n")
+    APP_TEXT("Player Can't Pass\n")
+    APP_TEXT("Player Must Pass\n")
+    APP_TEXT("Computer Must Pass\n")
+    APP_TEXT("-\n")
+    APP_TEXT("Draw\n")
+    APP_TEXT("Player Won\n")
+    APP_TEXT("Player Lose");
+
+static const APP_CHAR kTestMenuPassword[] = APP_TEXT("shift xyzzy");
+
 static int IsTestCommand(UINT cmd)
 {
     return cmd >= IDM_TEST_PLAYER_PASS && cmd <= IDM_TEST_LOSE;
+}
+
+static void DestroyTestContextMenu(void)
+{
+    if (g_testContextMenu) {
+        DestroyMenu(g_testContextMenu);
+        g_testContextMenu = NULL;
+    }
+}
+
+static int IsTestContextMenuUnlocked(void)
+{
+    APP_CHAR key[TEST_MENU_LABEL_LIMIT];
+
+    LoadText(IDS_BACKGROUND_KEY, key, TEST_MENU_LABEL_LIMIT);
+    return AppStringEquals(key, kTestMenuPassword);
+}
+
+static int InitTestContextMenu(void)
+{
+    const APP_CHAR *p = kTestMenuText;
+    UINT command_index = 0;
+
+    DestroyTestContextMenu();
+    if (!IsTestContextMenuUnlocked()) {
+        return 0;
+    }
+
+    g_testContextMenu = CreatePopupMenu();
+    if (!g_testContextMenu) {
+        return 0;
+    }
+
+    while (*p) {
+        APP_CHAR label[TEST_MENU_LABEL_LIMIT];
+        int len = 0;
+
+        while (*p && *p != '\n' && len < TEST_MENU_LABEL_LIMIT - 1) {
+            label[len++] = *p++;
+        }
+        label[len] = 0;
+        while (*p == '\n' || *p == '\r') {
+            ++p;
+        }
+
+        if (!label[0]) {
+            continue;
+        }
+        if (label[0] == '-' && !label[1]) {
+            AppendMenu(g_testContextMenu, MF_SEPARATOR, 0, NULL);
+            continue;
+        }
+        if (command_index >= sizeof(kTestMenuCommands) / sizeof(kTestMenuCommands[0])) {
+            DestroyTestContextMenu();
+            return 0;
+        }
+        if (!AppendMenu(g_testContextMenu, MF_STRING, kTestMenuCommands[command_index], label)) {
+            DestroyTestContextMenu();
+            return 0;
+        }
+        ++command_index;
+    }
+
+    if (command_index != sizeof(kTestMenuCommands) / sizeof(kTestMenuCommands[0])) {
+        DestroyTestContextMenu();
+        return 0;
+    }
+    return 1;
 }
 
 static void PrepareTestGame(HWND hwnd)
@@ -4221,27 +4338,26 @@ static int IsBlankClientPoint(HWND hwnd, int x, int y)
 
 static void ShowTestContextMenu(HWND hwnd, LPARAM lparam)
 {
-    HMENU menu;
-    HMENU popup;
     POINT pt;
 
     if (IsGameBusy() || !IsBlankClientPoint(hwnd, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam))) {
         return;
     }
-
-    menu = APP_LOAD_MENU(g_hinst, MAKEINTRESOURCE(IDR_TESTMENU));
-    if (!menu) {
+    if (!g_testContextMenu) {
         return;
     }
 
-    popup = GetSubMenu(menu, 0);
-    if (popup) {
-        pt.x = GET_X_LPARAM(lparam);
-        pt.y = GET_Y_LPARAM(lparam);
-        ClientToScreen(hwnd, &pt);
-        TrackPopupMenu(popup, TPM_RIGHTBUTTON | TPM_LEFTALIGN | TPM_TOPALIGN, pt.x, pt.y, 0, hwnd, NULL);
-    }
-    DestroyMenu(menu);
+    pt.x = GET_X_LPARAM(lparam);
+    pt.y = GET_Y_LPARAM(lparam);
+    ClientToScreen(hwnd, &pt);
+    TrackPopupMenu(
+        g_testContextMenu,
+        TPM_RIGHTBUTTON | TPM_LEFTALIGN | TPM_TOPALIGN,
+        pt.x,
+        pt.y,
+        0,
+        hwnd,
+        NULL);
 }
 
 static void TryPass(HWND hwnd)
@@ -4460,6 +4576,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ApplyAppThemeToWindow(hwnd);
         UpdateWindowIcons(hwnd);
         RefreshMessageFont(hwnd);
+        InitTestContextMenu();
         InitGameState();
         SetTitle(hwnd);
         UpdateMenuChecks(hwnd);
@@ -4747,6 +4864,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         DestroyCellCache();
         DestroyMessageFont();
+        DestroyTestContextMenu();
         PostQuitMessage(0);
         return 0;
 
