@@ -19,6 +19,9 @@
 #define HH_DISPLAY_TOC_LOCAL 0x0001
 #define HH_DISPLAY_INDEX_LOCAL 0x0002
 #define HH_CLOSE_ALL_LOCAL 0x0012
+#ifndef HELP_FINDER
+#define HELP_FINDER 0x000b
+#endif
 
 #ifndef DPI_AWARENESS_CONTEXT_SYSTEM_AWARE
 #define DPI_AWARENESS_CONTEXT_SYSTEM_AWARE ((HANDLE)(LONG_PTR)-2)
@@ -3552,7 +3555,7 @@ static void ShowHelp(HWND hwnd, int cmd)
             opened = OpenLocalChmHelp(hwnd, HH_DISPLAY_TOPIC_LOCAL);
         }
         if (!opened && !force_chm) {
-            opened = OpenLocalWinHelp(hwnd, HELP_CONTENTS, 0);
+            opened = OpenLocalWinHelp(hwnd, HELP_FINDER, 0);
         }
     }
 

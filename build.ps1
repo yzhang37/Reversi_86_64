@@ -96,7 +96,7 @@ function Copy-HelpFiles {
         [Parameter(Mandatory = $true)][string]$OutputDir
     )
 
-    foreach ($file in @('REVERSI.HLP', 'REVERSI.CHM')) {
+    foreach ($file in @('REVERSI.HLP', 'REVERSI.CNT', 'REVERSI.CHM')) {
         $sourcePath = Join-Path $Root $file
         if (Test-Path $sourcePath) {
             $destName = $file.ToLowerInvariant()
@@ -133,6 +133,7 @@ Invoke-Build `
     -Subsystem '5.01' `
     -OsVersion '5.01'
 Set-PeVersion -Path (Join-Path $x86Output 'REVERSI.exe') -Major 4 -Minor 0
+Copy-HelpFiles -OutputDir $x86Output
 
 Invoke-Build `
     -Arch 'x64' `
