@@ -3443,9 +3443,9 @@ static void HandleKey(HWND hwnd, WPARAM key)
 
 static HCURSOR LoadLegalMoveCursor(void)
 {
-    HCURSOR cursor = APP_LOAD_CURSOR(g_hinst, MAKEINTRESOURCE(IDC_REVERSI_CROSS));
+    HCURSOR cursor = APP_LOAD_CURSOR(NULL, IDC_CROSS);
     if (!cursor) {
-        cursor = APP_LOAD_CURSOR(NULL, IDC_CROSS);
+        cursor = APP_LOAD_CURSOR(NULL, IDC_ARROW);
     }
     return cursor;
 }

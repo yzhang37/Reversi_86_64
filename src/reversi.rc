@@ -9,7 +9,6 @@
 #define VER_PRODUCT_VERSION_STR      "1.0.0.0"
 
 IDI_REVERSI ICON "src\\reversi.ico"
-IDC_REVERSI_CROSS CURSOR "src\\reversi.cur"
 IDR_VISUAL_STYLES_MANIFEST RT_MANIFEST "src\\visualstyles.manifest"
 
 IDR_MAINACCEL ACCELERATORS

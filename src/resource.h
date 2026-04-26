@@ -4,7 +4,6 @@
 #define IDR_VISUAL_STYLES_MANIFEST 2
 #define IDR_MAINACCEL 180
 #define IDI_REVERSI 3
-#define IDC_REVERSI_CROSS 103
 
 #define IDM_PASS 20
 #define IDM_NEW 25
