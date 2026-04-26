@@ -1,0 +1,19 @@
+:Base REVERSI.HLP>proc4
+:Title “翻转棋”帮助
+:Index Reversi Help =REVERSI.HLP
+:Link REVERSI.HLP
+1 翻转棋
+2 “翻转棋”概述=TOPIC_OVERVIEW
+2 玩翻转棋
+3 “玩翻转棋”概述=TOPIC_PLAY
+3 选择难度=TOPIC_DIFFICULTY
+3 开始新游戏=TOPIC_NEW_GAME
+3 游戏回合=TOPIC_TURN
+3 使用键盘下棋=TOPIC_KEYBOARD
+2 游戏规则
+3 “游戏规则”概述=TOPIC_RULES
+3 棋盘和棋子=TOPIC_BOARD
+3 合法走法=TOPIC_LEGAL
+3 翻转棋子=TOPIC_FLIP
+3 游戏结束和胜负=TOPIC_END
+2 获得提示=TOPIC_HINT

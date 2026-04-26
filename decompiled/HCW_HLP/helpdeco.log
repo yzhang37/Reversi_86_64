@@ -1,0 +1,3 @@
+Help Compiler will issue Note HC1002: Using existing phrase table
+HELPDECO had problems with ..\..\tools\hcw\hcw.hlp. Rebuilt helpfile may behave bad.
+Use HCRTF hcw.hpj to recompile helpfile.

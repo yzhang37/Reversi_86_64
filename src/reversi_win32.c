@@ -28,6 +28,9 @@
 #ifndef HELP_FINDER
 #define HELP_FINDER 0x000b
 #endif
+#ifndef MB_EXCLAMATION
+#define MB_EXCLAMATION MB_ICONEXCLAMATION
+#endif
 
 #ifndef DPI_AWARENESS_CONTEXT_SYSTEM_AWARE
 #define DPI_AWARENESS_CONTEXT_SYSTEM_AWARE ((HANDLE)(LONG_PTR)-2)
@@ -4653,9 +4656,13 @@ static void ShowHelp(HWND hwnd, int cmd)
     }
     static APP_CHAR text[512];
     static APP_CHAR title[64];
+    UINT icon = MB_ICONINFORMATION;
+    if (cmd == IDM_HELP_SEARCH || cmd == IDM_HELP_USING) {
+        icon = MB_EXCLAMATION;
+    }
     LoadText(text_id, text, 512);
     LoadText(IDS_HELP_TITLE, title, 64);
-    APP_MESSAGE_BOX(hwnd, text, title, MB_OK | MB_ICONINFORMATION);
+    APP_MESSAGE_BOX(hwnd, text, title, MB_OK | icon);
 }
 
 static void MoveCursorToCell(HWND hwnd, int row, int col)

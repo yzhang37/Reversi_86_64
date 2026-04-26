@@ -1,0 +1,7 @@
+:Base FREECELL.HLP>main
+:Title “空当接龙”帮助
+1 “空当接龙”游戏：规则=freecell_play
+1 “空当接龙”游戏：目标=freecell_object
+1 “空当接龙”游戏：策略与技巧=freecell_hints
+1 中转单元是位于屏幕左上方的四个空位，每个空位只能放一张牌。=5SYX.W_
+1 回收单元是位于屏幕右上方的四个空位。A=3H949H5

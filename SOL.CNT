@@ -1,0 +1,5 @@
+:Base sol.hlp>proc4
+:Title “纸牌”帮助
+:Index Solitaire Help =sol.hlp
+1 游戏规则=SOL_PLAY
+1 选择计分制=SOL_SCORING

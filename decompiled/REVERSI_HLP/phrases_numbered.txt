@@ -1,0 +1,67 @@
+00: After
+01: Beginner
+02: Choose
+03: Commands
+04: Exit
+05: Expert
+06: Game
+07: Game Menu Commands
+08: Help
+09: Hint
+10: Keyboard
+11: Master
+12: Menu
+13: Move
+14: Novice
+15: Pass
+16: Playing Reversi with the Keyboard
+17: Playing the Game
+18: Related Topics
+19: Reversi
+20: Rules of the Game
+21: Skill Menu Commands
+22: The
+23: Topics
+24: You
+25: accept
+26: before
+27: calculating
+28: can
+29: cannot
+30: changes
+31: choose
+32: circles
+33: command
+34: computer
+35: cross
+36: elsewhere.
+37: finish
+38: first
+39: force
+40: from
+41: game
+42: giving
+43: highe
+44: legal
+45: level
+46: lowest
+47: make
+48: menu.
+49: more
+50: move
+51: move,
+52: move.
+53: moves.
+54: must
+55: play
+56: pointer
+57: second
+58: skill
+59: spends
+60: square
+61: suggestion
+62: the
+63: time
+64: with
+65: you
+66: your
