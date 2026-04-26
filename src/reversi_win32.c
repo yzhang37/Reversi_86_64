@@ -158,6 +158,14 @@ typedef struct AnimCell {
     int step;
 } AnimCell;
 
+typedef struct PlaceFlash {
+    int active;
+    int row;
+    int col;
+    int piece;
+    int visible;
+} PlaceFlash;
+
 typedef struct Game {
     int cells[BOARD_N][BOARD_N];
     int turn;
@@ -179,6 +187,7 @@ typedef struct Game {
 
 static Game g_game;
 static AnimCell g_anim;
+static PlaceFlash g_placeFlash;
 static HINSTANCE g_hinst;
 static COLORREF g_windowGray;
 static COLORREF g_cellGray;
@@ -2161,9 +2170,14 @@ static void DrawGame(HWND hwnd, HDC hdc)
                 local_anim = g_anim;
                 anim = &local_anim;
             }
-            DrawPiece(hdc, cell, g_game.cells[r][c], anim);
+            if (g_placeFlash.active && g_placeFlash.row == r && g_placeFlash.col == c) {
+                DrawPiece(hdc, cell, g_placeFlash.visible ? g_placeFlash.piece : EMPTY, NULL);
+            } else {
+                DrawPiece(hdc, cell, g_game.cells[r][c], anim);
+            }
 
             if (!g_game.game_over && !g_game.thinking &&
+                !(g_placeFlash.active && g_placeFlash.row == r && g_placeFlash.col == c) &&
                 g_game.hint_row == r && g_game.hint_col == c &&
                 g_game.cells[r][c] == EMPTY) {
                 DrawHint(hdc, cell);
@@ -2274,12 +2288,32 @@ static void AnimateFlips(HWND hwnd, Flip *flips, int count, int to_piece)
     }
 }
 
+static void FlashComputerPlacement(HWND hwnd, int row, int col)
+{
+    int flashes = g_game.animation_cmd == IDM_ANIM_SLOW ? 7 : 3;
+    for (int i = 0; i < flashes; ++i) {
+        g_placeFlash.active = 1;
+        g_placeFlash.row = row;
+        g_placeFlash.col = col;
+        g_placeFlash.piece = BLUE;
+        g_placeFlash.visible = (i & 1) == 0;
+        InvalidateCell(hwnd, row, col);
+        UpdateWindow(hwnd);
+        PumpFor(150);
+    }
+    g_placeFlash.active = 0;
+}
+
 static int ApplyMove(HWND hwnd, int row, int col, int player, int animate)
 {
     Flip flips[64];
     int count = CollectFlips(row, col, player, flips, 64);
     if (count <= 0) {
         return 0;
+    }
+
+    if (player == BLUE) {
+        FlashComputerPlacement(hwnd, row, col);
     }
 
     g_game.cells[row][col] = player;
