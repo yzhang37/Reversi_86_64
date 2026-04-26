@@ -47,6 +47,12 @@ DECLARE_HANDLE(HMONITOR);
 #ifndef WM_THEMECHANGED
 #define WM_THEMECHANGED 0x031A
 #endif
+#ifndef WM_ENTERSIZEMOVE
+#define WM_ENTERSIZEMOVE 0x0231
+#endif
+#ifndef WM_EXITSIZEMOVE
+#define WM_EXITSIZEMOVE 0x0232
+#endif
 
 #define DWMWA_USE_IMMERSIVE_DARK_MODE_OLD 19
 #define DWMWA_USE_IMMERSIVE_DARK_MODE_LOCAL 20
@@ -270,6 +276,10 @@ static int g_darkModeSupported = 0;
 static int g_darkModeEnabled = 0;
 static int g_inputLock = 0;
 static int g_hintBlankCursor = 0;
+static int g_inSizeMove = 0;
+static int g_sizedDuringSizeMove = 0;
+static int g_builtGdiCacheDuringSizeMove = 0;
+static int g_forceGdiPieces = 0;
 static int g_cpuHasSse2 = 0;
 static int g_cpuHasAvx = 0;
 static int g_configSkillCmd = IDM_INTERMEDIATE;
@@ -3340,12 +3350,27 @@ static int GdiPlusDrawEllipse(GpGraphics *graphics, const RECT *rc, COLORREF fil
     return ok;
 }
 
+static int IsGdiPlusPieceRenderingAvailable(void)
+{
+    return g_gdiPlusReady && !g_monoDisplay;
+}
+
+static int ShouldDrawPiecesWithGdiPlus(void)
+{
+    return IsGdiPlusPieceRenderingAvailable() && !g_forceGdiPieces;
+}
+
+static int ShouldBuildCellCacheWithGdiPlus(void)
+{
+    return IsGdiPlusPieceRenderingAvailable() && !g_inSizeMove;
+}
+
 static int DrawPieceGdiPlus(HDC hdc, const RECT *white_rc, const RECT *gray_rc,
     const RECT *color_rc, COLORREF main_color)
 {
     GpGraphics *graphics = NULL;
 
-    if (!g_gdiPlusReady || g_monoDisplay) {
+    if (!ShouldDrawPiecesWithGdiPlus()) {
         return 0;
     }
 
@@ -3465,18 +3490,25 @@ static void DrawHintPiece(HDC hdc, RECT rc)
 
 static int IsCellCacheCurrent(int cell_w, int cell_h)
 {
-    return g_cellCache.valid &&
-        g_cellCache.cell_w == cell_w &&
-        g_cellCache.cell_h == cell_h &&
-        g_cellCache.mono_display == g_monoDisplay &&
-        g_cellCache.gdiplus_ready == g_gdiPlusReady &&
-        g_cellCache.window_gray == g_windowGray &&
-        g_cellCache.cell_gray == g_cellGray &&
-        g_cellCache.dark_gray == g_darkGray &&
-        g_cellCache.red_color == g_redColor &&
-        g_cellCache.blue_color == g_blueColor &&
-        g_cellCache.edge_light_color == g_edgeLightColor &&
-        g_cellCache.edge_dark_color == g_edgeDarkColor;
+    if (!g_cellCache.valid ||
+        g_cellCache.cell_w != cell_w ||
+        g_cellCache.cell_h != cell_h ||
+        g_cellCache.mono_display != g_monoDisplay ||
+        g_cellCache.window_gray != g_windowGray ||
+        g_cellCache.cell_gray != g_cellGray ||
+        g_cellCache.dark_gray != g_darkGray ||
+        g_cellCache.red_color != g_redColor ||
+        g_cellCache.blue_color != g_blueColor ||
+        g_cellCache.edge_light_color != g_edgeLightColor ||
+        g_cellCache.edge_dark_color != g_edgeDarkColor) {
+        return 0;
+    }
+
+    if (g_inSizeMove) {
+        return 1;
+    }
+
+    return g_cellCache.gdiplus_ready == ShouldBuildCellCacheWithGdiPlus();
 }
 
 static int RenderCellCacheBitmap(HDC hdc, int index, int piece, int shrink_level)
@@ -3515,6 +3547,9 @@ static int RenderCellCacheBitmap(HDC hdc, int index, int piece, int shrink_level
 
 static int EnsureCellCache(HDC hdc, int cell_w, int cell_h)
 {
+    int old_force_gdi;
+    int use_gdiplus;
+
     if (cell_w <= 0 || cell_h <= 0) {
         return 0;
     }
@@ -3522,11 +3557,18 @@ static int EnsureCellCache(HDC hdc, int cell_w, int cell_h)
         return 1;
     }
 
+    use_gdiplus = ShouldBuildCellCacheWithGdiPlus();
+    if (g_inSizeMove && !use_gdiplus && IsGdiPlusPieceRenderingAvailable()) {
+        g_builtGdiCacheDuringSizeMove = 1;
+    }
+    old_force_gdi = g_forceGdiPieces;
+    g_forceGdiPieces = !use_gdiplus;
+
     DestroyCellCache();
     g_cellCache.cell_w = cell_w;
     g_cellCache.cell_h = cell_h;
     g_cellCache.mono_display = g_monoDisplay;
-    g_cellCache.gdiplus_ready = g_gdiPlusReady;
+    g_cellCache.gdiplus_ready = use_gdiplus;
     g_cellCache.window_gray = g_windowGray;
     g_cellCache.cell_gray = g_cellGray;
     g_cellCache.dark_gray = g_darkGray;
@@ -3536,17 +3578,20 @@ static int EnsureCellCache(HDC hdc, int cell_w, int cell_h)
     g_cellCache.edge_dark_color = g_edgeDarkColor;
 
     if (!RenderCellCacheBitmap(hdc, CellCacheIndex(EMPTY, 0), EMPTY, 0)) {
+        g_forceGdiPieces = old_force_gdi;
         DestroyCellCache();
         return 0;
     }
     for (int shrink = 0; shrink < CELL_CACHE_SHRINKS; ++shrink) {
         if (!RenderCellCacheBitmap(hdc, CellCacheIndex(RED, shrink), RED, shrink) ||
             !RenderCellCacheBitmap(hdc, CellCacheIndex(BLUE, shrink), BLUE, shrink)) {
+            g_forceGdiPieces = old_force_gdi;
             DestroyCellCache();
             return 0;
         }
     }
 
+    g_forceGdiPieces = old_force_gdi;
     g_cellCache.valid = 1;
     return 1;
 }
@@ -4412,6 +4457,24 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         return 0;
     }
 
+    case WM_ENTERSIZEMOVE:
+        g_inSizeMove = 1;
+        g_sizedDuringSizeMove = 0;
+        g_builtGdiCacheDuringSizeMove = 0;
+        return 0;
+
+    case WM_EXITSIZEMOVE: {
+        int should_redraw = g_sizedDuringSizeMove || g_builtGdiCacheDuringSizeMove;
+        g_inSizeMove = 0;
+        g_sizedDuringSizeMove = 0;
+        g_builtGdiCacheDuringSizeMove = 0;
+        if (should_redraw) {
+            DestroyCellCache();
+            RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_NOERASE);
+        }
+        return 0;
+    }
+
     case WM_DPICHANGED: {
         RECT *suggested = (RECT *)lparam;
         int dpi = (int)LOWORD(wparam);
@@ -4455,6 +4518,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         break;
 
     case WM_SIZE:
+        if (g_inSizeMove) {
+            g_sizedDuringSizeMove = 1;
+        }
         DestroyCellCache();
         InvalidateRect(hwnd, NULL, TRUE);
         return 0;
