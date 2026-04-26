@@ -4647,31 +4647,38 @@ static void ShowHelp(HWND hwnd, int cmd)
     APP_MESSAGE_BOX(hwnd, text, title, MB_OK | MB_ICONINFORMATION);
 }
 
+static void MoveCursorToCell(HWND hwnd, int row, int col)
+{
+    Layout layout;
+    RECT rc;
+    POINT pt;
+
+    CalculateLayout(hwnd, &layout);
+    rc = CellRect(&layout, row, col);
+    pt.x = rc.left + layout.cell_w / 2;
+    pt.y = rc.top + layout.cell_h / 2;
+    ClientToScreen(hwnd, &pt);
+    SetCursorPos(pt.x, pt.y);
+}
+
 static void MoveSelection(HWND hwnd, int dr, int dc)
 {
-    if (g_game.game_over || IsGameBusy() || g_game.turn != RED || g_game.must_pass) {
-        return;
-    }
-
     int row = g_game.selected_row;
     int col = g_game.selected_col;
-    for (int i = 0; i < BOARD_N * BOARD_N; ++i) {
-        row = (row + dr + BOARD_N) % BOARD_N;
-        col = (col + dc + BOARD_N) % BOARD_N;
-        if (CollectFlips(row, col, RED, NULL, 0) > 0) {
-            g_game.selected_row = row;
-            g_game.selected_col = col;
-            Layout layout;
-            CalculateLayout(hwnd, &layout);
-            RECT rc = CellRect(&layout, row, col);
-            POINT pt;
-            pt.x = rc.left + layout.cell_w / 2;
-            pt.y = rc.top + layout.cell_h / 2;
-            ClientToScreen(hwnd, &pt);
-            SetCursorPos(pt.x, pt.y);
-            return;
-        }
+
+    if (IsGameBusy()) {
+        return;
     }
+    if (!OnBoard(row, col)) {
+        row = 0;
+        col = 0;
+    }
+
+    row = (row + dr + BOARD_N) % BOARD_N;
+    col = (col + dc + BOARD_N) % BOARD_N;
+    g_game.selected_row = row;
+    g_game.selected_col = col;
+    MoveCursorToCell(hwnd, row, col);
 }
 
 static void HandleKey(HWND hwnd, WPARAM key)
