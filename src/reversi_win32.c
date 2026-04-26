@@ -102,6 +102,7 @@ typedef WCHAR APP_CHAR;
 #define APP_GET_TEXT_METRICS GetTextMetricsW
 #define APP_GET_TEXT_EXTENT GetTextExtentPoint32W
 #define APP_TEXT_OUT TextOutW
+#define APP_DRAW_TEXT DrawTextW
 #define APP_LSTRCPYN lstrcpynW
 #define APP_LSTRLEN lstrlenW
 #define APP_WSPRINTF wsprintfW
@@ -136,6 +137,7 @@ typedef CHAR APP_CHAR;
 #define APP_GET_TEXT_METRICS GetTextMetricsA
 #define APP_GET_TEXT_EXTENT AppGetTextExtentPoint
 #define APP_TEXT_OUT AppTextOut
+#define APP_DRAW_TEXT AppDrawText
 #define APP_LSTRCPYN lstrcpynA
 #define APP_LSTRLEN lstrlenA
 #define APP_WSPRINTF wsprintfA
@@ -436,6 +438,7 @@ typedef int (WINAPI *MessageBoxWProc)(HWND, LPCWSTR, LPCWSTR, UINT);
 typedef int (WINAPI *ShellAboutWProc)(HWND, LPCWSTR, LPCWSTR, HICON);
 typedef BOOL (WINAPI *GetTextExtentPoint32WProc)(HDC, LPCWSTR, int, LPSIZE);
 typedef BOOL (WINAPI *TextOutWProc)(HDC, int, int, LPCWSTR, int);
+typedef int (WINAPI *DrawTextWProc)(HDC, LPCWSTR, int, LPRECT, UINT);
 typedef LPWSTR (WINAPI *GetCommandLineWProc)(void);
 typedef DWORD (WINAPI *GetModuleFileNameWProc)(HMODULE, LPWSTR, DWORD);
 typedef DWORD (WINAPI *GetFileAttributesWProc)(LPCWSTR);
@@ -833,6 +836,19 @@ static BOOL AppTextOut(HDC hdc, int x, int y, const char *text, int len)
         }
     }
     return TextOutA(hdc, x, y, text, len);
+}
+
+static int AppDrawText(HDC hdc, const char *text, int len, LPRECT rc, UINT format)
+{
+    if (g_useWideCommands) {
+        DrawTextWProc draw_text = (DrawTextWProc)AppGetProc("user32.dll", "DrawTextW");
+        if (draw_text) {
+            WCHAR wide[256];
+            AppToWide(text, wide, 256);
+            return draw_text(hdc, wide, AppWideLen(wide), rc, format);
+        }
+    }
+    return DrawTextA(hdc, text, len, rc, format);
 }
 #endif
 
@@ -1373,6 +1389,72 @@ static int CurrentWindowDpi(void)
     return g_enableSystemScaling && g_currentDpi > 0 ? g_currentDpi : 96;
 }
 
+static void CalculateBoardLayout(int width, int height, Layout *layout)
+{
+    int calc_width = width;
+    int calc_height = height;
+    int cell_w;
+    int cell_h;
+    int board_w;
+    int board_h;
+    int depth_y;
+    int depth_x;
+
+    if (g_deviceAspect * calc_height > calc_width) {
+        int min_width = g_deviceAspect * 45;
+        if (calc_width < min_width) {
+            calc_width = min_width;
+        }
+        cell_w = calc_width / 10;
+        cell_h = cell_w / g_deviceAspect;
+    } else {
+        if (calc_height < 45) {
+            calc_height = 45;
+        }
+        cell_h = calc_height / 10;
+        cell_w = cell_h * g_deviceAspect;
+    }
+    if ((cell_w & 1) == 0) {
+        --cell_w;
+    }
+    if ((cell_h & 1) == 0) {
+        --cell_h;
+    }
+    if (cell_w < 1) {
+        cell_w = 1;
+    }
+    if (cell_h < 1) {
+        cell_h = 1;
+    }
+
+    board_w = cell_w * BOARD_N;
+    board_h = cell_h * BOARD_N;
+    depth_y = board_h / 30;
+    depth_x = g_deviceAspect * depth_y;
+
+    layout->cell = cell_w;
+    layout->cell_w = cell_w;
+    layout->cell_h = cell_h;
+    layout->depth_x = depth_x;
+    layout->depth_y = depth_y;
+    layout->board.left = width > board_w ? (width - board_w) / 2 : 0;
+    layout->board.top = height > board_h ? (height - board_h) / 2 : 0;
+    layout->board.right = layout->board.left + board_w;
+    layout->board.bottom = layout->board.top + board_h;
+}
+
+static int MessageTopSpaceForWindow(HWND hwnd)
+{
+    RECT rc;
+    Layout layout;
+
+    if (!hwnd || !GetClientRect(hwnd, &rc)) {
+        return 0;
+    }
+    CalculateBoardLayout(rc.right - rc.left, rc.bottom - rc.top, &layout);
+    return layout.board.top;
+}
+
 static void BuildFallbackMessageLogFont(LOGFONT *log_font, int dpi)
 {
     AppZeroMemory(log_font, sizeof(*log_font));
@@ -1436,6 +1518,7 @@ static int MessageFontHeightForWindow(HWND hwnd, int dpi, const LOGFONT *log_fon
     int height = log_font && log_font->lfHeight ? AbsInt(log_font->lfHeight) : 0;
     int min_height = MulDiv(16, safe_dpi, 96);
     int scaled_height = 0;
+    int top_space = MessageTopSpaceForWindow(hwnd);
     RECT rc;
 
     if (hwnd && GetClientRect(hwnd, &rc)) {
@@ -1452,6 +1535,9 @@ static int MessageFontHeightForWindow(HWND hwnd, int dpi, const LOGFONT *log_fon
     }
     if (height < scaled_height) {
         height = scaled_height;
+    }
+    if (top_space > 0 && height > top_space) {
+        height = top_space;
     }
     return height > 0 ? height : min_height;
 }
@@ -2848,6 +2934,8 @@ static void CalculateLayout(HWND hwnd, Layout *layout)
     int width = rc.right - rc.left;
     int height = rc.bottom - rc.top;
 
+    CalculateBoardLayout(width, height, layout);
+
     int text_h = 0;
     HDC hdc = GetDC(hwnd);
     if (hdc) {
@@ -2865,57 +2953,17 @@ static void CalculateLayout(HWND hwnd, Layout *layout)
     if (text_h <= 0) {
         text_h = 16;
     }
-
-    int calc_width = width;
-    int calc_height = height;
-    int cell_w;
-    int cell_h;
-
-    if (g_deviceAspect * calc_height > calc_width) {
-        int min_width = g_deviceAspect * 45;
-        if (calc_width < min_width) {
-            calc_width = min_width;
-        }
-        cell_w = calc_width / 10;
-        cell_h = cell_w / g_deviceAspect;
-    } else {
-        if (calc_height < 45) {
-            calc_height = 45;
-        }
-        cell_h = calc_height / 10;
-        cell_w = cell_h * g_deviceAspect;
+    if (text_h > layout->board.top) {
+        text_h = layout->board.top;
     }
-    if ((cell_w & 1) == 0) {
-        --cell_w;
-    }
-    if ((cell_h & 1) == 0) {
-        --cell_h;
-    }
-    if (cell_w < 1) {
-        cell_w = 1;
-    }
-    if (cell_h < 1) {
-        cell_h = 1;
+    if (text_h < 0) {
+        text_h = 0;
     }
 
-    int board_w = cell_w * BOARD_N;
-    int board_h = cell_h * BOARD_N;
-    int depth_y = board_h / 30;
-    int depth_x = g_deviceAspect * depth_y;
-
-    layout->cell = cell_w;
-    layout->cell_w = cell_w;
-    layout->cell_h = cell_h;
     layout->message.left = 0;
     layout->message.top = 0;
     layout->message.right = width;
     layout->message.bottom = text_h;
-    layout->depth_x = depth_x;
-    layout->depth_y = depth_y;
-    layout->board.left = width > board_w ? (width - board_w) / 2 : 0;
-    layout->board.top = height > board_h ? (height - board_h) / 2 : 0;
-    layout->board.right = layout->board.left + board_w;
-    layout->board.bottom = layout->board.top + board_h;
 }
 
 static RECT CellRect(const Layout *layout, int row, int col)
@@ -3630,18 +3678,33 @@ static int DrawCachedCell(HDC hdc, HDC cell_dc, RECT cell, int piece, const Anim
 
 static void DrawMessageLine(HWND hwnd, HDC hdc, const Layout *layout)
 {
-    HBRUSH face = CreateSolidBrush(g_messageBackColor);
+    RECT text_rc;
+    HBRUSH face;
+    int len;
+    HFONT font;
+    HGDIOBJ old_font;
+
+    if (layout->message.bottom <= layout->message.top ||
+        layout->message.right <= layout->message.left) {
+        (void)hwnd;
+        return;
+    }
+
+    face = CreateSolidBrush(g_messageBackColor);
     FillRect(hdc, &layout->message, face);
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, g_messageTextColor);
 
-    HFONT font = MessageFont(hwnd);
-    HGDIOBJ old_font = font ? SelectObject(hdc, font) : NULL;
-    int len = APP_LSTRLEN(g_game.message);
-    SIZE text_size = {0, 0};
-    APP_GET_TEXT_EXTENT(hdc, g_game.message, len, &text_size);
-    int x = layout->message.left + ((layout->message.right - layout->message.left) - text_size.cx) / 2;
-    APP_TEXT_OUT(hdc, x, layout->message.top, g_game.message, len);
+    font = MessageFont(hwnd);
+    old_font = font ? SelectObject(hdc, font) : NULL;
+    len = APP_LSTRLEN(g_game.message);
+    text_rc = layout->message;
+    APP_DRAW_TEXT(
+        hdc,
+        g_game.message,
+        len,
+        &text_rc,
+        DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
     if (old_font) {
         SelectObject(hdc, old_font);
     }
