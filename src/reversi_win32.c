@@ -156,6 +156,8 @@ void *__cdecl memset(void *dest, int value, UINT_PTR count)
     return dest;
 }
 
+int _fltused = 0;
+
 typedef struct Move {
     int row;
     int col;
@@ -299,6 +301,46 @@ typedef BOOL (WINAPI *AllowDarkModeForAppProc)(BOOL);
 typedef BOOL (WINAPI *AllowDarkModeForWindowProc)(HWND, BOOL);
 typedef VOID (WINAPI *FlushMenuThemesProc)(void);
 typedef HRESULT (WINAPI *SetWindowThemeProc)(HWND, LPCWSTR, LPCWSTR);
+typedef struct GpGraphics GpGraphics;
+typedef struct GpBrush GpBrush;
+typedef struct GpPen GpPen;
+typedef struct GdiplusStartupInputLocal {
+    UINT32 GdiplusVersion;
+    VOID *DebugEventCallback;
+    BOOL SuppressBackgroundThread;
+    BOOL SuppressExternalCodecs;
+} GdiplusStartupInputLocal;
+typedef int (WINAPI *GdiplusStartupProc)(ULONG_PTR *, const GdiplusStartupInputLocal *, VOID *);
+typedef VOID (WINAPI *GdiplusShutdownProc)(ULONG_PTR);
+typedef int (WINAPI *GdipCreateFromHDCProc)(HDC, GpGraphics **);
+typedef int (WINAPI *GdipDeleteGraphicsProc)(GpGraphics *);
+typedef int (WINAPI *GdipSetSmoothingModeProc)(GpGraphics *, int);
+typedef int (WINAPI *GdipSetPixelOffsetModeProc)(GpGraphics *, int);
+typedef int (WINAPI *GdipCreateSolidFillProc)(DWORD, GpBrush **);
+typedef int (WINAPI *GdipDeleteBrushProc)(GpBrush *);
+typedef int (WINAPI *GdipCreatePen1Proc)(DWORD, float, int, GpPen **);
+typedef int (WINAPI *GdipDeletePenProc)(GpPen *);
+typedef int (WINAPI *GdipFillEllipseIProc)(GpGraphics *, GpBrush *, int, int, int, int);
+typedef int (WINAPI *GdipDrawEllipseIProc)(GpGraphics *, GpPen *, int, int, int, int);
+
+typedef struct GdiPlusApi {
+    HMODULE module;
+    ULONG_PTR token;
+    GdiplusShutdownProc shutdown;
+    GdipCreateFromHDCProc create_from_hdc;
+    GdipDeleteGraphicsProc delete_graphics;
+    GdipSetSmoothingModeProc set_smoothing_mode;
+    GdipSetPixelOffsetModeProc set_pixel_offset_mode;
+    GdipCreateSolidFillProc create_solid_fill;
+    GdipDeleteBrushProc delete_brush;
+    GdipCreatePen1Proc create_pen;
+    GdipDeletePenProc delete_pen;
+    GdipFillEllipseIProc fill_ellipse;
+    GdipDrawEllipseIProc draw_ellipse;
+} GdiPlusApi;
+
+static GdiPlusApi g_gdiPlus;
+static int g_gdiPlusReady = 0;
 
 static void AppZeroMemory(void *ptr, UINT_PTR size)
 {
@@ -851,6 +893,95 @@ static void InitModernDispatch(void)
     g_cpuHasSse2 = 1;
     g_cpuHasAvx = 0;
 #endif
+}
+
+static int AppCanUseGdiPlus(void)
+{
+    OSVERSIONINFOW version;
+    return QueryWindowsVersion(&version) &&
+        version.dwPlatformId == VER_PLATFORM_WIN32_NT &&
+        IsWindowsVersionAtLeast(&version, 5, 0);
+}
+
+static DWORD GdiPlusColor(COLORREF color)
+{
+    return 0xFF000000u |
+        ((DWORD)GetRValue(color) << 16) |
+        ((DWORD)GetGValue(color) << 8) |
+        (DWORD)GetBValue(color);
+}
+
+static void InitGdiPlus(void)
+{
+    HMODULE module;
+    GdiplusStartupProc startup;
+    GdiplusStartupInputLocal input;
+
+    AppZeroMemory(&g_gdiPlus, sizeof(g_gdiPlus));
+    g_gdiPlusReady = 0;
+
+    if (!AppCanUseGdiPlus()) {
+        return;
+    }
+
+    module = LoadLibraryA("gdiplus.dll");
+    if (!module) {
+        return;
+    }
+
+    startup = (GdiplusStartupProc)GetProcAddress(module, "GdiplusStartup");
+    g_gdiPlus.shutdown = (GdiplusShutdownProc)GetProcAddress(module, "GdiplusShutdown");
+    g_gdiPlus.create_from_hdc =
+        (GdipCreateFromHDCProc)GetProcAddress(module, "GdipCreateFromHDC");
+    g_gdiPlus.delete_graphics =
+        (GdipDeleteGraphicsProc)GetProcAddress(module, "GdipDeleteGraphics");
+    g_gdiPlus.set_smoothing_mode =
+        (GdipSetSmoothingModeProc)GetProcAddress(module, "GdipSetSmoothingMode");
+    g_gdiPlus.set_pixel_offset_mode =
+        (GdipSetPixelOffsetModeProc)GetProcAddress(module, "GdipSetPixelOffsetMode");
+    g_gdiPlus.create_solid_fill =
+        (GdipCreateSolidFillProc)GetProcAddress(module, "GdipCreateSolidFill");
+    g_gdiPlus.delete_brush =
+        (GdipDeleteBrushProc)GetProcAddress(module, "GdipDeleteBrush");
+    g_gdiPlus.create_pen = (GdipCreatePen1Proc)GetProcAddress(module, "GdipCreatePen1");
+    g_gdiPlus.delete_pen = (GdipDeletePenProc)GetProcAddress(module, "GdipDeletePen");
+    g_gdiPlus.fill_ellipse =
+        (GdipFillEllipseIProc)GetProcAddress(module, "GdipFillEllipseI");
+    g_gdiPlus.draw_ellipse =
+        (GdipDrawEllipseIProc)GetProcAddress(module, "GdipDrawEllipseI");
+
+    if (!startup || !g_gdiPlus.shutdown || !g_gdiPlus.create_from_hdc ||
+        !g_gdiPlus.delete_graphics || !g_gdiPlus.set_smoothing_mode ||
+        !g_gdiPlus.set_pixel_offset_mode || !g_gdiPlus.create_solid_fill ||
+        !g_gdiPlus.delete_brush || !g_gdiPlus.create_pen || !g_gdiPlus.delete_pen ||
+        !g_gdiPlus.fill_ellipse || !g_gdiPlus.draw_ellipse) {
+        FreeLibrary(module);
+        AppZeroMemory(&g_gdiPlus, sizeof(g_gdiPlus));
+        return;
+    }
+
+    AppZeroMemory(&input, sizeof(input));
+    input.GdiplusVersion = 1;
+    if (startup(&g_gdiPlus.token, &input, NULL) != 0) {
+        FreeLibrary(module);
+        AppZeroMemory(&g_gdiPlus, sizeof(g_gdiPlus));
+        return;
+    }
+
+    g_gdiPlus.module = module;
+    g_gdiPlusReady = 1;
+}
+
+static void ShutdownGdiPlus(void)
+{
+    if (g_gdiPlusReady && g_gdiPlus.shutdown) {
+        g_gdiPlus.shutdown(g_gdiPlus.token);
+    }
+    if (g_gdiPlus.module) {
+        FreeLibrary(g_gdiPlus.module);
+    }
+    AppZeroMemory(&g_gdiPlus, sizeof(g_gdiPlus));
+    g_gdiPlusReady = 0;
 }
 
 static void InitClassicVisualStyles(void)
@@ -2849,6 +2980,63 @@ static void Draw3DCell(HDC hdc, RECT rc)
     DeleteObject(black);
 }
 
+static int GdiPlusDrawEllipse(GpGraphics *graphics, const RECT *rc, COLORREF fill, COLORREF edge)
+{
+    GpBrush *brush = NULL;
+    GpPen *pen = NULL;
+    int width = rc->right - rc->left;
+    int height = rc->bottom - rc->top;
+    int ok = 0;
+
+    if (width <= 0 || height <= 0) {
+        return 0;
+    }
+
+    if (g_gdiPlus.create_solid_fill(GdiPlusColor(fill), &brush) != 0 || !brush) {
+        return 0;
+    }
+    if (g_gdiPlus.create_pen(GdiPlusColor(edge), 1.0f, 2, &pen) != 0 || !pen) {
+        g_gdiPlus.delete_brush(brush);
+        return 0;
+    }
+
+    if (g_gdiPlus.fill_ellipse(graphics, brush, rc->left, rc->top, width, height) == 0 &&
+        g_gdiPlus.draw_ellipse(graphics, pen, rc->left, rc->top, width, height) == 0) {
+        ok = 1;
+    }
+
+    g_gdiPlus.delete_pen(pen);
+    g_gdiPlus.delete_brush(brush);
+    return ok;
+}
+
+static int DrawPieceGdiPlus(HDC hdc, const RECT *white_rc, const RECT *gray_rc,
+    const RECT *color_rc, COLORREF main_color)
+{
+    GpGraphics *graphics = NULL;
+
+    if (!g_gdiPlusReady || g_monoDisplay) {
+        return 0;
+    }
+
+    if (g_gdiPlus.create_from_hdc(hdc, &graphics) != 0 || !graphics) {
+        return 0;
+    }
+
+    g_gdiPlus.set_smoothing_mode(graphics, 4);
+    g_gdiPlus.set_pixel_offset_mode(graphics, 4);
+
+    if (!GdiPlusDrawEllipse(graphics, white_rc, kClassicLight, kClassicLight) ||
+        !GdiPlusDrawEllipse(graphics, gray_rc, g_darkGray, g_darkGray) ||
+        !GdiPlusDrawEllipse(graphics, color_rc, main_color, g_edgeDarkColor)) {
+        g_gdiPlus.delete_graphics(graphics);
+        return 0;
+    }
+
+    g_gdiPlus.delete_graphics(graphics);
+    return 1;
+}
+
 static void DrawPiece(HDC hdc, RECT cell, int piece, const AnimCell *anim)
 {
     int draw_piece = piece;
@@ -2886,6 +3074,10 @@ static void DrawPiece(HDC hdc, RECT cell, int piece, const AnimCell *anim)
     InflateRect(&white_rc, -shrink_x, 0);
     InflateRect(&gray_rc, -shrink_x, 0);
     InflateRect(&color_rc, -shrink_x, 0);
+
+    if (DrawPieceGdiPlus(hdc, &white_rc, &gray_rc, &color_rc, main_color)) {
+        return;
+    }
 
     HBRUSH white_brush = CreateSolidBrush(kClassicLight);
     HBRUSH gray_brush = CreateSolidBrush(g_darkGray);
@@ -3761,6 +3953,8 @@ static int ReversiMain(HINSTANCE hinst, int show)
         return RunSelfTest();
     }
 
+    InitGdiPlus();
+
     const APP_CHAR class_name[] = APP_TEXT("NativeReversiWindow");
     APP_CHAR title[64];
     LoadText(IDS_APP_TITLE, title, 64);
@@ -3784,6 +3978,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
         APP_CHAR message[128];
         LoadText(IDS_REGISTER_FAIL, message, 128);
         APP_MESSAGE_BOX(NULL, message, title, MB_OK | MB_ICONERROR);
+        ShutdownGdiPlus();
         ShutdownClassicVisualStyles();
         return 1;
     }
@@ -3817,6 +4012,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
         APP_CHAR message[128];
         LoadText(IDS_CREATE_FAIL, message, 128);
         APP_MESSAGE_BOX(NULL, message, title, MB_OK | MB_ICONERROR);
+        ShutdownGdiPlus();
         ShutdownClassicVisualStyles();
         return 1;
     }
@@ -3838,6 +4034,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
     }
 
     int exit_code = (int)msg.wParam;
+    ShutdownGdiPlus();
     ShutdownClassicVisualStyles();
     return exit_code;
 }
