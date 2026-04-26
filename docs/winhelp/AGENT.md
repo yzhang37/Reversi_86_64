@@ -2,6 +2,13 @@
 
 本项目把 Wolai 中整理好的中文「翻转棋」帮助文档转换成 Windows 95 风格的 WinHelp 4.0 文件。
 
+## 快速入口
+
+- `WORKFLOW.md`：从 Wolai/生成器到 `REVERSI.HLP` 的完整构建流程。
+- `FORMAT.md`：RTF、HPJ、CNT、topic footnote、popup、宏按钮的格式规则。
+- `INDEXING.md`：K 索引、组合索引、A-keyword、`AL()` 相关主题。
+- `TROUBLESHOOTING.md`：1032、141、`.GID` 缓存、同名 HLP 冲突、字体乱码等排错记录。
+
 ## 目标
 
 - 输出 `REVERSI.HLP` 和同名 `REVERSI.CNT`。
@@ -80,10 +87,13 @@ Wolai 里的上下文帮助要转换成 WinHelp popup topic。
 ## WinHelp 4.0 注意事项
 
 - `.HLP` 和 `.CNT` 必须放在一起，否则帮助主题列表可能报错。
+- 没有 `.CNT` 时，HPJ 的 `CONTENTS=JP.RLA` 应打开 fallback topic，显示“单击‘帮助主题’返回到主题列表。”。
 - 程序从「帮助 > 目录」打开时，应使用 `HELP_FINDER`，不要再用旧的 `HELP_CONTENTS`。
 - 中文 RTF 使用宋体 9 号：`\ansicpg936`，`\fcharset134`，`\fs18`。
 - 标题加粗后，要用 `\plain` 重置正文样式，避免整页都继承加粗。
 - 英文版可以保留 MS Sans Serif。中文版不要用它当正文默认字体。
+- 调试时使用仓库根目录的 `WINHLP95.EXE`，不要误调用 `C:\Windows\winhlp32.exe`。
+- 测试前删除同目录 `.GID`，否则目录、索引、ALink 可能仍显示旧缓存。
 
 ## 相关主题菜单
 
@@ -95,6 +105,21 @@ WinHelp 4.0 支持类似截图里的「相关主题」弹出入口。做法是 a
 - 多个匹配 topic 会显示 Topics Found 列表。只有一个匹配时，WinHelp 可能直接跳转。
 
 建议本项目优先使用 `AL()`，因为「相关主题」不一定应该污染索引。
+
+已确认的 Win95 坑：
+
+- 如果 `C:\WINDOWS` 或 `C:\WINDOWS\HELP` 里存在另一个同名 `REVERSI.HLP`，当前目录 HLP 里的 `AL()` 可能报 141。
+- 这种情况不是 `AL()` 语法本身错误。先排除同名 help family 冲突，再查 RTF。
+
+## 索引策略
+
+WinHelp 的索引不应只列页面标题。参考 Notepad 帮助，应大量使用 `K` footnote：
+
+- 一级词：`落子`、`让棋`、`提示`。
+- 组合词：`合法走法, 夹住`、`提示, 练习赛`、`键盘, 移动指针`。
+- 用户疑问：`不能落子`、`不知道怎么走`、`为什么可以落子`。
+
+组合索引会在 WinHelp 索引页里显示成层级，比单薄的标题列表更像系统帮助。
 
 ## 工作纪律
 

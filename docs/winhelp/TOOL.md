@@ -10,6 +10,10 @@
 - `help/zh-CN/REVERSI.cnt`：WinHelp 目录文件。
 - `help/zh-CN/REVERSI.HLP`：Help Workshop 编译结果。
 - `build.ps1`：构建程序时复制 `.HLP` 和 `.CNT` 到输出目录。
+- `docs/winhelp/FORMAT.md`：WinHelp 4.0 格式细节。
+- `docs/winhelp/INDEXING.md`：索引和相关主题按钮。
+- `docs/winhelp/TROUBLESHOOTING.md`：常见错误和 Win95 实机坑。
+- `docs/winhelp/WORKFLOW.md`：推荐构建和测试流程。
 
 ## 常用命令
 
@@ -40,6 +44,15 @@ Copy-Item help\zh-CN\REVERSI.cnt build\x64\REVERSI.CNT -Force
 
 ```powershell
 .\tools\helpdeco-2.1.4\helpdeco.exe help\zh-CN\REVERSI.HLP /p
+```
+
+测试前清 WinHelp 缓存：
+
+```powershell
+Remove-Item .\REVERSI.GID -Force -ErrorAction SilentlyContinue
+Remove-Item .\help\zh-CN\REVERSI.GID -Force -ErrorAction SilentlyContinue
+Remove-Item .\build\x86\REVERSI.GID -Force -ErrorAction SilentlyContinue
+Remove-Item .\build\x64\REVERSI.GID -Force -ErrorAction SilentlyContinue
 ```
 
 提交前检查：
@@ -85,7 +98,7 @@ git status --short
 索引词使用 `K` footnote：
 
 ```rtf
-{\footnote \pard\plain K 翻转棋;游戏规则}
+{\footnote \pard\plain K 翻转棋;游戏规则;合法走法, 夹住}
 ```
 
 `AL()` 相关主题使用 `A` footnote：
@@ -141,6 +154,7 @@ WinHelp 4.0 支持类似「相关主题」弹出列表。Help Workshop 自带帮
 - A-keywords 不显示在索引里，适合本项目的「相关主题」。
 - 多个匹配时 WinHelp 显示 Topics Found 列表。一个匹配时可能直接跳转。
 - 如果要固定显示一组选项，确保目标 topic 都有对应 A-keyword。
+- Win95 报 141 时，先检查 `C:\WINDOWS` 和 `C:\WINDOWS\HELP` 是否有同名 `REVERSI.HLP`。同名 help family 会影响 ALink 解析。
 
 ## CNT 写法
 
@@ -162,6 +176,12 @@ REVERSI.HLP
 REVERSI.CNT
 ```
 
+没有 `.CNT` 时，应由 `CONTENTS=JP.RLA` 打开 fallback topic：
+
+```text
+单击“帮助主题”返回到主题列表。
+```
+
 ## 程序调用
 
 菜单「帮助 > 目录」应调用：
@@ -171,6 +191,8 @@ WinHelp(hwnd, helpPath, HELP_FINDER, 0);
 ```
 
 不要用旧的 `HELP_CONTENTS`。有 `.CNT` 时，`HELP_FINDER` 能打开 WinHelp 4.0 的目录/索引界面。
+
+调试 Win95 行为时，使用仓库根目录的 `WINHLP95.EXE`，不要误调用系统目录下的 `winhlp32.exe`。
 
 ## 提交范围
 

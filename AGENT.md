@@ -6,6 +6,13 @@
 
 ## WinHelp Notes
 
+- Detailed WinHelp 4.0 knowledge is in `docs/winhelp/`:
+  - `AGENT.md` for project rules and page structure.
+  - `TOOL.md` for commands and source files.
+  - `FORMAT.md` for RTF/HPJ/CNT syntax.
+  - `INDEXING.md` for K indexes, ALinks, and related topics.
+  - `TROUBLESHOOTING.md` for Win95/WinHelp errors and cache issues.
+  - `WORKFLOW.md` for the build and test flow.
 - Decompile the original `REVERSI.HLP` into a reviewable output folder, and keep the generated output available under the x86 build/reference area as requested.
 - Export every RTF topic/source into Markdown, including the original WinHelp markup information, so the text and formatting can be edited and reviewed manually.
 - Rebuild `REVERSI.HLP` as final WinHelp 4.0 format, starting with a Simplified Chinese version.
