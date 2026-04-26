@@ -1,129 +1,156 @@
 # Reversi WinHelp Agent Notes
 
-本项目把 Wolai 中整理好的中文「翻转棋」帮助文档转换成 Windows 95 风格的 WinHelp 4.0 文件。
+This folder documents the WinHelp 4.0 work for `REVERSI.HLP` and
+`REVERSI.CNT`.
 
-## 快速入口
+The goal is to rebuild Reversi help in the style of Windows 95-era Microsoft
+games while preserving clean, editable source material.
 
-- `WORKFLOW.md`：从 Wolai/生成器到 `REVERSI.HLP` 的完整构建流程。
-- `FORMAT.md`：RTF、HPJ、CNT、topic footnote、popup、宏按钮的格式规则。
-- `INDEXING.md`：K 索引、组合索引、A-keyword、`AL()` 相关主题。
-- `TROUBLESHOOTING.md`：1032、141、`.GID` 缓存、同名 HLP 冲突、字体乱码等排错记录。
+## Quick Map
 
-## 目标
+- `WORKFLOW.md`: recommended build and test workflow.
+- `TOOL.md`: tool commands and source file map.
+- `FORMAT.md`: RTF, HPJ, CNT, topic footnotes, popup links, and macro buttons.
+- `INDEXING.md`: K indexes, ALinks, and related-topic strategy.
+- `TROUBLESHOOTING.md`: Win95/WinHelp errors, `.GID` cache behavior, and font
+  issues.
 
-- 输出 `REVERSI.HLP` 和同名 `REVERSI.CNT`。
-- 内容以 Wolai B root 的页面为准。
-- 文字风格接近 Windows 95 帮助，不写教科书，不写营销文案。
-- 用户打开帮助后，先看到「翻转棋」顶级书，再进入「“翻转棋”概述」。
+## Primary Goals
 
-## 当前目录结构
+- Produce `REVERSI.HLP` and matching `REVERSI.CNT`.
+- Start with Simplified Chinese, then keep the structure ready for other
+  languages.
+- Match official Microsoft game help style where possible.
+- Compare against `WINMINE.HLP`, `FREECELL.HLP`, and `SOL.HLP` when available.
+- Avoid a modern web-help tone. Keep pages short, practical, and system-like.
 
-目录中的书和页面应保持这个层级：
+## Content Structure
+
+The contents tree should stay close to this hierarchy:
 
 ```text
-翻转棋
-  “翻转棋”概述
-  玩翻转棋
-    “玩翻转棋”概述
-    选择难度
-    开始新游戏
-    游戏回合
-    使用键盘下棋
-  游戏规则
-    “游戏规则”概述
-    棋盘和棋子
-    合法走法
-    翻转棋子
-    游戏结束和胜负
-  获得提示
+Reversi
+  Reversi overview
+  Playing Reversi
+    Playing Reversi overview
+    Choosing skill
+    Starting a new game
+    Game turns
+    Using the keyboard
+  Rules
+    Rules overview
+    Board and pieces
+    Legal moves
+    Flipping pieces
+    Game end and scoring
+  Getting a hint
 ```
 
-WinHelp 的 `.cnt` 书节点不能直接跳到 topic。顶级「翻转棋」「玩翻转棋」「游戏规则」应作为书节点存在，下面再放同名概述页。
+WinHelp `.cnt` book nodes should not jump directly to a topic. Top-level book
+nodes such as Reversi, Playing Reversi, and Rules should contain an overview
+page under the book.
 
-## 写作规则
+## Writing Rules
 
-- 先告诉用户这个页面能解决什么。
-- 正文只讲主干。
-- 句子短，语气友好。
-- 少用分号。中文帮助页优先用逗号和句号。
-- 不把整篇正文都加粗。只加粗标题、小节名、必要提示。
-- 「您」「计算机」「对手」「双方」比「我方」「本方」更适合这个帮助文件。
-- 菜单命令要按实际程序写，例如菜单中是「让棋」，不要写成「跳过」。
+- Tell the user what the page helps with before giving details.
+- Keep sentences short.
+- Prefer friendly system-help wording over tutorial prose.
+- Chinese help text should use polite, system-like wording. Prefer terms
+  equivalent to "you", "the computer", "opponent", and "both sides".
+- Match actual menu commands. For example, if the program menu uses the Chinese
+  term for Pass, do not replace it with a different synonym such as Skip.
+- Do not make entire pages bold. Bold headings and important labels only.
+- Use bullets where official Microsoft game help would use bullets.
 
-## 页面关系
+## Popup Help
 
-「玩翻转棋」是用户操作主线：
+Wolai context help maps to WinHelp popup topics.
 
-- 选择难度：设置计算机走棋水平。
-- 开始新游戏：重新开始一局。
-- 游戏回合：轮到用户时怎么判断能不能落子，不能落子时怎么让棋。
-- 使用键盘下棋：方向键移动指针，Enter 或空格键落子。
-- 获得提示：这是辅助功能，会退出当前正常比赛并进入练习赛模式。
+Rules:
 
-「游戏规则」是通用规则：
+- A popup explains one term or one small difficulty.
+- The linked term must appear in nearby body text.
+- Popup topics do not appear in `.cnt`.
+- Popup text stays short.
 
-- 棋盘和棋子：解释棋盘、红蓝棋子、空格。
-- 合法走法：解释什么位置可以落子，必须能夹住对手棋子。
-- 翻转棋子：解释落子后怎样翻转棋子。
-- 游戏结束和胜负：解释何时结束，怎样判定输赢。
+Known popup topics:
 
-## 上下文帮助
+```text
+clamp / outflank      -> POP_CLAMP
+multiple directions   -> POP_MULTI_DIRECTION
+```
 
-Wolai 里的上下文帮助要转换成 WinHelp popup topic。
+## Related Topics
 
-规则：
+Use WinHelp macro buttons for related topics.
 
-- 每个 popup 只解释一个术语或难点。
-- popup 词必须真实出现在它前面的正文附近。
-- 如果正文里没有这个词，不要硬加 popup。
-- popup topic 不放进 `.cnt` 目录。
-- popup 文本保持短，不写成长页面。
+- Prefer `AL()` for hidden related-topic groups.
+- Use `K` keywords for public index words.
+- Target topics need matching `A` or `K` footnotes.
+- Multiple matches show a Topics Found list. One match may jump directly.
 
-当前已知 popup：
+## Indexing Strategy
 
-- `夹住` -> `POP_CLAMP`
-- `多个方向` -> `POP_MULTI_DIRECTION`
+Do not index only page titles. Follow the style of Notepad and classic game
+help with useful K keywords.
 
-## WinHelp 4.0 注意事项
+Examples:
 
-- `.HLP` 和 `.CNT` 必须放在一起，否则帮助主题列表可能报错。
-- 没有 `.CNT` 时，HPJ 的 `CONTENTS=JP.RLA` 应打开 fallback topic，显示“单击‘帮助主题’返回到主题列表。”。
-- 程序从「帮助 > 目录」打开时，应使用 `HELP_FINDER`，不要再用旧的 `HELP_CONTENTS`。
-- 中文 RTF 使用宋体 9 号：`\ansicpg936`，`\fcharset134`，`\fs18`。
-- 标题加粗后，要用 `\plain` 重置正文样式，避免整页都继承加粗。
-- 英文版可以保留 MS Sans Serif。中文版不要用它当正文默认字体。
-- 调试时使用仓库根目录的 `WINHLP95.EXE`，不要误调用 `C:\Windows\winhlp32.exe`。
-- 测试前删除同目录 `.GID`，否则目录、索引、ALink 可能仍显示旧缓存。
+```text
+move
+pass
+hint
+legal move, outflank
+hint, practice game
+keyboard, moving the pointer
+cannot move
+where to move
+why a square is legal
+```
 
-## 相关主题菜单
+## WinHelp 4.0 Requirements
 
-WinHelp 4.0 支持类似截图里的「相关主题」弹出入口。做法是 authorable button 加 `AL()` 或 `KL()` 宏。
+- `.HLP` and `.CNT` should be kept together.
+- Delete `.GID` before testing changes.
+- Use `HELP_FINDER` for Help -> Contents behavior.
+- Simplified Chinese RTF uses:
 
-- `AL()` 查找 A-keywords。A-keywords 不出现在索引里，适合做隐藏的相关主题分组。
-- `KL()` 查找 K-keywords。K-keywords 会参与索引，适合公开索引词。
-- 目标 topic 需要有匹配的 `A` 或 `K` footnote。
-- 多个匹配 topic 会显示 Topics Found 列表。只有一个匹配时，WinHelp 可能直接跳转。
+```rtf
+\ansicpg936
+\fcharset134
+\fs18
+```
 
-建议本项目优先使用 `AL()`，因为「相关主题」不一定应该污染索引。
+- Use Songti/SimSun-style 9 point body text for Simplified Chinese.
+- Reset body style after headings with `\plain`, or the whole page can inherit
+  bold style.
+- Use `WINHLP95.EXE` from the repository when testing classic behavior.
 
-已确认的 Win95 坑：
+## Known WinHelp Pitfalls
 
-- 如果 `C:\WINDOWS` 或 `C:\WINDOWS\HELP` 里存在另一个同名 `REVERSI.HLP`，当前目录 HLP 里的 `AL()` 可能报 141。
-- 这种情况不是 `AL()` 语法本身错误。先排除同名 help family 冲突，再查 RTF。
+- A same-name `REVERSI.HLP` in `C:\WINDOWS` or `C:\WINDOWS\HELP` can interfere
+  with app-local tests.
+- `.GID` caches can preserve stale contents/index/ALink behavior.
+- HelpDeco is useful but does not perfectly reconstruct every WinHelp 4.0
+  system record. Do not blindly trust decompiled HPJ output.
 
-## 索引策略
+## Commit Discipline
 
-WinHelp 的索引不应只列页面标题。参考 Notepad 帮助，应大量使用 `K` footnote：
+WinHelp changes may include:
 
-- 一级词：`落子`、`让棋`、`提示`。
-- 组合词：`合法走法, 夹住`、`提示, 练习赛`、`键盘, 移动指针`。
-- 用户疑问：`不能落子`、`不知道怎么走`、`为什么可以落子`。
+```text
+help/zh-CN/make_hlp_sources.py
+help/zh-CN/REVERSI.rtf
+help/zh-CN/REVERSI.hpj
+help/zh-CN/REVERSI.cnt
+help/zh-CN/REVERSI.HLP
+REVERSI.HLP
+REVERSI.cnt
+build/x86/REVERSI.HLP
+build/x86/REVERSI.CNT
+build/x64/REVERSI.HLP
+build/x64/REVERSI.CNT
+docs/winhelp/*.md
+```
 
-组合索引会在 WinHelp 索引页里显示成层级，比单薄的标题列表更像系统帮助。
-
-## 工作纪律
-
-- Wolai API 调用有限。先缓存页面树和页面内容，再改写。
-- 不要一边猜一边反复读取同一页。
-- 提交时只 stage 本次相关文件。不要顺手提交 exe、临时 `.GID`、反编译输出、用户正在改的源码。
-- 生成文件和手写源文件都要确认 diff，再提交。
+Do not commit generated `.GID` caches or unrelated external reference files.
