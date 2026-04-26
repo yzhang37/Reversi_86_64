@@ -39,6 +39,21 @@ DECLARE_HANDLE(HMONITOR);
 #ifndef WM_DPICHANGED
 #define WM_DPICHANGED 0x02E0
 #endif
+#ifndef WM_THEMECHANGED
+#define WM_THEMECHANGED 0x031A
+#endif
+
+#define DWMWA_USE_IMMERSIVE_DARK_MODE_OLD 19
+#define DWMWA_USE_IMMERSIVE_DARK_MODE_LOCAL 20
+#define APP_PREFERRED_APP_MODE_DEFAULT 0
+#define APP_PREFERRED_APP_MODE_ALLOW_DARK 1
+
+#ifndef SPI_GETHIGHCONTRAST
+#define SPI_GETHIGHCONTRAST 0x0042
+#endif
+#ifndef HCF_HIGHCONTRASTON
+#define HCF_HIGHCONTRASTON 0x00000001
+#endif
 
 #if defined(_MSC_VER)
 #define APP_NOINLINE __declspec(noinline)
@@ -214,11 +229,19 @@ static COLORREF g_cellGray;
 static COLORREF g_darkGray;
 static COLORREF g_redColor;
 static COLORREF g_blueColor;
+static COLORREF g_edgeLightColor;
+static COLORREF g_edgeDarkColor;
+static COLORREF g_messageBackColor;
+static COLORREF g_messageTextColor;
+static COLORREF g_hintColor;
 static int g_deviceAspect = 1;
+static int g_monoDisplay = 0;
 static int g_currentDpi = 96;
 static int g_enableSystemScaling = 0;
 static int g_perMonitorDpiAware = 0;
 static int g_useWideCommands = 0;
+static int g_darkModeSupported = 0;
+static int g_darkModeEnabled = 0;
 static int g_inputLock = 0;
 static int g_cpuHasSse2 = 0;
 static int g_cpuHasAvx = 0;
@@ -230,6 +253,7 @@ static RECT g_configWindowRect;
 static ModernFindBestMoveProc g_modernFindBestMove = NULL;
 static HANDLE g_visualStylesActCtx = INVALID_HANDLE_VALUE;
 static ULONG_PTR g_visualStylesCookie = 0;
+static HWND g_mainWindow = NULL;
 
 static const int k_dirs[8][2] = {
     {-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
@@ -270,6 +294,12 @@ typedef BOOL (WINAPI *WinHelpAProc)(HWND, LPCSTR, UINT, ULONG_PTR);
 typedef BOOL (WINAPI *WinHelpWProc)(HWND, LPCWSTR, UINT, ULONG_PTR);
 typedef HWND (WINAPI *HtmlHelpAProc)(HWND, LPCSTR, UINT, DWORD_PTR);
 typedef HWND (WINAPI *HtmlHelpWProc)(HWND, LPCWSTR, UINT, DWORD_PTR);
+typedef HRESULT (WINAPI *DwmSetWindowAttributeProc)(HWND, DWORD, LPCVOID, DWORD);
+typedef int (WINAPI *SetPreferredAppModeProc)(int);
+typedef BOOL (WINAPI *AllowDarkModeForAppProc)(BOOL);
+typedef BOOL (WINAPI *AllowDarkModeForWindowProc)(HWND, BOOL);
+typedef VOID (WINAPI *FlushMenuThemesProc)(void);
+typedef HRESULT (WINAPI *SetWindowThemeProc)(HWND, LPCWSTR, LPCWSTR);
 
 static void AppZeroMemory(void *ptr, UINT_PTR size)
 {
@@ -1061,24 +1091,74 @@ static int UpdateWindowDpi(HWND hwnd)
     return 0;
 }
 
+static int AppShouldUseLegacyMonoDisplayFallback(void)
+{
+    OSVERSIONINFOW version;
+    if (!QueryWindowsVersion(&version)) {
+        return 0;
+    }
+
+    if (version.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
+        return 1;
+    }
+
+    return version.dwPlatformId == VER_PLATFORM_WIN32_NT &&
+        !IsWindowsVersionAtLeast(&version, 5, 1);
+}
+
 static void RefreshClassicColors(void)
 {
     HDC hdc = GetDC(NULL);
     if (hdc) {
+        COLORREF nearest_red = GetNearestColor(hdc, RGB(255, 0, 0));
+        COLORREF nearest_blue = GetNearestColor(hdc, RGB(0, 0, 255));
+        int planes = GetDeviceCaps(hdc, PLANES);
+        int bits_per_pixel = GetDeviceCaps(hdc, BITSPIXEL);
+        int color_count = GetDeviceCaps(hdc, NUMCOLORS);
+        int mono_caps =
+            (planes > 0 && bits_per_pixel > 0 && planes * bits_per_pixel <= 1) ||
+            (color_count > 0 && color_count <= 2) ||
+            nearest_red == nearest_blue;
+
         g_deviceAspect = GetDeviceCaps(hdc, VERTRES) == 200 ? 2 : 1;
-        g_redColor = GetNearestColor(hdc, RGB(255, 0, 0));
-        g_blueColor = GetNearestColor(hdc, RGB(0, 0, 255));
-        g_windowGray = GetNearestColor(hdc, RGB(170, 170, 170));
-        g_cellGray = GetNearestColor(hdc, RGB(192, 192, 192));
-        g_darkGray = GetNearestColor(hdc, RGB(85, 85, 85));
+        g_monoDisplay = AppShouldUseLegacyMonoDisplayFallback() && mono_caps;
+        if (g_monoDisplay) {
+            g_redColor = kClassicLight;
+            g_blueColor = kClassicDark;
+            g_windowGray = RGB(128, 128, 128);
+            g_cellGray = RGB(192, 192, 192);
+            g_darkGray = kClassicDark;
+            g_edgeLightColor = kClassicLight;
+            g_edgeDarkColor = kClassicDark;
+            g_messageBackColor = kClassicLight;
+            g_messageTextColor = kClassicDark;
+            g_hintColor = kClassicDark;
+        } else {
+            g_redColor = nearest_red;
+            g_blueColor = nearest_blue;
+            g_windowGray = GetNearestColor(hdc, g_darkModeEnabled ? RGB(96, 96, 96) : RGB(170, 170, 170));
+            g_cellGray = GetNearestColor(hdc, g_darkModeEnabled ? RGB(150, 150, 150) : RGB(192, 192, 192));
+            g_darkGray = GetNearestColor(hdc, RGB(85, 85, 85));
+            g_edgeLightColor = GetNearestColor(hdc, kClassicLight);
+            g_edgeDarkColor = GetNearestColor(hdc, kClassicDark);
+            g_messageBackColor = GetNearestColor(hdc, g_darkModeEnabled ? RGB(64, 64, 64) : kClassicLight);
+            g_messageTextColor = GetNearestColor(hdc, g_darkModeEnabled ? RGB(240, 240, 240) : kClassicDark);
+            g_hintColor = GetNearestColor(hdc, g_darkModeEnabled ? RGB(240, 240, 240) : kClassicDark);
+        }
         ReleaseDC(NULL, hdc);
     } else {
         g_deviceAspect = 1;
+        g_monoDisplay = 0;
         g_redColor = RGB(255, 0, 0);
         g_blueColor = RGB(0, 0, 255);
-        g_windowGray = RGB(170, 170, 170);
-        g_cellGray = RGB(192, 192, 192);
+        g_windowGray = g_darkModeEnabled ? RGB(96, 96, 96) : RGB(170, 170, 170);
+        g_cellGray = g_darkModeEnabled ? RGB(150, 150, 150) : RGB(192, 192, 192);
         g_darkGray = RGB(85, 85, 85);
+        g_edgeLightColor = kClassicLight;
+        g_edgeDarkColor = kClassicDark;
+        g_messageBackColor = g_darkModeEnabled ? RGB(64, 64, 64) : kClassicLight;
+        g_messageTextColor = g_darkModeEnabled ? RGB(240, 240, 240) : kClassicDark;
+        g_hintColor = g_darkModeEnabled ? RGB(240, 240, 240) : kClassicDark;
     }
 }
 
@@ -1272,38 +1352,46 @@ static int AppBuildModuleFilePath(APP_CHAR *out, int cch, const APP_CHAR *file_n
     return 1;
 }
 
-static int AppBuildWindowsHelpPath(APP_CHAR *out, int cch, const APP_CHAR *file_name)
-{
-    UINT len = APP_GET_WINDOWS_DIRECTORY(out, (UINT)cch);
-    if (!len || len >= (UINT)cch) {
-        return 0;
-    }
-    AppEnsureTrailingSlash(out, cch);
-    AppStrAppend(out, cch, APP_TEXT("Help\\"));
-    AppStrAppend(out, cch, file_name);
-    return 1;
-}
-
 static int AppResolveLocalHelpFile(UINT string_id, APP_CHAR *out, int cch)
 {
     APP_CHAR file_name[MAX_PATH];
     LoadText(string_id, file_name, MAX_PATH);
+    if (!file_name[0]) {
+        return 0;
+    }
+    if (AppBuildModuleFilePath(out, cch, file_name) && AppFileExists(out)) {
+        return 1;
+    }
+    if (AppFileExists(file_name)) {
+        AppStrCopy(out, cch, file_name);
+        return 1;
+    }
+    return 0;
+}
+
+static int AppResolveWinHelpFile(UINT string_id, APP_CHAR *out, int cch)
+{
+    APP_CHAR file_name[MAX_PATH];
+    LoadText(string_id, file_name, MAX_PATH);
+    if (!file_name[0]) {
+        return 0;
+    }
     if (AppBuildModuleFilePath(out, cch, file_name) && AppFileExists(out)) {
         return 1;
     }
     AppStrCopy(out, cch, file_name);
-    return AppFileExists(out);
+    return 1;
 }
 
 static int AppResolveWindowsHelpFile(UINT string_id, APP_CHAR *out, int cch)
 {
     APP_CHAR file_name[MAX_PATH];
     LoadText(string_id, file_name, MAX_PATH);
-    if (AppBuildWindowsHelpPath(out, cch, file_name) && AppFileExists(out)) {
-        return 1;
+    if (!file_name[0]) {
+        return 0;
     }
     AppStrCopy(out, cch, file_name);
-    return AppFileExists(out);
+    return 1;
 }
 
 static int AppIsVistaOrNewer(void)
@@ -1472,14 +1560,14 @@ static APP_NOINLINE int OpenHelpViewerChmHelp(HWND hwnd)
 static APP_NOINLINE int OpenLocalWinHelp(HWND hwnd, UINT command, ULONG_PTR data)
 {
     APP_CHAR help_path[MAX_PATH];
-    return AppResolveLocalHelpFile(IDS_HELP_FILE, help_path, MAX_PATH) &&
+    return AppResolveWinHelpFile(IDS_HELP_FILE, help_path, MAX_PATH) &&
         AppWinHelp(hwnd, help_path, command, data);
 }
 
 static void CloseLegacyWinHelp(HWND hwnd)
 {
     APP_CHAR help_path[MAX_PATH];
-    if (AppResolveLocalHelpFile(IDS_HELP_FILE, help_path, MAX_PATH)) {
+    if (AppResolveWinHelpFile(IDS_HELP_FILE, help_path, MAX_PATH)) {
         AppWinHelp(hwnd, help_path, HELP_QUIT, 0);
     }
 }
@@ -1630,6 +1718,194 @@ static void SetSettingsDword(HKEY key, UINT name_id, DWORD value)
     if (value_name[0]) {
         AppRegSetDword(key, value_name, value);
     }
+}
+
+static void ReloadMainMenu(HWND hwnd, int update_checks);
+
+static int AppDarkModeOsSupported(void)
+{
+    OSVERSIONINFOW version;
+    if (!QueryWindowsVersion(&version)) {
+        return 0;
+    }
+    return version.dwPlatformId == VER_PLATFORM_WIN32_NT &&
+        IsWindowsVersionAtLeast(&version, 10, 0);
+}
+
+static int AppIsHighContrastOn(void)
+{
+    HIGHCONTRASTA high_contrast;
+    AppZeroMemory(&high_contrast, sizeof(high_contrast));
+    high_contrast.cbSize = sizeof(high_contrast);
+    if (!SystemParametersInfoA(SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, 0)) {
+        return 0;
+    }
+    return (high_contrast.dwFlags & HCF_HIGHCONTRASTON) != 0;
+}
+
+static int QuerySystemDarkMode(void)
+{
+    HKEY key;
+    DWORD apps_use_light_theme = 1;
+
+    if (!g_darkModeSupported || AppIsHighContrastOn()) {
+        return 0;
+    }
+
+    if (AppRegOpenSettingsKey(
+            APP_TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"),
+            &key) != ERROR_SUCCESS) {
+        return 0;
+    }
+
+    if (AppRegQueryDword(key, APP_TEXT("AppsUseLightTheme"), &apps_use_light_theme) !=
+        ERROR_SUCCESS) {
+        apps_use_light_theme = 1;
+    }
+    RegCloseKey(key);
+    return apps_use_light_theme == 0;
+}
+
+static void InitAppTheme(void)
+{
+    g_darkModeSupported = AppDarkModeOsSupported();
+    g_darkModeEnabled = QuerySystemDarkMode();
+}
+
+static void ApplyDwmDarkMode(HWND hwnd)
+{
+    OSVERSIONINFOW version;
+    DwmSetWindowAttributeProc set_window_attribute;
+    BOOL enabled;
+    HRESULT hr = E_FAIL;
+
+    if (!hwnd || !g_darkModeSupported || !QueryWindowsVersion(&version) ||
+        !IsWindowsBuildAtLeast(&version, 10, 0, 17763)) {
+        return;
+    }
+
+    set_window_attribute =
+        (DwmSetWindowAttributeProc)AppGetProc("dwmapi.dll", "DwmSetWindowAttribute");
+    if (!set_window_attribute) {
+        return;
+    }
+
+    enabled = g_darkModeEnabled ? TRUE : FALSE;
+    if (IsWindowsBuildAtLeast(&version, 10, 0, 18362)) {
+        hr = set_window_attribute(
+            hwnd,
+            DWMWA_USE_IMMERSIVE_DARK_MODE_LOCAL,
+            &enabled,
+            sizeof(enabled));
+    }
+    if (FAILED(hr)) {
+        set_window_attribute(
+            hwnd,
+            DWMWA_USE_IMMERSIVE_DARK_MODE_OLD,
+            &enabled,
+            sizeof(enabled));
+    }
+}
+
+static void ApplyUxThemeDarkMode(HWND hwnd)
+{
+    OSVERSIONINFOW version;
+    HMODULE uxtheme;
+    FARPROC preferred_mode;
+    AllowDarkModeForWindowProc allow_window;
+    FlushMenuThemesProc flush_menus;
+
+    if (!g_darkModeSupported || !QueryWindowsVersion(&version) ||
+        !IsWindowsBuildAtLeast(&version, 10, 0, 17763)) {
+        return;
+    }
+
+    uxtheme = LoadLibraryA("uxtheme.dll");
+    if (!uxtheme) {
+        return;
+    }
+
+    preferred_mode = GetProcAddress(uxtheme, MAKEINTRESOURCEA(135));
+    if (preferred_mode) {
+        if (IsWindowsBuildAtLeast(&version, 10, 0, 18362)) {
+            ((SetPreferredAppModeProc)preferred_mode)(APP_PREFERRED_APP_MODE_ALLOW_DARK);
+        } else {
+            ((AllowDarkModeForAppProc)preferred_mode)(TRUE);
+        }
+    }
+
+    allow_window = (AllowDarkModeForWindowProc)GetProcAddress(uxtheme, MAKEINTRESOURCEA(133));
+    if (allow_window && hwnd) {
+        allow_window(hwnd, g_darkModeEnabled ? TRUE : FALSE);
+    }
+
+    flush_menus = (FlushMenuThemesProc)GetProcAddress(uxtheme, MAKEINTRESOURCEA(136));
+    if (flush_menus) {
+        flush_menus();
+    }
+    FreeLibrary(uxtheme);
+}
+
+static void ApplyDarkThemeToWindow(HWND hwnd)
+{
+    OSVERSIONINFOW version;
+    HMODULE uxtheme;
+    AllowDarkModeForWindowProc allow_window;
+    SetWindowThemeProc set_window_theme;
+
+    if (!hwnd || !g_darkModeSupported || !QueryWindowsVersion(&version) ||
+        !IsWindowsBuildAtLeast(&version, 10, 0, 17763)) {
+        return;
+    }
+
+    uxtheme = LoadLibraryA("uxtheme.dll");
+    if (!uxtheme) {
+        return;
+    }
+
+    allow_window = (AllowDarkModeForWindowProc)GetProcAddress(uxtheme, MAKEINTRESOURCEA(133));
+    if (allow_window) {
+        allow_window(hwnd, g_darkModeEnabled ? TRUE : FALSE);
+    }
+
+    set_window_theme = (SetWindowThemeProc)GetProcAddress(uxtheme, "SetWindowTheme");
+    if (set_window_theme) {
+        if (g_darkModeEnabled) {
+            set_window_theme(hwnd, L"DarkMode_Explorer", NULL);
+        } else {
+            set_window_theme(hwnd, NULL, NULL);
+        }
+    }
+    FreeLibrary(uxtheme);
+}
+
+static void ApplyAppThemeToWindow(HWND hwnd)
+{
+    ApplyUxThemeDarkMode(hwnd);
+    ApplyDwmDarkMode(hwnd);
+    if (hwnd) {
+        DrawMenuBar(hwnd);
+        SetWindowPos(
+            hwnd,
+            NULL,
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+        RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN);
+    }
+}
+
+static void RefreshAppTheme(HWND hwnd)
+{
+    g_darkModeSupported = AppDarkModeOsSupported();
+    g_darkModeEnabled = QuerySystemDarkMode();
+    RefreshClassicColors();
+    if (hwnd && hwnd == g_mainWindow) {
+        ReloadMainMenu(hwnd, 1);
+    }
+    ApplyAppThemeToWindow(hwnd);
 }
 
 static int SkillDepthForCommand(int cmd)
@@ -2447,6 +2723,33 @@ static void UpdateMenuChecks(HWND hwnd)
     DrawMenuBar(hwnd);
 }
 
+static void ReloadMainMenu(HWND hwnd, int update_checks)
+{
+    HMENU old_menu;
+    HMENU new_menu;
+
+    if (!hwnd) {
+        return;
+    }
+
+    new_menu = APP_LOAD_MENU(g_hinst, MAKEINTRESOURCE(IDR_MAINMENU));
+    if (!new_menu) {
+        return;
+    }
+
+    old_menu = GetMenu(hwnd);
+    SetMenu(hwnd, new_menu);
+    if (old_menu) {
+        DestroyMenu(old_menu);
+    }
+
+    if (update_checks) {
+        UpdateMenuChecks(hwnd);
+    } else {
+        DrawMenuBar(hwnd);
+    }
+}
+
 static void BeginInputLock(HWND hwnd)
 {
     ++g_inputLock;
@@ -2499,14 +2802,35 @@ static void NewGame(HWND hwnd)
     InvalidateRect(hwnd, NULL, TRUE);
 }
 
+static void FillClassicFace(HDC hdc, const RECT *rc, COLORREF color, int cell_face)
+{
+    HBRUSH face;
+    int delete_face = 0;
+
+    if (g_monoDisplay) {
+        face = (HBRUSH)GetStockObject(cell_face ? LTGRAY_BRUSH : GRAY_BRUSH);
+    } else {
+        face = CreateSolidBrush(color);
+        delete_face = face != NULL;
+    }
+
+    if (!face) {
+        face = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    }
+
+    FillRect(hdc, rc, face);
+    if (delete_face) {
+        DeleteObject(face);
+    }
+}
+
 static void Draw3DCell(HDC hdc, RECT rc)
 {
-    HBRUSH face = CreateSolidBrush(g_cellGray);
-    FillRect(hdc, &rc, face);
+    FillClassicFace(hdc, &rc, g_cellGray, 1);
 
     HPEN gray = CreatePen(PS_SOLID, 1, g_darkGray);
-    HPEN white = CreatePen(PS_SOLID, 1, kClassicLight);
-    HPEN black = CreatePen(PS_SOLID, 1, kClassicDark);
+    HPEN white = CreatePen(PS_SOLID, 1, g_edgeLightColor);
+    HPEN black = CreatePen(PS_SOLID, 1, g_edgeDarkColor);
     HGDIOBJ old_pen = SelectObject(hdc, gray);
 
     MoveToEx(hdc, rc.left + 2, rc.bottom - 2, NULL);
@@ -2526,7 +2850,6 @@ static void Draw3DCell(HDC hdc, RECT rc)
     DeleteObject(gray);
     DeleteObject(white);
     DeleteObject(black);
-    DeleteObject(face);
 }
 
 static void DrawPiece(HDC hdc, RECT cell, int piece, const AnimCell *anim)
@@ -2572,7 +2895,7 @@ static void DrawPiece(HDC hdc, RECT cell, int piece, const AnimCell *anim)
     HBRUSH main_brush = CreateSolidBrush(main_color);
     HPEN white_pen = CreatePen(PS_SOLID, 1, kClassicLight);
     HPEN gray_pen = CreatePen(PS_SOLID, 1, g_darkGray);
-    HPEN black_pen = CreatePen(PS_SOLID, 1, kClassicDark);
+    HPEN black_pen = CreatePen(PS_SOLID, 1, g_edgeDarkColor);
     HGDIOBJ old_brush = SelectObject(hdc, white_brush);
     HGDIOBJ old_pen = SelectObject(hdc, white_pen);
 
@@ -2602,7 +2925,7 @@ static void DrawHint(HDC hdc, RECT rc)
     int cy = rc.top + h / 2;
     int arm = MinInt(w, h) / 4;
 
-    HPEN pen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+    HPEN pen = CreatePen(PS_SOLID, 1, g_hintColor);
     HGDIOBJ old_pen = SelectObject(hdc, pen);
     MoveToEx(hdc, cx - arm, cy, NULL);
     LineTo(hdc, cx + arm, cy);
@@ -2614,10 +2937,10 @@ static void DrawHint(HDC hdc, RECT rc)
 
 static void DrawMessageLine(HWND hwnd, HDC hdc, const Layout *layout)
 {
-    HBRUSH face = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    HBRUSH face = CreateSolidBrush(g_messageBackColor);
     FillRect(hdc, &layout->message, face);
     SetBkMode(hdc, TRANSPARENT);
-    SetTextColor(hdc, kClassicDark);
+    SetTextColor(hdc, g_messageTextColor);
 
     HFONT font = (HFONT)GetStockObject(SYSTEM_FONT);
     HGDIOBJ old_font = SelectObject(hdc, font);
@@ -2631,6 +2954,7 @@ static void DrawMessageLine(HWND hwnd, HDC hdc, const Layout *layout)
     if (g_game.flash_ticks > 0 && (g_game.flash_ticks & 1)) {
         InvertRect(hdc, &layout->message);
     }
+    DeleteObject(face);
     (void)hwnd;
 }
 
@@ -2641,9 +2965,7 @@ static void DrawGame(HWND hwnd, HDC hdc)
 
     RECT client;
     GetClientRect(hwnd, &client);
-    HBRUSH face = CreateSolidBrush(g_windowGray);
-    FillRect(hdc, &client, face);
-    DeleteObject(face);
+    FillClassicFace(hdc, &client, g_windowGray, 0);
     SetBkMode(hdc, TRANSPARENT);
 
     int depth_x = layout.depth_x;
@@ -2711,7 +3033,7 @@ static void DrawGame(HWND hwnd, HDC hdc)
         FillRect(hdc, &bottom_strip, slope);
     }
 
-    HPEN edge = CreatePen(PS_SOLID, 1, kClassicDark);
+    HPEN edge = CreatePen(PS_SOLID, 1, g_edgeDarkColor);
     HGDIOBJ old_pen = SelectObject(hdc, edge);
     MoveToEx(hdc, layout.board.right, layout.board.bottom, NULL);
     LineTo(hdc, layout.board.right, layout.board.top);
@@ -3132,17 +3454,28 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 {
     switch (msg) {
     case WM_NCCREATE:
+        g_mainWindow = hwnd;
         UpdateWindowDpi(hwnd);
+        ApplyUxThemeDarkMode(hwnd);
+        ApplyDwmDarkMode(hwnd);
         return TRUE;
 
     case WM_CREATE:
         UpdateWindowDpi(hwnd);
-        SetMenu(hwnd, APP_LOAD_MENU(g_hinst, MAKEINTRESOURCE(IDR_MAINMENU)));
+        ReloadMainMenu(hwnd, 0);
+        ApplyAppThemeToWindow(hwnd);
         UpdateWindowIcons(hwnd);
         InitGameState();
         SetTitle(hwnd);
         UpdateMenuChecks(hwnd);
         return 0;
+
+    case WM_ERASEBKGND: {
+        RECT client;
+        GetClientRect(hwnd, &client);
+        FillClassicFace((HDC)wparam, &client, g_windowGray, 0);
+        return 1;
+    }
 
     case WM_COMMAND:
         if (IsGameBusy()) {
@@ -3320,17 +3653,21 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             g_currentDpi = QuerySystemDpi();
             UpdateWindowIcons(hwnd);
         }
-        RefreshClassicColors();
-        InvalidateRect(hwnd, NULL, TRUE);
+        RefreshAppTheme(hwnd);
         return 0;
 
     case WM_SETTINGCHANGE:
         if (!g_perMonitorDpiAware) {
             g_currentDpi = QuerySystemDpi();
             UpdateWindowIcons(hwnd);
-            InvalidateRect(hwnd, NULL, TRUE);
         }
-        break;
+        RefreshAppTheme(hwnd);
+        return 0;
+
+    case WM_THEMECHANGED:
+    case WM_SYSCOLORCHANGE:
+        RefreshAppTheme(hwnd);
+        return 0;
 
     case WM_PAINT: {
         PAINTSTRUCT ps;
@@ -3345,6 +3682,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         AppCloseHtmlHelp();
         if (!AppIsVistaOrNewer()) {
             CloseLegacyWinHelp(hwnd);
+        }
+        if (g_mainWindow == hwnd) {
+            g_mainWindow = NULL;
         }
         PostQuitMessage(0);
         return 0;
@@ -3402,6 +3742,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
     InitModernDispatch();
     InitSystemDpiAwareness();
     InitClassicVisualStyles();
+    InitAppTheme();
     InitClassicColors();
     LoadGameSettings();
 
@@ -3423,7 +3764,9 @@ static int ReversiMain(HINSTANCE hinst, int show)
         MAKEINTRESOURCE(IDI_REVERSI),
         AppSystemMetricForDpi(SM_CXICON, CurrentWindowDpi()),
         AppSystemMetricForDpi(SM_CYICON, CurrentWindowDpi()));
-    wc.hbrBackground = CreateSolidBrush(g_windowGray);
+    wc.hbrBackground = g_monoDisplay ?
+        (HBRUSH)GetStockObject(GRAY_BRUSH) :
+        CreateSolidBrush(g_windowGray);
     wc.lpszClassName = class_name;
 
     if (!APP_REGISTER_CLASS(&wc)) {
