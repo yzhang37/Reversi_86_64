@@ -524,15 +524,17 @@ def build_topics():
 
 def build_rtf():
     return (
-        r"{\rtf1\ansi\deff0"
+        r"{\rtf1\ansi\ansicpg936\deff0"
         + "\n"
-        + r"{\fonttbl{\f0\fswiss MS Sans Serif;}{\f1\fmodern "
+        + r"{\fonttbl{\f0\fnil\fcharset134 "
+        + rtf_text("宋体")
+        + r";}{\f1\fnil\fcharset134 "
         + rtf_text("宋体")
         + r";}}"
         + "\n"
-        + r"{\stylesheet{\fs18 \snext0 Normal;}"
+        + r"{\stylesheet{\f0\fs18 \snext0 Normal;}"
         + "\n}"
-        + r"\pard\plain"
+        + r"\pard\plain\f0\fs18"
         + "\n"
         + "".join(build_topics())
         + hidden_contents()
@@ -601,13 +603,13 @@ def build_cnt():
 1 翻转棋
 2 “翻转棋”概述=TOPIC_OVERVIEW
 2 玩翻转棋
-3 玩翻转棋=TOPIC_PLAY
+3 “玩翻转棋”概述=TOPIC_PLAY
 3 选择难度=TOPIC_DIFFICULTY
 3 开始新游戏=TOPIC_NEW_GAME
 3 游戏回合=TOPIC_TURN
 3 使用键盘下棋=TOPIC_KEYBOARD
 2 游戏规则
-3 游戏规则=TOPIC_RULES
+3 “游戏规则”概述=TOPIC_RULES
 3 棋盘和棋子=TOPIC_BOARD
 3 合法走法=TOPIC_LEGAL
 3 翻转棋子=TOPIC_FLIP
