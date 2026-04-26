@@ -291,6 +291,7 @@ static int g_inSizeMove = 0;
 static int g_sizedDuringSizeMove = 0;
 static int g_builtGdiCacheDuringSizeMove = 0;
 static int g_forceGdiPieces = 0;
+static int g_scratchBoard = 0;
 static int g_cpuHasSse2 = 0;
 static int g_cpuHasAvx = 0;
 static int g_configSkillCmd = IDM_INTERMEDIATE;
@@ -3319,7 +3320,8 @@ static void NewGame(HWND hwnd)
 }
 
 enum {
-    IDM_TEST_PLAYER_PASS = WM_APP + 1,
+    IDM_TEST_SCRATCH_BOARD = WM_APP + 1,
+    IDM_TEST_PLAYER_PASS,
     IDM_TEST_COMPUTER_PASS,
     IDM_TEST_CANNOT_PASS,
     IDM_TEST_MUST_PASS,
@@ -3330,6 +3332,7 @@ enum {
 };
 
 static const UINT kTestMenuCommands[] = {
+    IDM_TEST_SCRATCH_BOARD,
     IDM_TEST_PLAYER_PASS,
     IDM_TEST_COMPUTER_PASS,
     IDM_TEST_CANNOT_PASS,
@@ -3341,6 +3344,8 @@ static const UINT kTestMenuCommands[] = {
 };
 
 static const APP_CHAR kTestMenuText[] =
+    APP_TEXT("Scratch Board\n")
+    APP_TEXT("-\n")
     APP_TEXT("Player Pass\n")
     APP_TEXT("Computer Pass\n")
     APP_TEXT("Player Can't Pass\n")
@@ -3355,7 +3360,7 @@ static const APP_CHAR kTestMenuPassword[] = APP_TEXT("shift xyzzy");
 
 static int IsTestCommand(UINT cmd)
 {
-    return cmd >= IDM_TEST_PLAYER_PASS && cmd <= IDM_TEST_LOSE;
+    return cmd >= IDM_TEST_SCRATCH_BOARD && cmd <= IDM_TEST_LOSE;
 }
 
 static void DestroyTestContextMenu(void)
@@ -4408,6 +4413,37 @@ static int PointToCell(HWND hwnd, int x, int y, int *row, int *col)
     return OnBoard(*row, *col);
 }
 
+static void ToggleScratchBoard(HWND hwnd)
+{
+    g_scratchBoard = !g_scratchBoard;
+    if (g_testContextMenu) {
+        CheckMenuItem(
+            g_testContextMenu,
+            IDM_TEST_SCRATCH_BOARD,
+            MF_BYCOMMAND | (g_scratchBoard ? MF_CHECKED : MF_UNCHECKED));
+    }
+    SetCursor(APP_LOAD_CURSOR(NULL, IDC_ARROW));
+    InvalidateRect(hwnd, NULL, FALSE);
+}
+
+static void ScratchBoardClick(HWND hwnd, int row, int col)
+{
+    int piece = g_game.cells[row][col];
+
+    if (piece == EMPTY) {
+        piece = RED;
+    } else if (piece == RED) {
+        piece = BLUE;
+    } else {
+        piece = EMPTY;
+    }
+
+    g_game.cells[row][col] = piece;
+    g_game.selected_row = row;
+    g_game.selected_col = col;
+    InvalidateCell(hwnd, row, col);
+}
+
 static void HandleClick(HWND hwnd, LPARAM lparam)
 {
     int x = GET_X_LPARAM(lparam);
@@ -4415,6 +4451,10 @@ static void HandleClick(HWND hwnd, LPARAM lparam)
     int row;
     int col;
     if (PointToCell(hwnd, x, y, &row, &col)) {
+        if (g_scratchBoard) {
+            ScratchBoardClick(hwnd, row, col);
+            return;
+        }
         int force_tip = 0;
         if (CanAcceptPlayerMoveInput() && CollectFlips(row, col, RED, NULL, 0) <= 0) {
             force_tip = IsInvalidMoveDoubleClick(x, y);
@@ -4461,6 +4501,10 @@ static void ShowTestContextMenu(HWND hwnd, LPARAM lparam)
     if (!g_testContextMenu) {
         return;
     }
+    CheckMenuItem(
+        g_testContextMenu,
+        IDM_TEST_SCRATCH_BOARD,
+        MF_BYCOMMAND | (g_scratchBoard ? MF_CHECKED : MF_UNCHECKED));
 
     pt.x = GET_X_LPARAM(lparam);
     pt.y = GET_Y_LPARAM(lparam);
@@ -4647,7 +4691,11 @@ static void HandleKey(HWND hwnd, WPARAM key)
         ShowHint(hwnd);
         break;
     case VK_SPACE:
-        PlayerMove(hwnd, g_game.selected_row, g_game.selected_col, 0);
+        if (g_scratchBoard && OnBoard(g_game.selected_row, g_game.selected_col)) {
+            ScratchBoardClick(hwnd, g_game.selected_row, g_game.selected_col);
+        } else {
+            PlayerMove(hwnd, g_game.selected_row, g_game.selected_col, 0);
+        }
         break;
     case VK_LEFT:
         MoveSelection(hwnd, 0, -1);
@@ -4752,6 +4800,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case IDM_ANIM_FAST:
             SetAnimation(hwnd, cmd);
             return 0;
+        case IDM_TEST_SCRATCH_BOARD:
+            ToggleScratchBoard(hwnd);
+            return 0;
         case IDM_TEST_PLAYER_PASS:
         case IDM_TEST_COMPUTER_PASS:
         case IDM_TEST_CANNOT_PASS:
@@ -4802,6 +4853,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             SetCursor(NULL);
         } else if (IsGameBusy()) {
             SetCursor(APP_LOAD_CURSOR(NULL, IDC_WAIT));
+        } else if (g_scratchBoard &&
+            PointToCell(hwnd, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), &row, &col)) {
+            SetCursor(LoadLegalMoveCursor());
         } else if (!g_game.game_over && g_game.turn == RED && !g_game.must_pass &&
             PointToCell(hwnd, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), &row, &col) &&
             CollectFlips(row, col, RED, NULL, 0) > 0) {
