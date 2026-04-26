@@ -72,5 +72,5 @@ BEGIN
     IDS_WINDOW_DPI_KEY "WindowDpi"
     IDS_COMPUTER_PASS "電腦沒有空位下棋，必須讓棋"
     IDS_COMPUTER_PASS_TEXT "電腦讓棋"
-    IDS_BACKGROUND_KEY "shift xyzzy"
+    // IDS_BACKGROUND_KEY "shift xyzzy"
 END

@@ -107,7 +107,7 @@ shift xyzzy
 
 - If the user explicitly says to publish a formal release or production build,
   comment out every `IDS_BACKGROUND_KEY "shift xyzzy"` line in
-  `src/lang/*.rcinc` before building.
+  `src/lang/*.rcinc` before building, then build with `build.ps1 -Production`.
 - For normal development builds or commits, keep those lines present and
   uncommented.
 - The debug menu opens from right-click on blank client area. Current entries

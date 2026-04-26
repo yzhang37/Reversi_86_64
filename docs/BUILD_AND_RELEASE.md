@@ -25,6 +25,21 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 
 The build uses MSVC directly through `vcvarsall.bat`, not a project file.
 
+## Production Build
+
+For a production build without the hidden debug menu:
+
+1. Exclude the debug resource key, for example by commenting out every
+   `IDS_BACKGROUND_KEY "shift xyzzy"` line in `src/lang/*.rcinc`.
+2. Build with the production compiler define:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Production
+```
+
+The `-Production` switch defines `REVERSI_PRODUCTION`, which keeps the hidden
+test menu strings and password out of the compiled C object.
+
 ## Source And Resource Layout
 
 The main C file includes responsibility-focused `.inc` shards. They are still
@@ -135,7 +150,8 @@ IDS_BACKGROUND_KEY "shift xyzzy"
 Formal release or production builds must comment out every
 `IDS_BACKGROUND_KEY "shift xyzzy"` line in `src/lang/*.rcinc` before building.
 If the string is empty or different, the hidden debug context menu is not
-created at startup.
+created at startup. Production builds should also use `.\build.ps1
+-Production` so the debug password and labels are not compiled into the EXE.
 
 ## Git Discipline
 

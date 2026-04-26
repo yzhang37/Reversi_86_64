@@ -72,5 +72,5 @@ BEGIN
     IDS_WINDOW_DPI_KEY "WindowDpi"
     IDS_COMPUTER_PASS "O computador não tem nenhuma casa livre onde jogar e tem de passar."
     IDS_COMPUTER_PASS_TEXT "O computador passa."
-    IDS_BACKGROUND_KEY "shift xyzzy"
+    // IDS_BACKGROUND_KEY "shift xyzzy"
 END

@@ -72,5 +72,5 @@ BEGIN
     IDS_WINDOW_DPI_KEY "WindowDpi"
     IDS_COMPUTER_PASS "למחשב אין משבצת פנויה למהלך ועליו לדלג על התור."
     IDS_COMPUTER_PASS_TEXT "המחשב מדלג על התור."
-    IDS_BACKGROUND_KEY "shift xyzzy"
+    // IDS_BACKGROUND_KEY "shift xyzzy"
 END

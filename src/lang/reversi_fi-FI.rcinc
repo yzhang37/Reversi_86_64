@@ -72,5 +72,5 @@ BEGIN
     IDS_WINDOW_DPI_KEY "WindowDpi"
     IDS_COMPUTER_PASS "Tietokoneella ei ole vapaata ruutua siirtoa varten, joten sen on passattava."
     IDS_COMPUTER_PASS_TEXT "Tietokone passaa."
-    IDS_BACKGROUND_KEY "shift xyzzy"
+    // IDS_BACKGROUND_KEY "shift xyzzy"
 END

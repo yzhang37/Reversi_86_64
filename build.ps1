@@ -1,3 +1,7 @@
+param(
+    [switch]$Production
+)
+
 $ErrorActionPreference = 'Stop'
 
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -127,11 +131,12 @@ function Set-PeVersion {
 
 $x86Output = Join-Path $Root 'build\x86'
 $x64Output = Join-Path $Root 'build\x64'
+$productionDefine = if ($Production) { ' /DREVERSI_PRODUCTION' } else { '' }
 
 Invoke-Build `
     -Arch 'x86' `
     -OutputDir $x86Output `
-    -Defines '/DWINVER=0x0400 /D_WIN32_WINNT=0x0400 /D_WIN32_WINDOWS=0x0400' `
+    -Defines ('/DWINVER=0x0400 /D_WIN32_WINNT=0x0400 /D_WIN32_WINDOWS=0x0400' + $productionDefine) `
     -CompilerOptions '/arch:IA32' `
     -Subsystem '5.01' `
     -OsVersion '5.01'
@@ -141,7 +146,7 @@ Copy-HelpFiles -OutputDir $x86Output
 Invoke-Build `
     -Arch 'x64' `
     -OutputDir $x64Output `
-    -Defines '/DUNICODE /D_UNICODE /DWINVER=0x0600 /D_WIN32_WINNT=0x0600' `
+    -Defines ('/DUNICODE /D_UNICODE /DWINVER=0x0600 /D_WIN32_WINNT=0x0600' + $productionDefine) `
     -Optimization '/O1' `
     -CompilerOptions '/Gy /Gw' `
     -LinkerOptions '/OPT:REF /OPT:ICF' `

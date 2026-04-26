@@ -1,5 +1,28 @@
 /* Included by reversi_win32.c. Hidden background context menu for manual state probes. */
 
+#ifdef REVERSI_PRODUCTION
+static int IsTestCommand(UINT cmd)
+{
+    (void)cmd;
+    return 0;
+}
+
+static void DestroyTestContextMenu(void)
+{
+    g_testContextMenu = NULL;
+}
+
+static int InitTestContextMenu(void)
+{
+    return 0;
+}
+
+static void ApplyTestScenario(HWND hwnd, UINT cmd)
+{
+    (void)hwnd;
+    (void)cmd;
+}
+#else
 static const UINT kTestMenuCommands[] = {
     IDM_TEST_SCRATCH_BOARD,
     IDM_TEST_PLAYER_PASS,
@@ -212,3 +235,4 @@ static void ApplyTestScenario(HWND hwnd, UINT cmd)
 
     FinishTestGame(hwnd);
 }
+#endif

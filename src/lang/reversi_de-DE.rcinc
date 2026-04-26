@@ -72,5 +72,5 @@ BEGIN
     IDS_WINDOW_DPI_KEY "WindowDpi"
     IDS_COMPUTER_PASS "Der Computer hat kein freies Feld für einen Zug und muss passen."
     IDS_COMPUTER_PASS_TEXT "Der Computer passt."
-    IDS_BACKGROUND_KEY "shift xyzzy"
+    // IDS_BACKGROUND_KEY "shift xyzzy"
 END
