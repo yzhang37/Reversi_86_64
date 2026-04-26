@@ -264,6 +264,7 @@ static ULONG_PTR g_visualStylesCookie = 0;
 static HWND g_mainWindow = NULL;
 static HFONT g_messageFont = NULL;
 static int g_messageFontDpi = 0;
+static int g_messageFontHeight = 0;
 
 static const int k_dirs[8][2] = {
     {-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
@@ -1327,6 +1328,11 @@ static int MaxInt(int a, int b)
     return a > b ? a : b;
 }
 
+static int AbsInt(int value)
+{
+    return value < 0 ? -value : value;
+}
+
 static int ScaleForDpi(int value)
 {
     return g_enableSystemScaling ? MulDiv(value, g_currentDpi, 96) : value;
@@ -1340,7 +1346,7 @@ static int CurrentWindowDpi(void)
 static void BuildFallbackMessageLogFont(LOGFONT *log_font, int dpi)
 {
     AppZeroMemory(log_font, sizeof(*log_font));
-    log_font->lfHeight = -MulDiv(9, IsValidDpi(dpi) ? dpi : 96, 72);
+    log_font->lfHeight = -MulDiv(12, IsValidDpi(dpi) ? dpi : 96, 72);
     log_font->lfWeight = FW_BOLD;
     log_font->lfCharSet = DEFAULT_CHARSET;
     log_font->lfOutPrecision = OUT_DEFAULT_PRECIS;
@@ -1358,7 +1364,6 @@ static int QueryCaptionLogFontForDpi(LOGFONT *log_font, int dpi)
     AppZeroMemory(&metrics, sizeof(metrics));
     metrics.cbSize = sizeof(metrics);
 
-#ifdef UNICODE
     if (IsValidDpi(dpi)) {
         SystemParametersInfoForDpiProc get_for_dpi =
             (SystemParametersInfoForDpiProc)AppGetProc("user32.dll", "SystemParametersInfoForDpi");
@@ -1368,7 +1373,6 @@ static int QueryCaptionLogFontForDpi(LOGFONT *log_font, int dpi)
             got_dpi_metrics = 1;
         }
     }
-#endif
 
     if (!got_metrics) {
         AppZeroMemory(&metrics, sizeof(metrics));
@@ -1390,10 +1394,43 @@ static int QueryCaptionLogFontForDpi(LOGFONT *log_font, int dpi)
         }
     }
     if (log_font->lfHeight == 0) {
-        log_font->lfHeight = -MulDiv(9, IsValidDpi(dpi) ? dpi : 96, 72);
+        log_font->lfHeight = -MulDiv(12, IsValidDpi(dpi) ? dpi : 96, 72);
     }
     log_font->lfWeight = FW_BOLD;
     return 1;
+}
+
+static int MessageFontHeightForWindow(HWND hwnd, int dpi, const LOGFONT *log_font)
+{
+    int safe_dpi = IsValidDpi(dpi) ? dpi : 96;
+    int height = log_font && log_font->lfHeight ? AbsInt(log_font->lfHeight) : 0;
+    int min_height = MulDiv(16, safe_dpi, 96);
+    int scaled_height = 0;
+    RECT rc;
+
+    if (hwnd && GetClientRect(hwnd, &rc)) {
+        int width = rc.right - rc.left;
+        int height_px = rc.bottom - rc.top;
+        int short_side = MinInt(width, height_px);
+        if (short_side > 0) {
+            scaled_height = short_side / 24;
+        }
+    }
+
+    if (height < min_height) {
+        height = min_height;
+    }
+    if (height < scaled_height) {
+        height = scaled_height;
+    }
+    return height > 0 ? height : min_height;
+}
+
+static void ScaleMessageLogFont(HWND hwnd, LOGFONT *log_font, int dpi)
+{
+    int height = MessageFontHeightForWindow(hwnd, dpi, log_font);
+    log_font->lfHeight = log_font->lfHeight > 0 ? height : -height;
+    log_font->lfWeight = FW_BOLD;
 }
 
 static void DestroyMessageFont(void)
@@ -1403,17 +1440,21 @@ static void DestroyMessageFont(void)
         g_messageFont = NULL;
     }
     g_messageFontDpi = 0;
+    g_messageFontHeight = 0;
 }
 
-static void RefreshMessageFont(void)
+static void RefreshMessageFont(HWND hwnd)
 {
     int dpi = CurrentWindowDpi();
     LOGFONT log_font;
+    int height;
     HFONT font;
 
     if (!QueryCaptionLogFontForDpi(&log_font, dpi)) {
         BuildFallbackMessageLogFont(&log_font, dpi);
     }
+    ScaleMessageLogFont(hwnd, &log_font, dpi);
+    height = AbsInt(log_font.lfHeight);
 
     font = CreateFontIndirect(&log_font);
     if (!font) {
@@ -1423,15 +1464,23 @@ static void RefreshMessageFont(void)
     DestroyMessageFont();
     g_messageFont = font;
     g_messageFontDpi = dpi;
+    g_messageFontHeight = height;
 }
 
-static HFONT MessageFont(void)
+static HFONT MessageFont(HWND hwnd)
 {
     HFONT font;
     int dpi = CurrentWindowDpi();
+    LOGFONT log_font;
+    int height;
 
-    if (!g_messageFont || g_messageFontDpi != dpi) {
-        RefreshMessageFont();
+    if (!QueryCaptionLogFontForDpi(&log_font, dpi)) {
+        BuildFallbackMessageLogFont(&log_font, dpi);
+    }
+    height = MessageFontHeightForWindow(hwnd, dpi, &log_font);
+
+    if (!g_messageFont || g_messageFontDpi != dpi || g_messageFontHeight != height) {
+        RefreshMessageFont(hwnd);
     }
     if (g_messageFont) {
         return g_messageFont;
@@ -2773,7 +2822,7 @@ static void CalculateLayout(HWND hwnd, Layout *layout)
     HDC hdc = GetDC(hwnd);
     if (hdc) {
         TEXTMETRIC tm;
-        HFONT font = MessageFont();
+        HFONT font = MessageFont(hwnd);
         HGDIOBJ old_font = font ? SelectObject(hdc, font) : NULL;
         if (APP_GET_TEXT_METRICS(hdc, &tm)) {
             text_h = tm.tmHeight;
@@ -3357,7 +3406,7 @@ static void DrawMessageLine(HWND hwnd, HDC hdc, const Layout *layout)
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, g_messageTextColor);
 
-    HFONT font = MessageFont();
+    HFONT font = MessageFont(hwnd);
     HGDIOBJ old_font = font ? SelectObject(hdc, font) : NULL;
     int len = APP_LSTRLEN(g_game.message);
     SIZE text_size = {0, 0};
@@ -3914,7 +3963,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ReloadMainMenu(hwnd, 0);
         ApplyAppThemeToWindow(hwnd);
         UpdateWindowIcons(hwnd);
-        RefreshMessageFont();
+        RefreshMessageFont(hwnd);
         InitGameState();
         SetTitle(hwnd);
         UpdateMenuChecks(hwnd);
@@ -4086,7 +4135,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         g_currentDpi = NormalizeDpi(dpi);
         UpdateWindowIcons(hwnd);
-        RefreshMessageFont();
+        RefreshMessageFont(hwnd);
         if (suggested) {
             SetWindowPos(
                 hwnd,
@@ -4104,7 +4153,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_MOVE:
         if (g_perMonitorDpiAware && UpdateWindowDpi(hwnd)) {
             UpdateWindowIcons(hwnd);
-            RefreshMessageFont();
+            RefreshMessageFont(hwnd);
             InvalidateRect(hwnd, NULL, TRUE);
         }
         return 0;
@@ -4112,7 +4161,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_WINDOWPOSCHANGED:
         if (g_perMonitorDpiAware && UpdateWindowDpi(hwnd)) {
             UpdateWindowIcons(hwnd);
-            RefreshMessageFont();
+            RefreshMessageFont(hwnd);
             InvalidateRect(hwnd, NULL, TRUE);
         }
         break;
@@ -4125,12 +4174,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         if (g_perMonitorDpiAware) {
             if (UpdateWindowDpi(hwnd)) {
                 UpdateWindowIcons(hwnd);
-                RefreshMessageFont();
+                RefreshMessageFont(hwnd);
             }
         } else {
             g_currentDpi = QuerySystemDpi();
             UpdateWindowIcons(hwnd);
-            RefreshMessageFont();
+            RefreshMessageFont(hwnd);
         }
         RefreshAppTheme(hwnd);
         return 0;
@@ -4140,13 +4189,13 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             g_currentDpi = QuerySystemDpi();
             UpdateWindowIcons(hwnd);
         }
-        RefreshMessageFont();
+        RefreshMessageFont(hwnd);
         RefreshAppTheme(hwnd);
         return 0;
 
     case WM_THEMECHANGED:
     case WM_SYSCOLORCHANGE:
-        RefreshMessageFont();
+        RefreshMessageFont(hwnd);
         RefreshAppTheme(hwnd);
         return 0;
 
