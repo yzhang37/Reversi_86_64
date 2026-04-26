@@ -41,6 +41,18 @@ BEGIN
         MENUITEM "&Slow Animation", IDM_ANIM_SLOW
         MENUITEM "&Fast Animation", IDM_ANIM_FAST
     END
+    POPUP "&Test"
+    BEGIN
+        MENUITEM "I &Pass", IDM_TEST_PLAYER_PASS
+        MENUITEM "Computer &Passes", IDM_TEST_COMPUTER_PASS
+        MENUITEM "I &Cannot Pass", IDM_TEST_CANNOT_PASS
+        MENUITEM "I &Must Pass", IDM_TEST_MUST_PASS
+        MENUITEM "Computer M&ust Pass", IDM_TEST_COMPUTER_MUST_PASS
+        MENUITEM "No &Moves: Game Over", IDM_TEST_NO_MOVES
+        MENUITEM SEPARATOR
+        MENUITEM "I &Won", IDM_TEST_WIN
+        MENUITEM "I &Lost", IDM_TEST_LOSE
+    END
     POPUP "&Help"
     BEGIN
         MENUITEM "&Contents\tF1", IDM_HELP_CONTENTS
@@ -88,6 +100,8 @@ BEGIN
     IDS_WINDOW_WIDTH_KEY "WindowWidth"
     IDS_WINDOW_HEIGHT_KEY "WindowHeight"
     IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "I have no open square to move to and must pass."
+    IDS_COMPUTER_PASS_TEXT "Computer passes."
 END
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
@@ -112,6 +126,18 @@ BEGIN
         MENUITEM "无动画(&D)", IDM_ANIM_NONE
         MENUITEM "慢动画(&S)", IDM_ANIM_SLOW
         MENUITEM "快动画(&F)", IDM_ANIM_FAST
+    END
+    POPUP "测试(&T)"
+    BEGIN
+        MENUITEM "我让棋(&P)", IDM_TEST_PLAYER_PASS
+        MENUITEM "电脑让棋(&C)", IDM_TEST_COMPUTER_PASS
+        MENUITEM "我不能让棋(&N)", IDM_TEST_CANNOT_PASS
+        MENUITEM "我必须让棋(&M)", IDM_TEST_MUST_PASS
+        MENUITEM "电脑必须让棋(&U)", IDM_TEST_COMPUTER_MUST_PASS
+        MENUITEM "双方无棋：结束(&E)", IDM_TEST_NO_MOVES
+        MENUITEM SEPARATOR
+        MENUITEM "我赢了(&W)", IDM_TEST_WIN
+        MENUITEM "我输了(&L)", IDM_TEST_LOSE
     END
     POPUP "帮助(&H)"
     BEGIN
@@ -160,6 +186,8 @@ BEGIN
     IDS_WINDOW_WIDTH_KEY "WindowWidth"
     IDS_WINDOW_HEIGHT_KEY "WindowHeight"
     IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "我没有空位下棋，必须让棋"
+    IDS_COMPUTER_PASS_TEXT "电脑让棋"
 END
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
@@ -184,6 +212,18 @@ BEGIN
         MENUITEM "無動畫(&D)", IDM_ANIM_NONE
         MENUITEM "慢動畫(&S)", IDM_ANIM_SLOW
         MENUITEM "快動畫(&F)", IDM_ANIM_FAST
+    END
+    POPUP "測試(&T)"
+    BEGIN
+        MENUITEM "我讓棋(&P)", IDM_TEST_PLAYER_PASS
+        MENUITEM "電腦讓棋(&C)", IDM_TEST_COMPUTER_PASS
+        MENUITEM "我不能讓棋(&N)", IDM_TEST_CANNOT_PASS
+        MENUITEM "我必須讓棋(&M)", IDM_TEST_MUST_PASS
+        MENUITEM "電腦必須讓棋(&U)", IDM_TEST_COMPUTER_MUST_PASS
+        MENUITEM "雙方無棋：結束(&E)", IDM_TEST_NO_MOVES
+        MENUITEM SEPARATOR
+        MENUITEM "我贏了(&W)", IDM_TEST_WIN
+        MENUITEM "我輸了(&L)", IDM_TEST_LOSE
     END
     POPUP "說明(&H)"
     BEGIN
@@ -232,6 +272,8 @@ BEGIN
     IDS_WINDOW_WIDTH_KEY "WindowWidth"
     IDS_WINDOW_HEIGHT_KEY "WindowHeight"
     IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "我沒有空位下棋，必須讓棋"
+    IDS_COMPUTER_PASS_TEXT "電腦讓棋"
 END
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US

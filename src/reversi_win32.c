@@ -11,6 +11,9 @@
 #define BLUE 2
 
 #define TIMER_FLASH 0x29A
+#define MENU_POS_GAME 0
+#define MENU_POS_OPTIONS 1
+#define MENU_POS_TEST 2
 #define MIN_TRACK_SIZE 200
 #define PROCESS_SYSTEM_DPI_AWARE_LOCAL 1
 #define PROCESS_PER_MONITOR_DPI_AWARE_LOCAL 2
@@ -215,6 +218,7 @@ typedef struct Game {
     int skill_cmd;
     int search_depth;
     int animation_cmd;
+    int opening_pass_available;
     int practice_title;
     int invalid_tip_shown;
     int selected_row;
@@ -258,6 +262,8 @@ static ModernFindBestMoveProc g_modernFindBestMove = NULL;
 static HANDLE g_visualStylesActCtx = INVALID_HANDLE_VALUE;
 static ULONG_PTR g_visualStylesCookie = 0;
 static HWND g_mainWindow = NULL;
+static HFONT g_messageFont = NULL;
+static int g_messageFontDpi = 0;
 
 static const int k_dirs[8][2] = {
     {-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
@@ -285,6 +291,7 @@ typedef BOOL (WINAPI *SetProcessDPIAwareProc)(void);
 typedef UINT (WINAPI *GetDpiForWindowProc)(HWND);
 typedef UINT (WINAPI *GetDpiForSystemProc)(void);
 typedef int (WINAPI *GetSystemMetricsForDpiProc)(int, UINT);
+typedef BOOL (WINAPI *SystemParametersInfoForDpiProc)(UINT, UINT, PVOID, UINT, UINT);
 typedef HRESULT (WINAPI *GetDpiForMonitorProc)(HMONITOR, int, UINT *, UINT *);
 typedef HMONITOR (WINAPI *MonitorFromWindowProc)(HWND, DWORD);
 typedef HANDLE (WINAPI *LoadImageAProc)(HINSTANCE, LPCSTR, UINT, int, int, UINT);
@@ -1328,6 +1335,110 @@ static int ScaleForDpi(int value)
 static int CurrentWindowDpi(void)
 {
     return g_enableSystemScaling && g_currentDpi > 0 ? g_currentDpi : 96;
+}
+
+static void BuildFallbackMessageLogFont(LOGFONT *log_font, int dpi)
+{
+    AppZeroMemory(log_font, sizeof(*log_font));
+    log_font->lfHeight = -MulDiv(9, IsValidDpi(dpi) ? dpi : 96, 72);
+    log_font->lfWeight = FW_BOLD;
+    log_font->lfCharSet = DEFAULT_CHARSET;
+    log_font->lfOutPrecision = OUT_DEFAULT_PRECIS;
+    log_font->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    log_font->lfQuality = DEFAULT_QUALITY;
+    log_font->lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
+}
+
+static int QueryCaptionLogFontForDpi(LOGFONT *log_font, int dpi)
+{
+    NONCLIENTMETRICS metrics;
+    int got_metrics = 0;
+    int got_dpi_metrics = 0;
+
+    AppZeroMemory(&metrics, sizeof(metrics));
+    metrics.cbSize = sizeof(metrics);
+
+#ifdef UNICODE
+    if (IsValidDpi(dpi)) {
+        SystemParametersInfoForDpiProc get_for_dpi =
+            (SystemParametersInfoForDpiProc)AppGetProc("user32.dll", "SystemParametersInfoForDpi");
+        if (get_for_dpi &&
+            get_for_dpi(SPI_GETNONCLIENTMETRICS, metrics.cbSize, &metrics, 0, (UINT)dpi)) {
+            got_metrics = 1;
+            got_dpi_metrics = 1;
+        }
+    }
+#endif
+
+    if (!got_metrics) {
+        AppZeroMemory(&metrics, sizeof(metrics));
+        metrics.cbSize = sizeof(metrics);
+        if (SystemParametersInfo(SPI_GETNONCLIENTMETRICS, metrics.cbSize, &metrics, 0)) {
+            got_metrics = 1;
+        }
+    }
+
+    if (!got_metrics) {
+        return 0;
+    }
+
+    *log_font = metrics.lfCaptionFont;
+    if (!got_dpi_metrics && g_enableSystemScaling && IsValidDpi(dpi)) {
+        int system_dpi = QuerySystemDpi();
+        if (IsValidDpi(system_dpi) && system_dpi != dpi && log_font->lfHeight != 0) {
+            log_font->lfHeight = MulDiv(log_font->lfHeight, dpi, system_dpi);
+        }
+    }
+    if (log_font->lfHeight == 0) {
+        log_font->lfHeight = -MulDiv(9, IsValidDpi(dpi) ? dpi : 96, 72);
+    }
+    log_font->lfWeight = FW_BOLD;
+    return 1;
+}
+
+static void DestroyMessageFont(void)
+{
+    if (g_messageFont) {
+        DeleteObject(g_messageFont);
+        g_messageFont = NULL;
+    }
+    g_messageFontDpi = 0;
+}
+
+static void RefreshMessageFont(void)
+{
+    int dpi = CurrentWindowDpi();
+    LOGFONT log_font;
+    HFONT font;
+
+    if (!QueryCaptionLogFontForDpi(&log_font, dpi)) {
+        BuildFallbackMessageLogFont(&log_font, dpi);
+    }
+
+    font = CreateFontIndirect(&log_font);
+    if (!font) {
+        return;
+    }
+
+    DestroyMessageFont();
+    g_messageFont = font;
+    g_messageFontDpi = dpi;
+}
+
+static HFONT MessageFont(void)
+{
+    HFONT font;
+    int dpi = CurrentWindowDpi();
+
+    if (!g_messageFont || g_messageFontDpi != dpi) {
+        RefreshMessageFont();
+    }
+    if (g_messageFont) {
+        return g_messageFont;
+    }
+
+    font = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+    return font ? font : (HFONT)GetStockObject(SYSTEM_FONT);
 }
 
 static int AppSystemMetricForDpi(int metric, int dpi)
@@ -2662,8 +2773,13 @@ static void CalculateLayout(HWND hwnd, Layout *layout)
     HDC hdc = GetDC(hwnd);
     if (hdc) {
         TEXTMETRIC tm;
+        HFONT font = MessageFont();
+        HGDIOBJ old_font = font ? SelectObject(hdc, font) : NULL;
         if (APP_GET_TEXT_METRICS(hdc, &tm)) {
             text_h = tm.tmHeight;
+        }
+        if (old_font) {
+            SelectObject(hdc, old_font);
         }
         ReleaseDC(hwnd, hdc);
     }
@@ -2823,7 +2939,7 @@ static void UpdateMenuChecks(HWND hwnd)
     }
 
     int busy = IsGameBusy();
-    HMENU options = GetSubMenu(menu, 1);
+    HMENU options = GetSubMenu(menu, MENU_POS_OPTIONS);
     if (options) {
         if (!AppCheckMenuRadioItem(options, IDM_BEGINNER, IDM_MASTER, (UINT)g_game.skill_cmd)) {
             CheckMenuItem(options, IDM_BEGINNER, MF_BYCOMMAND | MF_UNCHECKED);
@@ -2847,8 +2963,9 @@ static void UpdateMenuChecks(HWND hwnd)
         EnableMenuItem(options, IDM_ANIM_FAST, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
     }
 
-    EnableMenuItem(menu, 0, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
-    EnableMenuItem(menu, 1, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, MENU_POS_GAME, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, MENU_POS_OPTIONS, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, MENU_POS_TEST, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
     EnableMenuItem(menu, IDM_NEW, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
     EnableMenuItem(menu, IDM_EXIT, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
     EnableMenuItem(menu, IDM_PASS, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
@@ -2912,6 +3029,7 @@ static void InitGameState(void)
     g_game.skill_cmd = NormalizeSkillCommand(g_configSkillCmd);
     g_game.search_depth = SkillDepthForCommand(g_game.skill_cmd);
     g_game.animation_cmd = NormalizeAnimationCommand(g_configAnimationCmd);
+    g_game.opening_pass_available = 1;
     g_game.selected_row = 3;
     g_game.selected_col = 4;
 }
@@ -2931,6 +3049,124 @@ static void NewGame(HWND hwnd)
     SetTitle(hwnd);
     UpdateMenuChecks(hwnd);
     InvalidateRect(hwnd, NULL, TRUE);
+}
+
+static int IsTestCommand(UINT cmd)
+{
+    return cmd >= IDM_TEST_PLAYER_PASS && cmd <= IDM_TEST_LOSE;
+}
+
+static void PrepareTestGame(HWND hwnd)
+{
+    int skill_cmd = g_game.skill_cmd ? g_game.skill_cmd : IDM_INTERMEDIATE;
+    int depth = g_game.search_depth ? g_game.search_depth : 2;
+    int animation_cmd = g_game.animation_cmd ? g_game.animation_cmd : IDM_ANIM_FAST;
+
+    KillTimer(hwnd, TIMER_FLASH);
+    g_inputLock = 0;
+    g_hintBlankCursor = 0;
+    AppZeroMemory(&g_anim, sizeof(g_anim));
+    AppZeroMemory(&g_placeFlash, sizeof(g_placeFlash));
+
+    InitGameState();
+    g_game.skill_cmd = skill_cmd;
+    g_game.search_depth = depth;
+    g_game.animation_cmd = animation_cmd;
+    g_game.opening_pass_available = 0;
+    g_game.practice_title = 0;
+    g_game.thinking = 0;
+    g_game.flash_ticks = 0;
+    g_game.message[0] = 0;
+    SetTitle(hwnd);
+}
+
+static void SetLinearBoard(int red_count)
+{
+    int index = 0;
+    for (int row = 0; row < BOARD_N; ++row) {
+        for (int col = 0; col < BOARD_N; ++col) {
+            g_game.cells[row][col] = index < red_count ? RED : BLUE;
+            ++index;
+        }
+    }
+}
+
+static void SetPassProbeBoard(int first, int second)
+{
+    AppZeroMemory(g_game.cells, sizeof(g_game.cells));
+    g_game.cells[0][0] = first;
+    g_game.cells[0][1] = second;
+    g_game.selected_row = 0;
+    g_game.selected_col = 2;
+}
+
+static void FinishTestGame(HWND hwnd)
+{
+    UpdateMenuChecks(hwnd);
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
+}
+
+static void TryPass(HWND hwnd);
+
+static void ApplyTestScenario(HWND hwnd, UINT cmd)
+{
+    APP_CHAR message[192];
+
+    PrepareTestGame(hwnd);
+
+    switch (cmd) {
+    case IDM_TEST_PLAYER_PASS:
+        g_game.turn = BLUE;
+        LoadText(IDS_PASS_TEXT, message, 64);
+        SetMessage(hwnd, message, 1);
+        break;
+    case IDM_TEST_COMPUTER_PASS:
+        g_game.turn = RED;
+        LoadText(IDS_COMPUTER_PASS_TEXT, message, 128);
+        SetMessage(hwnd, message, 1);
+        break;
+    case IDM_TEST_CANNOT_PASS:
+        g_game.turn = RED;
+        FinishTestGame(hwnd);
+        TryPass(hwnd);
+        return;
+    case IDM_TEST_MUST_PASS:
+        SetPassProbeBoard(BLUE, RED);
+        g_game.turn = RED;
+        g_game.must_pass = 1;
+        LoadText(IDS_MUST_PASS, message, 128);
+        SetMessage(hwnd, message, 1);
+        break;
+    case IDM_TEST_COMPUTER_MUST_PASS:
+        SetPassProbeBoard(RED, BLUE);
+        g_game.turn = RED;
+        LoadText(IDS_COMPUTER_PASS, message, 128);
+        SetMessage(hwnd, message, 1);
+        break;
+    case IDM_TEST_NO_MOVES:
+        SetLinearBoard(32);
+        g_game.turn = RED;
+        g_game.game_over = 1;
+        SetGameOverMessage(hwnd);
+        break;
+    case IDM_TEST_WIN:
+        SetLinearBoard(42);
+        g_game.turn = RED;
+        g_game.game_over = 1;
+        SetGameOverMessage(hwnd);
+        break;
+    case IDM_TEST_LOSE:
+        SetLinearBoard(22);
+        g_game.turn = RED;
+        g_game.game_over = 1;
+        SetGameOverMessage(hwnd);
+        break;
+    default:
+        return;
+    }
+
+    FinishTestGame(hwnd);
 }
 
 static void FillClassicFace(HDC hdc, const RECT *rc, COLORREF color, int cell_face)
@@ -3121,14 +3357,16 @@ static void DrawMessageLine(HWND hwnd, HDC hdc, const Layout *layout)
     SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, g_messageTextColor);
 
-    HFONT font = (HFONT)GetStockObject(SYSTEM_FONT);
-    HGDIOBJ old_font = SelectObject(hdc, font);
+    HFONT font = MessageFont();
+    HGDIOBJ old_font = font ? SelectObject(hdc, font) : NULL;
     int len = APP_LSTRLEN(g_game.message);
     SIZE text_size = {0, 0};
     APP_GET_TEXT_EXTENT(hdc, g_game.message, len, &text_size);
     int x = layout->message.left + ((layout->message.right - layout->message.left) - text_size.cx) / 2;
     APP_TEXT_OUT(hdc, x, layout->message.top, g_game.message, len);
-    SelectObject(hdc, old_font);
+    if (old_font) {
+        SelectObject(hdc, old_font);
+    }
 
     if (g_game.flash_ticks > 0 && (g_game.flash_ticks & 1)) {
         InvertRect(hdc, &layout->message);
@@ -3356,8 +3594,12 @@ static void ComputerTurn(HWND hwnd)
             SetGameOverMessage(hwnd);
         } else {
             g_game.turn = RED;
-            SetMessage(hwnd, NULL, 0);
+            g_game.must_pass = 0;
+            APP_CHAR message[128];
+            LoadText(IDS_COMPUTER_PASS, message, 128);
+            SetMessage(hwnd, message, 1);
         }
+        UpdateMenuChecks(hwnd);
         return;
     }
 
@@ -3402,6 +3644,13 @@ static void FinishTurn(HWND hwnd)
     }
 }
 
+static int CanPlayerPass(void)
+{
+    return !g_game.game_over &&
+        g_game.turn == RED &&
+        (g_game.opening_pass_available || !HasLegalMove(RED));
+}
+
 static void PlayerMove(HWND hwnd, int row, int col)
 {
     if (g_game.game_over || IsGameBusy() || g_game.turn != RED || g_game.must_pass) {
@@ -3422,6 +3671,7 @@ static void PlayerMove(HWND hwnd, int row, int col)
         return;
     }
 
+    g_game.opening_pass_available = 0;
     g_game.turn = BLUE;
     FinishTurn(hwnd);
 }
@@ -3453,11 +3703,11 @@ static void HandleClick(HWND hwnd, LPARAM lparam)
 
 static void TryPass(HWND hwnd)
 {
-    if (g_game.game_over || IsGameBusy()) {
+    if (g_game.game_over || IsGameBusy() || g_game.turn != RED) {
         return;
     }
 
-    if (HasLegalMove(RED)) {
+    if (!CanPlayerPass()) {
         MessageBeep(MB_ICONWARNING);
         APP_CHAR message[192];
         APP_CHAR title[64];
@@ -3467,6 +3717,7 @@ static void TryPass(HWND hwnd)
         return;
     }
 
+    g_game.opening_pass_available = 0;
     g_game.must_pass = 0;
     g_game.turn = BLUE;
     APP_CHAR message[64];
@@ -3663,6 +3914,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         ReloadMainMenu(hwnd, 0);
         ApplyAppThemeToWindow(hwnd);
         UpdateWindowIcons(hwnd);
+        RefreshMessageFont();
         InitGameState();
         SetTitle(hwnd);
         UpdateMenuChecks(hwnd);
@@ -3676,8 +3928,13 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     }
 
     case WM_COMMAND:
+    {
+        UINT cmd = LOWORD(wparam);
         if (IsGameBusy()) {
-            switch (LOWORD(wparam)) {
+            if (IsTestCommand(cmd)) {
+                return 0;
+            }
+            switch (cmd) {
             case IDM_NEW:
             case IDM_PASS:
             case IDM_HINT:
@@ -3694,7 +3951,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 break;
             }
         }
-        switch (LOWORD(wparam)) {
+        switch (cmd) {
         case IDM_NEW:
             NewGame(hwnd);
             return 0;
@@ -3716,12 +3973,22 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case IDM_ANIM_NONE:
         case IDM_ANIM_SLOW:
         case IDM_ANIM_FAST:
-            SetAnimation(hwnd, LOWORD(wparam));
+            SetAnimation(hwnd, cmd);
+            return 0;
+        case IDM_TEST_PLAYER_PASS:
+        case IDM_TEST_COMPUTER_PASS:
+        case IDM_TEST_CANNOT_PASS:
+        case IDM_TEST_MUST_PASS:
+        case IDM_TEST_COMPUTER_MUST_PASS:
+        case IDM_TEST_NO_MOVES:
+        case IDM_TEST_WIN:
+        case IDM_TEST_LOSE:
+            ApplyTestScenario(hwnd, cmd);
             return 0;
         case IDM_HELP_CONTENTS:
         case IDM_HELP_SEARCH:
         case IDM_HELP_USING:
-            ShowHelp(hwnd, LOWORD(wparam));
+            ShowHelp(hwnd, cmd);
             return 0;
         case IDM_ABOUT:
         {
@@ -3737,6 +4004,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             break;
         }
         break;
+    }
 
     case WM_LBUTTONDOWN:
         SetFocus(hwnd);
@@ -3818,6 +4086,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         g_currentDpi = NormalizeDpi(dpi);
         UpdateWindowIcons(hwnd);
+        RefreshMessageFont();
         if (suggested) {
             SetWindowPos(
                 hwnd,
@@ -3835,6 +4104,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_MOVE:
         if (g_perMonitorDpiAware && UpdateWindowDpi(hwnd)) {
             UpdateWindowIcons(hwnd);
+            RefreshMessageFont();
             InvalidateRect(hwnd, NULL, TRUE);
         }
         return 0;
@@ -3842,6 +4112,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_WINDOWPOSCHANGED:
         if (g_perMonitorDpiAware && UpdateWindowDpi(hwnd)) {
             UpdateWindowIcons(hwnd);
+            RefreshMessageFont();
             InvalidateRect(hwnd, NULL, TRUE);
         }
         break;
@@ -3854,10 +4125,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         if (g_perMonitorDpiAware) {
             if (UpdateWindowDpi(hwnd)) {
                 UpdateWindowIcons(hwnd);
+                RefreshMessageFont();
             }
         } else {
             g_currentDpi = QuerySystemDpi();
             UpdateWindowIcons(hwnd);
+            RefreshMessageFont();
         }
         RefreshAppTheme(hwnd);
         return 0;
@@ -3867,11 +4140,13 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             g_currentDpi = QuerySystemDpi();
             UpdateWindowIcons(hwnd);
         }
+        RefreshMessageFont();
         RefreshAppTheme(hwnd);
         return 0;
 
     case WM_THEMECHANGED:
     case WM_SYSCOLORCHANGE:
+        RefreshMessageFont();
         RefreshAppTheme(hwnd);
         return 0;
 
@@ -3892,6 +4167,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         if (g_mainWindow == hwnd) {
             g_mainWindow = NULL;
         }
+        DestroyMessageFont();
         PostQuitMessage(0);
         return 0;
 
@@ -3923,20 +4199,50 @@ static int RunSelfTest(void)
         return 1;
     }
 
-    if (CountPieces(RED) != 2 || CountPieces(BLUE) != 2) {
+    if (!HasLegalMove(RED) || !CanPlayerPass()) {
         return 2;
     }
-    if (CollectFlips(2, 3, RED, NULL, 0) != 1 || !HasLegalMove(RED)) {
+    g_game.opening_pass_available = 0;
+    if (CanPlayerPass()) {
         return 3;
+    }
+
+    if (CountPieces(RED) != 2 || CountPieces(BLUE) != 2) {
+        return 4;
+    }
+    if (CollectFlips(2, 3, RED, NULL, 0) != 1 || !HasLegalMove(RED)) {
+        return 5;
     }
     int board[BOARD_N][BOARD_N];
     CopyBoard(board, g_game.cells);
     if (!ApplyMoveOnBoard(board, 2, 3, RED) || board[3][3] != RED) {
-        return 4;
+        return 6;
     }
     Move move = FindBestMove(BLUE);
     if (move.row < 0 || move.col < 0) {
-        return 5;
+        return 7;
+    }
+
+    AppZeroMemory(g_game.cells, sizeof(g_game.cells));
+    g_game.cells[0][0] = BLUE;
+    g_game.cells[0][1] = RED;
+    g_game.turn = RED;
+    g_game.game_over = 0;
+    g_game.opening_pass_available = 0;
+    if (HasLegalMove(RED) || !HasLegalMove(BLUE) || !CanPlayerPass()) {
+        return 8;
+    }
+
+    for (int row = 0; row < BOARD_N; ++row) {
+        for (int col = 0; col < BOARD_N; ++col) {
+            g_game.cells[row][col] = RED;
+        }
+    }
+    g_game.turn = RED;
+    g_game.game_over = 0;
+    g_game.opening_pass_available = 0;
+    if (HasLegalMove(RED) || HasLegalMove(BLUE)) {
+        return 9;
     }
     return 0;
 }
