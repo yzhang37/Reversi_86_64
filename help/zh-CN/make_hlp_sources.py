@@ -88,7 +88,7 @@ def rich(parts):
 def para(parts, before=75, left=115, first=0):
     fi = f"\\fi{first}" if first else ""
     return (
-        f"\\pard\\sb{before}\\sl-235\\li{left}\\ri125{fi} \\f1\\fs18 "
+        f"\\pard\\sb{before}\\sl-235\\li{left}\\ri125{fi} \\plain\\f1\\fs18 "
         + rich(parts)
         + "\n\\par\n"
     )
@@ -98,6 +98,7 @@ def title_line(text):
     return (
         r"\pard\sb115\sa35\sl-235\li115\ri125 \f1\b\fs18 "
         + rtf_text(text)
+        + r"\plain\f1\fs18"
         + "\n\\par\n"
     )
 
@@ -142,7 +143,7 @@ def bullet(parts, before=45, left=295, first=-185):
 
 def table_row(left, right, before=55):
     return (
-        f"\\pard\\sb{before}\\sl-235\\li2155\\fi-2035\\tx2155 \\f1\\fs18 "
+        f"\\pard\\sb{before}\\sl-235\\li2155\\fi-2035\\tx2155 \\plain\\f1\\fs18 "
         + rtf_text(left)
         + r"\tab "
         + rtf_text(right)
