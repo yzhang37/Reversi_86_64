@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for ar-SA. */
+
+LANGUAGE LANG_ARABIC, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "لعبة(&G)"
+    BEGIN
+        MENUITEM "جديد(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "تمرير(&P)", IDM_PASS
+        MENUITEM "تلميح(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "إنهاء(&X)", IDM_EXIT
+    END
+    POPUP "خيارات(&O)"
+    BEGIN
+        MENUITEM "مبتدئ(&B)", IDM_BEGINNER
+        MENUITEM "متوسط(&N)", IDM_INTERMEDIATE
+        MENUITEM "خبير(&E)", IDM_EXPERT
+        MENUITEM "محترف(&M)", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "بدون حركة(&D)", IDM_ANIM_NONE
+        MENUITEM "حركة بطيئة(&S)", IDM_ANIM_SLOW
+        MENUITEM "حركة سريعة(&F)", IDM_ANIM_FAST
+    END
+    POPUP "تعليمات(&H)"
+    BEGIN
+        MENUITEM "المحتويات(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "البحث في التعليمات(&S)...", IDM_HELP_SEARCH
+        MENUITEM "كيفية استخدام التعليمات(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "حول ريفيرسي(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_ARABIC, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "ريفرسي"
+    IDS_PRACTICE_TITLE "لعبة تدريب ريفيرسي"
+    IDS_PASS_TEXT "تمرير"
+    IDS_MUST_PASS "لا توجد خانة فارغة يمكنك اللعب فيها، ويجب أن تمرر الدور."
+    IDS_DRAW "تعادل"
+    IDS_LOST_FMT "خسرت بفارق %d قطعة"
+    IDS_WON_FMT "فزت بفارق %d قطعة"
+    IDS_ABOUT_MENU "حول..."
+    IDS_INVALID_MOVE "يمكنك اللعب فقط حيث يتغير مؤشر الماوس إلى صليب."
+    IDS_CANNOT_PASS "لا يمكنك تمرير الدور. حرّك مؤشر الماوس إلى خانة يتحول فيها إلى صليب."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "فيما يلي وصف موجز لبرنامج ريفيرسي:\n\nقواعد ريفيرسي: أحط قطع الكمبيوتر في خط أفقي أو عمودي أو قطري لتحويلها إلى لونك.\n\nقطعك حمراء. قطع الكمبيوتر زرقاء. يمكنك اللعب فقط حيث يتحول المؤشر إلى صليب."
+    IDS_HELP_SEARCH_TEXT "تعذر العثور على ملف تعليمات ريفيرسي. تأكد من تثبيت ملف التعليمات ثم حاول مرة أخرى."
+    IDS_HELP_USING_TEXT "تعذر فتح تعليمات كيفية استخدام التعليمات. تأكد من تثبيت تعليمات Windows ثم حاول مرة أخرى."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "تعذر تسجيل فئة النافذة."
+    IDS_CREATE_FAIL "تعذر إنشاء النافذة."
+    IDS_FILE_DESCRIPTION "تطبيق ريفيرسي لـ Microsoft Windows"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "تعليمات ريفيرسي"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "لا توجد خانة فارغة يستطيع الكمبيوتر اللعب فيها، ويجب أن يمرر الدور."
+    IDS_COMPUTER_PASS_TEXT "يمرر الكمبيوتر الدور."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for he-IL. */
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "משחק(&G)"
+    BEGIN
+        MENUITEM "חדש(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "דלג(&P)", IDM_PASS
+        MENUITEM "רמז(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "יציאה(&X)", IDM_EXIT
+    END
+    POPUP "אפשרויות(&O)"
+    BEGIN
+        MENUITEM "מתחיל(&B)", IDM_BEGINNER
+        MENUITEM "בינוני(&N)", IDM_INTERMEDIATE
+        MENUITEM "מומחה(&E)", IDM_EXPERT
+        MENUITEM "אמן(&M)", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "ללא הנפשה(&D)", IDM_ANIM_NONE
+        MENUITEM "הנפשה איטית(&S)", IDM_ANIM_SLOW
+        MENUITEM "הנפשה מהירה(&F)", IDM_ANIM_FAST
+    END
+    POPUP "עזרה(&H)"
+    BEGIN
+        MENUITEM "תוכן(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "חיפוש בעזרה(&S)...", IDM_HELP_SEARCH
+        MENUITEM "כיצד להשתמש בעזרה(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "אודות רברסי(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "רברסי"
+    IDS_PRACTICE_TITLE "משחק אימון רברסי"
+    IDS_PASS_TEXT "דלג"
+    IDS_MUST_PASS "אין לך משבצת פנויה למהלך ועליך לדלג על התור."
+    IDS_DRAW "תיקו"
+    IDS_LOST_FMT "הפסדת בהפרש של %d דסקיות"
+    IDS_WON_FMT "ניצחת בהפרש של %d דסקיות"
+    IDS_ABOUT_MENU "אודות..."
+    IDS_INVALID_MOVE "ניתן לבצע מהלך רק במקום שבו מצביע העכבר משתנה לצלב."
+    IDS_CANNOT_PASS "אינך יכול לדלג. העבר את מצביע העכבר למשבצת שבה הוא משתנה לצלב."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "להלן תיאור קצר של תוכנית רברסי:\n\nכללי רברסי: לכוד את דסקיות המחשב בשורה אופקית, אנכית או אלכסונית כדי להפוך אותן לצבע שלך.\n\nהדסקיות שלך אדומות. דסקיות המחשב כחולות. ניתן לבצע מהלך רק במקום שבו המצביע משתנה לצלב."
+    IDS_HELP_SEARCH_TEXT "קובץ העזרה של רברסי לא נמצא. ודא שקובץ העזרה מותקן ולאחר מכן נסה שוב."
+    IDS_HELP_USING_TEXT "לא ניתן לפתוח את העזרה בנושא שימוש בעזרה. ודא שעזרת Windows מותקנת ולאחר מכן נסה שוב."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "לא ניתן לרשום את מחלקת החלון."
+    IDS_CREATE_FAIL "לא ניתן ליצור את החלון."
+    IDS_FILE_DESCRIPTION "יישום רברסי של Microsoft Windows"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "עזרה של רברסי"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "למחשב אין משבצת פנויה למהלך ועליו לדלג על התור."
+    IDS_COMPUTER_PASS_TEXT "המחשב מדלג על התור."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

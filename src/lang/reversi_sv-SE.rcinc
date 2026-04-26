@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for sv-SE. */
+
+LANGUAGE LANG_SWEDISH, SUBLANG_SWEDISH
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Spel"
+    BEGIN
+        MENUITEM "&Nytt\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Passa", IDM_PASS
+        MENUITEM "&Tips\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Avsluta", IDM_EXIT
+    END
+    POPUP "&Alternativ"
+    BEGIN
+        MENUITEM "&Nybörjare", IDM_BEGINNER
+        MENUITEM "&Medel", IDM_INTERMEDIATE
+        MENUITEM "&Expert", IDM_EXPERT
+        MENUITEM "&Mästare", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Ingen animering", IDM_ANIM_NONE
+        MENUITEM "&Långsam animering", IDM_ANIM_SLOW
+        MENUITEM "&Snabb animering", IDM_ANIM_FAST
+    END
+    POPUP "&Hjälp"
+    BEGIN
+        MENUITEM "&Innehåll\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Sök i Hjälp...", IDM_HELP_SEARCH
+        MENUITEM "&Använda Hjälp", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Om Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_SWEDISH, SUBLANG_SWEDISH
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Övningsspel i Reversi"
+    IDS_PASS_TEXT "Passa"
+    IDS_MUST_PASS "Du har ingen ledig ruta att spela på och måste passa."
+    IDS_DRAW "Oavgjort"
+    IDS_LOST_FMT "Du förlorade med %d brickor"
+    IDS_WON_FMT "Du vann med %d brickor"
+    IDS_ABOUT_MENU "Om..."
+    IDS_INVALID_MOVE "Du kan bara spela där muspekaren ändras till ett kors."
+    IDS_CANNOT_PASS "Du kan inte passa. Flytta muspekaren till en ruta där den ändras till ett kors."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Här är en kort beskrivning av Reversi:\n\nRegler för Reversi: fånga datorns brickor i en vågrät, lodrät eller diagonal rad för att vända dem till din färg.\n\nDina brickor är röda. Datorns brickor är blå. Du kan bara spela där pekaren ändras till ett kors."
+    IDS_HELP_SEARCH_TEXT "Hjälpfilen för Reversi hittades inte. Kontrollera att hjälpfilen är installerad och försök igen."
+    IDS_HELP_USING_TEXT "Hjälpen om hur Hjälp används kunde inte öppnas. Kontrollera att Windows Hjälp är installerad och försök igen."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Det gick inte att registrera fönsterklassen."
+    IDS_CREATE_FAIL "Det gick inte att skapa fönstret."
+    IDS_FILE_DESCRIPTION "Microsoft Windows Reversi-program"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Hjälp för Reversi"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "Datorn har ingen ledig ruta att spela på och måste passa."
+    IDS_COMPUTER_PASS_TEXT "Datorn passar."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

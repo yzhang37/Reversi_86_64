@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for es-ES. */
+
+LANGUAGE LANG_SPANISH, SUBLANG_SPANISH
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Juego"
+    BEGIN
+        MENUITEM "&Nuevo\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Pasar", IDM_PASS
+        MENUITEM "&Pista\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Salir", IDM_EXIT
+    END
+    POPUP "&Opciones"
+    BEGIN
+        MENUITEM "&Principiante", IDM_BEGINNER
+        MENUITEM "&Intermedio", IDM_INTERMEDIATE
+        MENUITEM "&Experto", IDM_EXPERT
+        MENUITEM "&Maestro", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Sin animación", IDM_ANIM_NONE
+        MENUITEM "Animación &lenta", IDM_ANIM_SLOW
+        MENUITEM "Animación &rápida", IDM_ANIM_FAST
+    END
+    POPUP "A&yuda"
+    BEGIN
+        MENUITEM "&Contenido\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Buscar en la ayuda...", IDM_HELP_SEARCH
+        MENUITEM "&Cómo usar la ayuda", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Acerca de Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_SPANISH, SUBLANG_SPANISH
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Partida de práctica de Reversi"
+    IDS_PASS_TEXT "Pasar"
+    IDS_MUST_PASS "No tiene ninguna casilla libre donde mover y debe pasar."
+    IDS_DRAW "Empate"
+    IDS_LOST_FMT "Ha perdido por %d fichas"
+    IDS_WON_FMT "Ha ganado por %d fichas"
+    IDS_ABOUT_MENU "Acerca de..."
+    IDS_INVALID_MOVE "Solo puede mover donde el puntero del mouse cambia a una cruz."
+    IDS_CANNOT_PASS "No puede pasar. Mueva el puntero del mouse a una casilla donde cambie a una cruz."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Esta es una breve descripción del programa Reversi:\n\nReglas de Reversi: atrape las fichas del ordenador en una línea horizontal, vertical o diagonal para cambiarlas a su color.\n\nSus fichas son rojas. Las fichas del ordenador son azules. Solo puede mover donde el puntero cambia a una cruz."
+    IDS_HELP_SEARCH_TEXT "No se encontró el archivo de ayuda de Reversi. Asegúrese de que el archivo de ayuda esté instalado e inténtelo de nuevo."
+    IDS_HELP_USING_TEXT "No se pudo abrir la ayuda sobre cómo usar la ayuda. Asegúrese de que la Ayuda de Windows esté instalada e inténtelo de nuevo."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "No se pudo registrar la clase de ventana."
+    IDS_CREATE_FAIL "No se pudo crear la ventana."
+    IDS_FILE_DESCRIPTION "Aplicación Reversi de Microsoft Windows"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Ayuda de Reversi"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "El ordenador no tiene ninguna casilla libre donde mover y debe pasar."
+    IDS_COMPUTER_PASS_TEXT "El ordenador pasa."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

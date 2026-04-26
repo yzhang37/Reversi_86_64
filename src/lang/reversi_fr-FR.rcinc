@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for fr-FR. */
+
+LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Partie"
+    BEGIN
+        MENUITEM "&Nouvelle\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Passer", IDM_PASS
+        MENUITEM "&Indice\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Quitter", IDM_EXIT
+    END
+    POPUP "&Options"
+    BEGIN
+        MENUITEM "&Débutant", IDM_BEGINNER
+        MENUITEM "&Intermédiaire", IDM_INTERMEDIATE
+        MENUITEM "&Expert", IDM_EXPERT
+        MENUITEM "&Maître", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "Animation &désactivée", IDM_ANIM_NONE
+        MENUITEM "Animation &lente", IDM_ANIM_SLOW
+        MENUITEM "Animation &rapide", IDM_ANIM_FAST
+    END
+    POPUP "&Aide"
+    BEGIN
+        MENUITEM "&Sommaire\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Rechercher dans l'aide...", IDM_HELP_SEARCH
+        MENUITEM "&Utilisation de l'aide", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "À &propos de Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Partie d'entraînement Reversi"
+    IDS_PASS_TEXT "Passer"
+    IDS_MUST_PASS "Vous n'avez aucune case libre où jouer et vous devez passer."
+    IDS_DRAW "Match nul"
+    IDS_LOST_FMT "Vous avez perdu de %d pions"
+    IDS_WON_FMT "Vous avez gagné de %d pions"
+    IDS_ABOUT_MENU "À propos..."
+    IDS_INVALID_MOVE "Vous ne pouvez jouer que là où le pointeur de la souris devient une croix."
+    IDS_CANNOT_PASS "Vous ne pouvez pas passer. Déplacez le pointeur vers une case où il devient une croix."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Voici une brève description du programme Reversi :\n\nRègles du Reversi : encadrez les pions de l'ordinateur sur une ligne horizontale, verticale ou diagonale pour les retourner à votre couleur.\n\nVos pions sont rouges. Les pions de l'ordinateur sont bleus. Vous ne pouvez jouer que là où le pointeur devient une croix."
+    IDS_HELP_SEARCH_TEXT "Le fichier d'aide de Reversi est introuvable. Vérifiez que le fichier d'aide est installé, puis réessayez."
+    IDS_HELP_USING_TEXT "Impossible d'ouvrir l'aide sur l'utilisation de l'aide. Vérifiez que l'aide Windows est installée, puis réessayez."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Impossible d'enregistrer la classe de fenêtre."
+    IDS_CREATE_FAIL "Impossible de créer la fenêtre."
+    IDS_FILE_DESCRIPTION "Application Reversi Microsoft Windows"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Aide de Reversi"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "L'ordinateur n'a aucune case libre où jouer et doit passer."
+    IDS_COMPUTER_PASS_TEXT "L'ordinateur passe."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

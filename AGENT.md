@@ -34,8 +34,22 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
 - Build and release details are in `docs/BUILD_AND_RELEASE.md`.
+- Source layout and Maintainable Code Golf rules are in
+  `docs/CODE_STRUCTURE.md`.
 - Porting and behavior rules are in `docs/PORTING_NOTES.md`.
 - WinHelp-specific rules are in `docs/winhelp/`.
+
+## Maintainable Code Golf
+
+- This project uses "Maintainable Code Golf" (MCG): make code as compact as
+  possible without making it harder to understand, modify, or extend.
+- Prefer clear names, early returns, short single-purpose helpers, and visible
+  state. Do not use clever short-circuit side effects, dense ternary chains, or
+  hidden shared state to save lines.
+- Split large code by responsibility. Keep include shards obvious and boring:
+  platform glue, settings, rules, paint, help, test menu, resources.
+- Comments should explain invariants, compatibility traps, and original-code
+  behavior. Do not narrate obvious assignments.
 
 ## Compatibility Contract
 
@@ -52,11 +66,28 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 
 ## Resources And Localization
 
-- UI strings belong in `src/reversi.rc` unless a feature is explicitly debug
+- `src/reversi.rc` is an index file. Language resources live in
+  `src/lang/*.rcinc`; version metadata lives in `src/reversi_version.rcinc`.
+- UI strings belong in resource files unless a feature is explicitly debug
   only. Supported resource languages are:
   - English, United States: 1033 / `0409`
   - Chinese, China: 2052 / `0804`
   - Chinese, Taiwan: 1028 / `0404`
+  - Japanese: `0411`
+  - Korean: `0412`
+  - French: `040c`
+  - German: `0407`
+  - Spanish: `040a`
+  - Swedish: `041d`
+  - Finnish: `040b`
+  - Portuguese, Portugal: `0816`
+  - Italian: `0410`
+  - Russian: `0419`
+  - Ukrainian: `0422`
+  - Arabic: `0401`
+  - Hebrew: `040d`
+- German (Switzerland) / `0807` was explicitly cancelled. Do not add it unless
+  the user asks again.
 - Version info currently targets the Windows 95 / Windows NT 4.0 generation:
   `4.0.0.0`.
 - Keep icons, version metadata, menus, about text, and string resources in the
@@ -67,14 +98,16 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 ## Hidden Debug Context Menu
 
 - The background debug menu is created at runtime, not as an RC `MENU`.
-- It is enabled only when `IDS_BACKGROUND_KEY` in `src/reversi.rc` is exactly:
+- It is enabled only when the active language resource's `IDS_BACKGROUND_KEY`
+  in `src/lang/*.rcinc` is exactly:
 
 ```text
 shift xyzzy
 ```
 
 - If the user explicitly says to publish a formal release or production build,
-  comment out every `IDS_BACKGROUND_KEY "shift xyzzy"` line before building.
+  comment out every `IDS_BACKGROUND_KEY "shift xyzzy"` line in
+  `src/lang/*.rcinc` before building.
 - For normal development builds or commits, keep those lines present and
   uncommented.
 - The debug menu opens from right-click on blank client area. Current entries

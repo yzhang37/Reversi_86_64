@@ -25,6 +25,23 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 
 The build uses MSVC directly through `vcvarsall.bat`, not a project file.
 
+## Source And Resource Layout
+
+The main C file includes responsibility-focused `.inc` shards. They are still
+one translation unit:
+
+```text
+reversi_platform.inc
+reversi_help.inc
+reversi_settings.inc
+reversi_rules.inc
+reversi_test_menu.inc
+reversi_paint.inc
+```
+
+`src/reversi.rc` is also an index file. Localized menus/string tables are under
+`src/lang/*.rcinc`; version metadata is in `src/reversi_version.rcinc`.
+
 ## Self-Test
 
 ```powershell
@@ -74,8 +91,9 @@ link: /OPT:REF /OPT:ICF
 ```
 
 - Subsystem is Windows GUI 6.0.
-- Current x64 size after optimization was reduced from 65536 bytes to about
-  51712 bytes.
+- Binary size changes with localized resources and bundled metadata. Do not use
+  a stale byte count as a release criterion; compare size only when evaluating
+  a specific optimization.
 
 ## CRT Avoidance
 
@@ -96,7 +114,7 @@ both x86 and x64.
 
 ## Version Info
 
-`src/reversi.rc` currently reports:
+`src/reversi_version.rcinc` currently reports:
 
 ```text
 FileVersion    4.0.0.0
@@ -114,18 +132,18 @@ Development builds keep:
 IDS_BACKGROUND_KEY "shift xyzzy"
 ```
 
-Formal release or production builds must comment out every `IDS_BACKGROUND_KEY
-"shift xyzzy"` line in `src/reversi.rc` before building. If the string is empty
-or different, the hidden debug context menu is not created at startup.
+Formal release or production builds must comment out every
+`IDS_BACKGROUND_KEY "shift xyzzy"` line in `src/lang/*.rcinc` before building.
+If the string is empty or different, the hidden debug context menu is not
+created at startup.
 
 ## Git Discipline
 
 - Run git commands with escalated permissions in this workspace.
 - Stage only the files related to the current task.
-- Do not stage user reference files, `.GID` caches, decompiled experiments, or
-  unrelated dirty files.
-- Current common ignored/untracked reference categories include Microsoft game
-  HLP/CHM/EXE files, WinHelp analysis folders, and generated `.GID` files.
+- Do not stage unrelated dirty files. If the user explicitly asks to submit the
+  entire repository, include tracked/generated reference assets as requested.
+- Generated `.GID` caches stay ignored.
 
 ## Build Blockers
 

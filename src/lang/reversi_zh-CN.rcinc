@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for zh-CN. */
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "游戏(&G)"
+    BEGIN
+        MENUITEM "开局(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "让棋(&P)", IDM_PASS
+        MENUITEM "提示(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "退出(&X)", IDM_EXIT
+    END
+    POPUP "选项(&O)"
+    BEGIN
+        MENUITEM "初级(&B)", IDM_BEGINNER
+        MENUITEM "中级(&N)", IDM_INTERMEDIATE
+        MENUITEM "高级(&E)", IDM_EXPERT
+        MENUITEM "大师(&M)", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "无动画(&D)", IDM_ANIM_NONE
+        MENUITEM "慢动画(&S)", IDM_ANIM_SLOW
+        MENUITEM "快动画(&F)", IDM_ANIM_FAST
+    END
+    POPUP "帮助(&H)"
+    BEGIN
+        MENUITEM "目录(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "搜索帮助内容(&S)...", IDM_HELP_SEARCH
+        MENUITEM "如何使用帮助(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "关于翻转棋(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "翻转棋"
+    IDS_PRACTICE_TITLE "翻转棋练习赛"
+    IDS_PASS_TEXT "让棋"
+    IDS_MUST_PASS "您没有空位下棋，必须让棋"
+    IDS_DRAW "平局"
+    IDS_LOST_FMT "您以 %d 子落败"
+    IDS_WON_FMT "您以 %d 子获胜"
+    IDS_ABOUT_MENU "关于..."
+    IDS_INVALID_MOVE "您只能在鼠标光标显示成十字准心的位置下棋。"
+    IDS_CANNOT_PASS "您不能让棋。请将鼠标光标移动到显示十字准心的位置。"
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "以下是“翻转棋程序”的简短说明：\n\n翻转棋规则：在一条横、竖或斜线上夹住电脑棋子，就可以把它们翻成你的颜色。\n\n你的棋子是红色，电脑棋子是蓝色。只有鼠标光标变成十字准心的位置才能落子。"
+    IDS_HELP_SEARCH_TEXT "无法找到翻转棋帮助文件。请确认帮助文件已经安装，然后重试。"
+    IDS_HELP_USING_TEXT "无法打开“如何使用帮助”的说明。请确认 Windows 帮助已经安装，然后重试。"
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "无法注册窗口类。"
+    IDS_CREATE_FAIL "无法创建窗口。"
+    IDS_FILE_DESCRIPTION "Microsoft Windows Reversi Application"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "翻转棋帮助"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "计算机没有空位下棋，必须让棋"
+    IDS_COMPUTER_PASS_TEXT "计算机让棋"
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

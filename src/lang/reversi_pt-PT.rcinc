@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for pt-PT. */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Jogo"
+    BEGIN
+        MENUITEM "&Novo\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Passar", IDM_PASS
+        MENUITEM "&Sugestão\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Sair", IDM_EXIT
+    END
+    POPUP "&Opções"
+    BEGIN
+        MENUITEM "&Principiante", IDM_BEGINNER
+        MENUITEM "&Intermédio", IDM_INTERMEDIATE
+        MENUITEM "&Perito", IDM_EXPERT
+        MENUITEM "&Mestre", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Sem animação", IDM_ANIM_NONE
+        MENUITEM "Animação &lenta", IDM_ANIM_SLOW
+        MENUITEM "Animação &rápida", IDM_ANIM_FAST
+    END
+    POPUP "&Ajuda"
+    BEGIN
+        MENUITEM "&Conteúdo\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Procurar na Ajuda...", IDM_HELP_SEARCH
+        MENUITEM "&Como utilizar a Ajuda", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Acerca do Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Jogo de treino Reversi"
+    IDS_PASS_TEXT "Passar"
+    IDS_MUST_PASS "Não tem nenhuma casa livre onde jogar e tem de passar."
+    IDS_DRAW "Empate"
+    IDS_LOST_FMT "Perdeu por %d peças"
+    IDS_WON_FMT "Ganhou por %d peças"
+    IDS_ABOUT_MENU "Acerca de..."
+    IDS_INVALID_MOVE "Só pode jogar onde o ponteiro do rato muda para uma cruz."
+    IDS_CANNOT_PASS "Não pode passar. Mova o ponteiro do rato para uma casa onde mude para uma cruz."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Segue-se uma breve descrição do programa Reversi:\n\nRegras do Reversi: cerque as peças do computador numa linha horizontal, vertical ou diagonal para as virar para a sua cor.\n\nAs suas peças são vermelhas. As peças do computador são azuis. Só pode jogar onde o ponteiro muda para uma cruz."
+    IDS_HELP_SEARCH_TEXT "Não foi possível encontrar o ficheiro de Ajuda do Reversi. Certifique-se de que o ficheiro de Ajuda está instalado e tente novamente."
+    IDS_HELP_USING_TEXT "Não foi possível abrir a Ajuda sobre como utilizar a Ajuda. Certifique-se de que a Ajuda do Windows está instalada e tente novamente."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Não foi possível registar a classe da janela."
+    IDS_CREATE_FAIL "Não foi possível criar a janela."
+    IDS_FILE_DESCRIPTION "Aplicação Reversi do Microsoft Windows"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Ajuda do Reversi"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "O computador não tem nenhuma casa livre onde jogar e tem de passar."
+    IDS_COMPUTER_PASS_TEXT "O computador passa."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

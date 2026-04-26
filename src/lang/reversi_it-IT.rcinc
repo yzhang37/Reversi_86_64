@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for it-IT. */
+
+LANGUAGE LANG_ITALIAN, SUBLANG_ITALIAN
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Partita"
+    BEGIN
+        MENUITEM "&Nuova\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Passa", IDM_PASS
+        MENUITEM "&Suggerimento\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Esci", IDM_EXIT
+    END
+    POPUP "&Opzioni"
+    BEGIN
+        MENUITEM "&Principiante", IDM_BEGINNER
+        MENUITEM "&Intermedio", IDM_INTERMEDIATE
+        MENUITEM "&Esperto", IDM_EXPERT
+        MENUITEM "&Maestro", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Nessuna animazione", IDM_ANIM_NONE
+        MENUITEM "Animazione &lenta", IDM_ANIM_SLOW
+        MENUITEM "Animazione &veloce", IDM_ANIM_FAST
+    END
+    POPUP "&Guida"
+    BEGIN
+        MENUITEM "&Sommario\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Cerca nella Guida...", IDM_HELP_SEARCH
+        MENUITEM "&Uso della Guida", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Informazioni su Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_ITALIAN, SUBLANG_ITALIAN
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Partita di pratica di Reversi"
+    IDS_PASS_TEXT "Passa"
+    IDS_MUST_PASS "Non ci sono caselle libere in cui muovere: devi passare."
+    IDS_DRAW "Pareggio"
+    IDS_LOST_FMT "Hai perso per %d pedine"
+    IDS_WON_FMT "Hai vinto per %d pedine"
+    IDS_ABOUT_MENU "Informazioni..."
+    IDS_INVALID_MOVE "Puoi muovere solo dove il puntatore del mouse diventa una croce."
+    IDS_CANNOT_PASS "Non puoi passare. Sposta il puntatore del mouse su una casella in cui diventa una croce."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Questa è una breve descrizione del programma Reversi:\n\nRegole di Reversi: racchiudi le pedine del computer in una riga orizzontale, verticale o diagonale per girarle nel tuo colore.\n\nLe tue pedine sono rosse. Le pedine del computer sono blu. Puoi muovere solo dove il puntatore diventa una croce."
+    IDS_HELP_SEARCH_TEXT "Il file della Guida di Reversi non è stato trovato. Verificare che il file della Guida sia installato, quindi riprovare."
+    IDS_HELP_USING_TEXT "Impossibile aprire la Guida sull'uso della Guida. Verificare che la Guida di Windows sia installata, quindi riprovare."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Impossibile registrare la classe della finestra."
+    IDS_CREATE_FAIL "Impossibile creare la finestra."
+    IDS_FILE_DESCRIPTION "Applicazione Reversi per Microsoft Windows"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Guida di Reversi"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "Il computer non ha caselle libere in cui muovere e deve passare."
+    IDS_COMPUTER_PASS_TEXT "Il computer passa."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for ko-KR. */
+
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "게임(&G)"
+    BEGIN
+        MENUITEM "새 게임(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "패스(&P)", IDM_PASS
+        MENUITEM "힌트(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "끝내기(&X)", IDM_EXIT
+    END
+    POPUP "옵션(&O)"
+    BEGIN
+        MENUITEM "초급(&B)", IDM_BEGINNER
+        MENUITEM "중급(&N)", IDM_INTERMEDIATE
+        MENUITEM "고급(&E)", IDM_EXPERT
+        MENUITEM "마스터(&M)", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "애니메이션 없음(&D)", IDM_ANIM_NONE
+        MENUITEM "느린 애니메이션(&S)", IDM_ANIM_SLOW
+        MENUITEM "빠른 애니메이션(&F)", IDM_ANIM_FAST
+    END
+    POPUP "도움말(&H)"
+    BEGIN
+        MENUITEM "목차(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "도움말 검색(&S)...", IDM_HELP_SEARCH
+        MENUITEM "도움말 사용 방법(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "리버시 정보(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "리버시"
+    IDS_PRACTICE_TITLE "리버시 연습 게임"
+    IDS_PASS_TEXT "패스"
+    IDS_MUST_PASS "둘 수 있는 빈 칸이 없어 패스해야 합니다."
+    IDS_DRAW "무승부"
+    IDS_LOST_FMT "%d개 차이로 졌습니다"
+    IDS_WON_FMT "%d개 차이로 이겼습니다"
+    IDS_ABOUT_MENU "정보..."
+    IDS_INVALID_MOVE "마우스 포인터가 십자 모양으로 바뀌는 곳에만 둘 수 있습니다."
+    IDS_CANNOT_PASS "패스할 수 없습니다. 마우스 포인터가 십자 모양으로 바뀌는 칸으로 이동하십시오."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "리버시 프로그램의 간단한 설명입니다.\n\n리버시 규칙: 가로, 세로 또는 대각선으로 컴퓨터의 말을 끼우면 그 말을 내 색으로 뒤집을 수 있습니다.\n\n내 말은 빨간색이고 컴퓨터 말은 파란색입니다. 마우스 포인터가 십자 모양으로 바뀌는 곳에만 둘 수 있습니다."
+    IDS_HELP_SEARCH_TEXT "리버시 도움말 파일을 찾을 수 없습니다. 도움말 파일이 설치되어 있는지 확인한 후 다시 시도하십시오."
+    IDS_HELP_USING_TEXT "도움말 사용 방법을 열 수 없습니다. Windows 도움말이 설치되어 있는지 확인한 후 다시 시도하십시오."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "창 클래스를 등록할 수 없습니다."
+    IDS_CREATE_FAIL "창을 만들 수 없습니다."
+    IDS_FILE_DESCRIPTION "Microsoft Windows 리버시 응용 프로그램"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "리버시 도움말"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "컴퓨터가 둘 수 있는 빈 칸이 없어 패스해야 합니다."
+    IDS_COMPUTER_PASS_TEXT "컴퓨터가 패스합니다."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

@@ -109,14 +109,19 @@ docs/winhelp/*.md
 
 ```text
 *.GID
-外部系统 HLP/CHM/EXE 参考文件
 ```
+
+外部系统 HLP/CHM/EXE 参考文件、Help Workshop、反编译输出和 Markdown 导出
+可以作为仓库参考资料存在。普通任务不要顺手改它们；只有用户要求同步整个仓库
+或明确要求更新参考资料时才一起提交。
 
 目录边界：
 
 - `build/` 只放可运行构建输出，例如 `build/x86` 和 `build/x64`。
 - `decompiled/` 放正式反编译结果，例如 `REVERSI_HLP`、`WINMINE_HLP`。
 - `decompiled/analysis/` 放临时分析、对比和 WinHelp 行为实验，例如 `kwdebug`、`notepad_hlp_analysis`、`winhelp-alink-debug`。
+- `help/markdown_exports/` 放 RTF 导出的 Markdown 视图，保留原始 WinHelp
+  标记信息，方便人工审阅文字和格式。
 
 ## 8. 和 Wolai 内容对应
 

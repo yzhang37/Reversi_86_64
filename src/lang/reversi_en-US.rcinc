@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for en-US. */
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Game"
+    BEGIN
+        MENUITEM "&New\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Pass", IDM_PASS
+        MENUITEM "&Hint\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit", IDM_EXIT
+    END
+    POPUP "&Options"
+    BEGIN
+        MENUITEM "&Beginner", IDM_BEGINNER
+        MENUITEM "I&ntermediate", IDM_INTERMEDIATE
+        MENUITEM "&Expert", IDM_EXPERT
+        MENUITEM "&Master", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Disabled Animation", IDM_ANIM_NONE
+        MENUITEM "&Slow Animation", IDM_ANIM_SLOW
+        MENUITEM "&Fast Animation", IDM_ANIM_FAST
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Contents\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Search for Help On...", IDM_HELP_SEARCH
+        MENUITEM "&How to Use Help", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&About Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Reversi Practice Game"
+    IDS_PASS_TEXT "Pass"
+    IDS_MUST_PASS "You have no open square to move to and must pass."
+    IDS_DRAW "Draw"
+    IDS_LOST_FMT "You lost by %d"
+    IDS_WON_FMT "You won by %d"
+    IDS_ABOUT_MENU "About..."
+    IDS_INVALID_MOVE "You can move only where the mouse pointer changes to a cross."
+    IDS_CANNOT_PASS "You cannot pass. Move the mouse pointer to a square where it changes to a cross."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Here is a brief description of Reversi:\n\nReversi rules: trap the computer's circles in a horizontal, vertical, or diagonal line to turn them into your color.\n\nYour circles are red. The computer's circles are blue. You can move only where the cursor changes to a cross."
+    IDS_HELP_SEARCH_TEXT "The Reversi help file could not be found. Make sure the help file is installed, and then try again."
+    IDS_HELP_USING_TEXT "Help for the Help viewer could not be opened. Make sure Windows Help is installed, and then try again."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Unable to register window class."
+    IDS_CREATE_FAIL "Unable to create window."
+    IDS_FILE_DESCRIPTION "Microsoft Windows Reversi Application"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Reversi Help"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "The computer has no open square to move to and must pass."
+    IDS_COMPUTER_PASS_TEXT "The computer passes."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

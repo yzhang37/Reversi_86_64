@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for uk-UA. */
+
+LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Гра"
+    BEGIN
+        MENUITEM "&Нова\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Пас", IDM_PASS
+        MENUITEM "Підказка(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Вихід", IDM_EXIT
+    END
+    POPUP "&Параметри"
+    BEGIN
+        MENUITEM "&Початківець", IDM_BEGINNER
+        MENUITEM "&Середній", IDM_INTERMEDIATE
+        MENUITEM "&Експерт", IDM_EXPERT
+        MENUITEM "&Майстер", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Без анімації", IDM_ANIM_NONE
+        MENUITEM "&Повільна анімація", IDM_ANIM_SLOW
+        MENUITEM "&Швидка анімація", IDM_ANIM_FAST
+    END
+    POPUP "&Довідка"
+    BEGIN
+        MENUITEM "&Зміст\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Шукати в довідці...", IDM_HELP_SEARCH
+        MENUITEM "&Як користуватися довідкою", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Про Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Реверсі"
+    IDS_PRACTICE_TITLE "Тренувальна гра Реверсі"
+    IDS_PASS_TEXT "Пас"
+    IDS_MUST_PASS "У вас немає вільної клітинки для ходу, тому потрібно пропустити хід."
+    IDS_DRAW "Нічия"
+    IDS_LOST_FMT "Ви програли з відставанням у %d фішок"
+    IDS_WON_FMT "Ви виграли з перевагою у %d фішок"
+    IDS_ABOUT_MENU "Про програму..."
+    IDS_INVALID_MOVE "Хід можна зробити лише там, де вказівник миші стає хрестиком."
+    IDS_CANNOT_PASS "Ви не можете пропустити хід. Перемістіть вказівник миші на клітинку, де він стає хрестиком."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Короткий опис програми Реверсі:\n\nПравила Реверсі: затисніть фішки комп'ютера по горизонталі, вертикалі або діагоналі, щоб перевернути їх у свій колір.\n\nВаші фішки червоні. Фішки комп'ютера сині. Хід можна зробити лише там, де вказівник стає хрестиком."
+    IDS_HELP_SEARCH_TEXT "Файл довідки Реверсі не знайдено. Переконайтеся, що файл довідки встановлено, і повторіть спробу."
+    IDS_HELP_USING_TEXT "Не вдалося відкрити довідку про використання довідки. Переконайтеся, що довідку Windows установлено, і повторіть спробу."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Не вдалося зареєструвати клас вікна."
+    IDS_CREATE_FAIL "Не вдалося створити вікно."
+    IDS_FILE_DESCRIPTION "Програма Microsoft Windows Reversi"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Довідка Реверсі"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "У комп'ютера немає вільної клітинки для ходу, тому потрібно пропустити хід."
+    IDS_COMPUTER_PASS_TEXT "Комп'ютер пропускає хід."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

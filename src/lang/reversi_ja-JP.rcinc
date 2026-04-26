@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for ja-JP. */
+
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "ゲーム(&G)"
+    BEGIN
+        MENUITEM "新規(&N)\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "パス(&P)", IDM_PASS
+        MENUITEM "ヒント(&H)\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "終了(&X)", IDM_EXIT
+    END
+    POPUP "オプション(&O)"
+    BEGIN
+        MENUITEM "初級(&B)", IDM_BEGINNER
+        MENUITEM "中級(&N)", IDM_INTERMEDIATE
+        MENUITEM "上級(&E)", IDM_EXPERT
+        MENUITEM "達人(&M)", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "アニメーションなし(&D)", IDM_ANIM_NONE
+        MENUITEM "遅いアニメーション(&S)", IDM_ANIM_SLOW
+        MENUITEM "速いアニメーション(&F)", IDM_ANIM_FAST
+    END
+    POPUP "ヘルプ(&H)"
+    BEGIN
+        MENUITEM "目次(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "ヘルプの検索(&S)...", IDM_HELP_SEARCH
+        MENUITEM "ヘルプの使い方(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "リバーシのバージョン情報(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "リバーシ"
+    IDS_PRACTICE_TITLE "リバーシ練習ゲーム"
+    IDS_PASS_TEXT "パス"
+    IDS_MUST_PASS "置ける空きマスがないため、パスする必要があります。"
+    IDS_DRAW "引き分け"
+    IDS_LOST_FMT "%d 石差で負けました"
+    IDS_WON_FMT "%d 石差で勝ちました"
+    IDS_ABOUT_MENU "バージョン情報..."
+    IDS_INVALID_MOVE "マウスポインターが十字に変わる場所にだけ置けます。"
+    IDS_CANNOT_PASS "パスできません。マウスポインターが十字に変わるマスへ移動してください。"
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "リバーシ プログラムの簡単な説明です。\n\nリバーシのルール: 横、縦、または斜めの列でコンピューターの石をはさむと、その石を自分の色に返せます。\n\nあなたの石は赤、コンピューターの石は青です。マウスポインターが十字に変わる場所にだけ置けます。"
+    IDS_HELP_SEARCH_TEXT "リバーシのヘルプ ファイルが見つかりません。ヘルプ ファイルがインストールされていることを確認して、もう一度お試しください。"
+    IDS_HELP_USING_TEXT "ヘルプの使い方を開けません。Windows ヘルプがインストールされていることを確認して、もう一度お試しください。"
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "ウィンドウ クラスを登録できません。"
+    IDS_CREATE_FAIL "ウィンドウを作成できません。"
+    IDS_FILE_DESCRIPTION "Microsoft Windows リバーシ アプリケーション"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "リバーシ ヘルプ"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "コンピューターに置ける空きマスがないため、パスする必要があります。"
+    IDS_COMPUTER_PASS_TEXT "コンピューターがパスします。"
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

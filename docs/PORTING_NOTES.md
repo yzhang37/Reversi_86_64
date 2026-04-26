@@ -15,13 +15,39 @@ Reversi port.
 ## Source Map
 
 ```text
-src/reversi_win32.c       Main Win32 program, drawing, input, game flow.
-src/reversi_cpu_x86.c     x86 legacy CPU feature helpers.
-src/reversi_modern_x86.c  x86 SSE2/modern helper implementation.
-src/reversi.rc            Menus, strings, version info, icon, manifest.
-src/resource.h            Resource and command identifiers.
-build.ps1                 MSVC build script.
+src/reversi_win32.c        Entry point, WndProc, input flow, turn flow.
+src/reversi_platform.inc   ANSI/Wide wrappers, OS probes, DPI, GDI+, colors.
+src/reversi_help.inc       String/path helpers and WinHelp/CHM dispatch.
+src/reversi_settings.inc   Registry settings, dark mode, saved window rects.
+src/reversi_rules.inc      Board rules, legal moves, scoring, AI search.
+src/reversi_test_menu.inc  Hidden developer context menu and scenarios.
+src/reversi_paint.inc      Board drawing, cell cache, pieces, animations.
+src/reversi_cpu_x86.c      x86 legacy CPU feature helpers.
+src/reversi_modern_x86.c   x86 SSE2/modern helper implementation.
+src/reversi.rc             Common resources and include list.
+src/lang/*.rcinc           Localized menus and string tables.
+src/reversi_version.rcinc  Version info and translation table.
+src/resource.h             Resource and command identifiers.
+build.ps1                  MSVC build script.
 ```
+
+The `.inc` files are organizational shards included by `reversi_win32.c`, not
+separate translation units. This preserves old-system assumptions while keeping
+the source navigable.
+
+## Maintainable Code Golf
+
+Use Maintainable Code Golf (MCG) for cleanup work:
+
+- Compact code by removing noise, not by hiding meaning.
+- Keep names descriptive and logic direct.
+- Prefer short helpers with clear boundaries over very long functions.
+- Do not use clever short-circuit side effects, dense ternary chains, or
+  implicit shared state to save lines.
+- Put code in the responsibility shard where a future maintainer would look
+  first.
+- Document only important compatibility traps, invariants, original behavior,
+  and boundary conditions.
 
 ## Runtime Feature Detection
 
@@ -161,7 +187,8 @@ defaults rather than preserved.
 The hidden debug menu is development-only.
 
 - Created at runtime, not as an RC menu.
-- Enabled only by `IDS_BACKGROUND_KEY == "shift xyzzy"`.
+- Enabled only by the active language resource's
+  `IDS_BACKGROUND_KEY == "shift xyzzy"` in `src/lang/*.rcinc`.
 - Opened by right-clicking blank client area.
 - Labels are hardcoded English and intentionally not localized.
 - `Scratch Board` is a checkbox. When enabled, clicking any board square cycles
@@ -179,6 +206,8 @@ The hidden debug menu is development-only.
   MUI/language-specific locations where supported.
 - If no help file can be opened, show a short built-in native MessageBox
   fallback.
+- Help Search and Help-on-Help fallback failures use an exclamation/warning
+  MessageBox icon. The Contents fallback is informational.
 
 ## Message Boxes And About
 

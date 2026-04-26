@@ -14,6 +14,8 @@ games while preserving clean, editable source material.
 - `INDEXING.md`: K indexes, ALinks, and related-topic strategy.
 - `TROUBLESHOOTING.md`: Win95/WinHelp errors, `.GID` cache behavior, and font
   issues.
+- Repository-level source layout and Maintainable Code Golf rules live in
+  `../CODE_STRUCTURE.md`.
 
 ## Primary Goals
 
@@ -153,4 +155,10 @@ build/x64/REVERSI.CNT
 docs/winhelp/*.md
 ```
 
-Do not commit generated `.GID` caches or unrelated external reference files.
+Generated `.GID` caches should not be committed.
+
+Official Microsoft game HLP/CHM/EXE files, Help Workshop files, and decompiled
+outputs may be present in the repository as reference material. Do not delete
+or rewrite them casually. For ordinary focused commits, stage only the files
+related to the task; if the user explicitly asks for a whole-repository sync,
+include the reference assets too.

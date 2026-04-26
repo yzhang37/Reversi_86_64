@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for fi-FI. */
+
+LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Peli"
+    BEGIN
+        MENUITEM "&Uusi\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Passaa", IDM_PASS
+        MENUITEM "&Vihje\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Lopeta", IDM_EXIT
+    END
+    POPUP "&Asetukset"
+    BEGIN
+        MENUITEM "&Aloittelija", IDM_BEGINNER
+        MENUITEM "&Keskitaso", IDM_INTERMEDIATE
+        MENUITEM "A&siantuntija", IDM_EXPERT
+        MENUITEM "&Mestari", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Ei animaatiota", IDM_ANIM_NONE
+        MENUITEM "&Hidas animaatio", IDM_ANIM_SLOW
+        MENUITEM "&Nopea animaatio", IDM_ANIM_FAST
+    END
+    POPUP "&Ohje"
+    BEGIN
+        MENUITEM "&Sisältö\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Etsi ohjeesta...", IDM_HELP_SEARCH
+        MENUITEM "&Ohjeen käyttäminen", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Tietoja Reversistä...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Reversi-harjoituspeli"
+    IDS_PASS_TEXT "Passaa"
+    IDS_MUST_PASS "Sinulla ei ole vapaata ruutua siirtoa varten, joten sinun on passattava."
+    IDS_DRAW "Tasapeli"
+    IDS_LOST_FMT "Hävisit %d kiekolla"
+    IDS_WON_FMT "Voitit %d kiekolla"
+    IDS_ABOUT_MENU "Tietoja..."
+    IDS_INVALID_MOVE "Voit siirtää vain kohtaan, jossa hiiriosoitin muuttuu ristiksi."
+    IDS_CANNOT_PASS "Et voi passata. Siirrä hiiriosoitin ruutuun, jossa se muuttuu ristiksi."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Tässä on lyhyt kuvaus Reversi-ohjelmasta:\n\nReversin säännöt: sulje tietokoneen kiekot vaakasuoraan, pystysuoraan tai vinoon riviin, jolloin ne kääntyvät sinun värisi puolelle.\n\nSinun kiekot ovat punaisia. Tietokoneen kiekot ovat sinisiä. Voit siirtää vain kohtaan, jossa osoitin muuttuu ristiksi."
+    IDS_HELP_SEARCH_TEXT "Reversin ohjetiedostoa ei löytynyt. Varmista, että ohjetiedosto on asennettu, ja yritä uudelleen."
+    IDS_HELP_USING_TEXT "Ohjeen käyttämisen ohjetta ei voitu avata. Varmista, että Windowsin ohje on asennettu, ja yritä uudelleen."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Ikkunaluokkaa ei voi rekisteröidä."
+    IDS_CREATE_FAIL "Ikkunaa ei voi luoda."
+    IDS_FILE_DESCRIPTION "Microsoft Windows Reversi -sovellus"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Reversin ohje"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "Tietokoneella ei ole vapaata ruutua siirtoa varten, joten sen on passattava."
+    IDS_COMPUTER_PASS_TEXT "Tietokone passaa."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END

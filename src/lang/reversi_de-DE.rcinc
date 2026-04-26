@@ -1,0 +1,76 @@
+/* Included by reversi.rc. Menu and strings for de-DE. */
+
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&Spiel"
+    BEGIN
+        MENUITEM "&Neu\tF2", IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Passen", IDM_PASS
+        MENUITEM "&Hinweis\tBackspace", IDM_HINT
+        MENUITEM SEPARATOR
+        MENUITEM "&Beenden", IDM_EXIT
+    END
+    POPUP "&Optionen"
+    BEGIN
+        MENUITEM "&Anfänger", IDM_BEGINNER
+        MENUITEM "&Mittel", IDM_INTERMEDIATE
+        MENUITEM "&Experte", IDM_EXPERT
+        MENUITEM "&Meister", IDM_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "Animation &aus", IDM_ANIM_NONE
+        MENUITEM "&Langsame Animation", IDM_ANIM_SLOW
+        MENUITEM "&Schnelle Animation", IDM_ANIM_FAST
+    END
+    POPUP "&Hilfe"
+    BEGIN
+        MENUITEM "&Inhalt\tF1", IDM_HELP_CONTENTS
+        MENUITEM "In der Hilfe &suchen...", IDM_HELP_SEARCH
+        MENUITEM "&Hilfe verwenden", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&Info zu Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE "Reversi"
+    IDS_PRACTICE_TITLE "Reversi-Übungsspiel"
+    IDS_PASS_TEXT "Passen"
+    IDS_MUST_PASS "Sie haben kein freies Feld für einen Zug und müssen passen."
+    IDS_DRAW "Unentschieden"
+    IDS_LOST_FMT "Sie haben mit %d Steinen verloren"
+    IDS_WON_FMT "Sie haben mit %d Steinen gewonnen"
+    IDS_ABOUT_MENU "Info..."
+    IDS_INVALID_MOVE "Sie können nur dort ziehen, wo der Mauszeiger zu einem Kreuz wird."
+    IDS_CANNOT_PASS "Sie können nicht passen. Bewegen Sie den Mauszeiger auf ein Feld, auf dem er zu einem Kreuz wird."
+    IDS_HELP_FILE "reversi.hlp"
+    IDS_INI_FILE "reversi.ini"
+    IDS_PROFILE_APP "Reversi"
+    IDS_ANIMATION_KEY "Animation"
+    IDS_SKILL_KEY "Skill"
+    IDS_HELP_CONTENTS_TEXT "Dies ist eine kurze Beschreibung des Reversi-Programms:\n\nReversi-Regeln: Schließen Sie die Steine des Computers waagerecht, senkrecht oder diagonal ein, um sie in Ihre Farbe umzudrehen.\n\nIhre Steine sind rot. Die Steine des Computers sind blau. Sie können nur dort ziehen, wo der Mauszeiger zu einem Kreuz wird."
+    IDS_HELP_SEARCH_TEXT "Die Reversi-Hilfedatei wurde nicht gefunden. Stellen Sie sicher, dass die Hilfedatei installiert ist, und versuchen Sie es erneut."
+    IDS_HELP_USING_TEXT "Die Hilfe zur Verwendung der Hilfe konnte nicht geöffnet werden. Stellen Sie sicher, dass die Windows-Hilfe installiert ist, und versuchen Sie es erneut."
+    IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
+    IDS_REGISTER_FAIL "Die Fensterklasse konnte nicht registriert werden."
+    IDS_CREATE_FAIL "Das Fenster konnte nicht erstellt werden."
+    IDS_FILE_DESCRIPTION "Microsoft Windows Reversi-Anwendung"
+    IDS_ORIGINAL_FILENAME "REVERSI.EXE"
+    IDS_HELP_TITLE "Reversi-Hilfe"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_HELP_VIEWER_CHM_FILE "NTHelp.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
+    IDS_WINDOW_DPI_KEY "WindowDpi"
+    IDS_COMPUTER_PASS "Der Computer hat kein freies Feld für einen Zug und muss passen."
+    IDS_COMPUTER_PASS_TEXT "Der Computer passt."
+    IDS_BACKGROUND_KEY "shift xyzzy"
+END
