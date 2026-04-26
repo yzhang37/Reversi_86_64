@@ -2,6 +2,7 @@
 
 #define IDR_MAINMENU 1
 #define IDR_VISUAL_STYLES_MANIFEST 2
+#define IDR_TESTMENU 4
 #define IDR_MAINACCEL 180
 #define IDI_REVERSI 3
 

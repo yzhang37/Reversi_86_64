@@ -41,6 +41,19 @@ BEGIN
         MENUITEM "&Slow Animation", IDM_ANIM_SLOW
         MENUITEM "&Fast Animation", IDM_ANIM_FAST
     END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Contents\tF1", IDM_HELP_CONTENTS
+        MENUITEM "&Search for Help On...", IDM_HELP_SEARCH
+        MENUITEM "&How to Use Help", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "&About Reversi...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+IDR_TESTMENU MENU
+BEGIN
     POPUP "&Test"
     BEGIN
         MENUITEM "I &Pass", IDM_TEST_PLAYER_PASS
@@ -52,14 +65,6 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "I &Won", IDM_TEST_WIN
         MENUITEM "I &Lost", IDM_TEST_LOSE
-    END
-    POPUP "&Help"
-    BEGIN
-        MENUITEM "&Contents\tF1", IDM_HELP_CONTENTS
-        MENUITEM "&Search for Help On...", IDM_HELP_SEARCH
-        MENUITEM "&How to Use Help", IDM_HELP_USING
-        MENUITEM SEPARATOR
-        MENUITEM "&About Reversi...", IDM_ABOUT
     END
 END
 
@@ -127,6 +132,19 @@ BEGIN
         MENUITEM "慢动画(&S)", IDM_ANIM_SLOW
         MENUITEM "快动画(&F)", IDM_ANIM_FAST
     END
+    POPUP "帮助(&H)"
+    BEGIN
+        MENUITEM "目录(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "搜索帮助内容(&S)...", IDM_HELP_SEARCH
+        MENUITEM "如何使用帮助(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "关于翻转棋(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+IDR_TESTMENU MENU
+BEGIN
     POPUP "测试(&T)"
     BEGIN
         MENUITEM "我让棋(&P)", IDM_TEST_PLAYER_PASS
@@ -138,14 +156,6 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "我赢了(&W)", IDM_TEST_WIN
         MENUITEM "我输了(&L)", IDM_TEST_LOSE
-    END
-    POPUP "帮助(&H)"
-    BEGIN
-        MENUITEM "目录(&C)\tF1", IDM_HELP_CONTENTS
-        MENUITEM "搜索帮助内容(&S)...", IDM_HELP_SEARCH
-        MENUITEM "如何使用帮助(&H)", IDM_HELP_USING
-        MENUITEM SEPARATOR
-        MENUITEM "关于翻转棋(&A)...", IDM_ABOUT
     END
 END
 
@@ -213,6 +223,19 @@ BEGIN
         MENUITEM "慢動畫(&S)", IDM_ANIM_SLOW
         MENUITEM "快動畫(&F)", IDM_ANIM_FAST
     END
+    POPUP "說明(&H)"
+    BEGIN
+        MENUITEM "目錄(&C)\tF1", IDM_HELP_CONTENTS
+        MENUITEM "搜尋說明內容(&S)...", IDM_HELP_SEARCH
+        MENUITEM "如何使用說明(&H)", IDM_HELP_USING
+        MENUITEM SEPARATOR
+        MENUITEM "關於翻轉棋(&A)...", IDM_ABOUT
+    END
+END
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+IDR_TESTMENU MENU
+BEGIN
     POPUP "測試(&T)"
     BEGIN
         MENUITEM "我讓棋(&P)", IDM_TEST_PLAYER_PASS
@@ -224,14 +247,6 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "我贏了(&W)", IDM_TEST_WIN
         MENUITEM "我輸了(&L)", IDM_TEST_LOSE
-    END
-    POPUP "說明(&H)"
-    BEGIN
-        MENUITEM "目錄(&C)\tF1", IDM_HELP_CONTENTS
-        MENUITEM "搜尋說明內容(&S)...", IDM_HELP_SEARCH
-        MENUITEM "如何使用說明(&H)", IDM_HELP_USING
-        MENUITEM SEPARATOR
-        MENUITEM "關於翻轉棋(&A)...", IDM_ABOUT
     END
 END
 

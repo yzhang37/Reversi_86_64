@@ -13,7 +13,6 @@
 #define TIMER_FLASH 0x29A
 #define MENU_POS_GAME 0
 #define MENU_POS_OPTIONS 1
-#define MENU_POS_TEST 2
 #define MIN_TRACK_SIZE 200
 #define PROCESS_SYSTEM_DPI_AWARE_LOCAL 1
 #define PROCESS_PER_MONITOR_DPI_AWARE_LOCAL 2
@@ -227,9 +226,29 @@ typedef struct Game {
     APP_CHAR message[192];
 } Game;
 
+#define CELL_CACHE_SHRINKS 4
+#define CELL_CACHE_BITMAPS 9
+
+typedef struct CellCache {
+    int valid;
+    int cell_w;
+    int cell_h;
+    int mono_display;
+    int gdiplus_ready;
+    COLORREF window_gray;
+    COLORREF cell_gray;
+    COLORREF dark_gray;
+    COLORREF red_color;
+    COLORREF blue_color;
+    COLORREF edge_light_color;
+    COLORREF edge_dark_color;
+    HBITMAP bitmap[CELL_CACHE_BITMAPS];
+} CellCache;
+
 static Game g_game;
 static AnimCell g_anim;
 static PlaceFlash g_placeFlash;
+static CellCache g_cellCache;
 static HINSTANCE g_hinst;
 static COLORREF g_windowGray;
 static COLORREF g_cellGray;
@@ -3014,7 +3033,6 @@ static void UpdateMenuChecks(HWND hwnd)
 
     EnableMenuItem(menu, MENU_POS_GAME, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
     EnableMenuItem(menu, MENU_POS_OPTIONS, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
-    EnableMenuItem(menu, MENU_POS_TEST, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
     EnableMenuItem(menu, IDM_NEW, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
     EnableMenuItem(menu, IDM_EXIT, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
     EnableMenuItem(menu, IDM_PASS, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
@@ -3268,6 +3286,30 @@ static void Draw3DCell(HDC hdc, RECT rc)
     DeleteObject(black);
 }
 
+static void DestroyCellCache(void)
+{
+    for (int i = 0; i < CELL_CACHE_BITMAPS; ++i) {
+        if (g_cellCache.bitmap[i]) {
+            DeleteObject(g_cellCache.bitmap[i]);
+            g_cellCache.bitmap[i] = NULL;
+        }
+    }
+    g_cellCache.valid = 0;
+}
+
+static int CellCacheIndex(int piece, int shrink_level)
+{
+    if (piece == EMPTY) {
+        return 0;
+    }
+    if (shrink_level < 0) {
+        shrink_level = 0;
+    } else if (shrink_level >= CELL_CACHE_SHRINKS) {
+        shrink_level = CELL_CACHE_SHRINKS - 1;
+    }
+    return (piece == RED ? 1 : 1 + CELL_CACHE_SHRINKS) + shrink_level;
+}
+
 static int GdiPlusDrawEllipse(GpGraphics *graphics, const RECT *rc, COLORREF fill, COLORREF edge)
 {
     GpBrush *brush = NULL;
@@ -3325,25 +3367,22 @@ static int DrawPieceGdiPlus(HDC hdc, const RECT *white_rc, const RECT *gray_rc,
     return 1;
 }
 
-static void DrawPiece(HDC hdc, RECT cell, int piece, const AnimCell *anim)
+static void DrawPieceRaw(HDC hdc, RECT cell, int piece, int shrink_level)
 {
-    int draw_piece = piece;
-    int shrink_x = 0;
-    if (anim && anim->active) {
-        if (anim->step <= 2) {
-            draw_piece = anim->from;
-            shrink_x = (anim->step + 1) * (cell.right - cell.left) / 8;
-        } else {
-            draw_piece = anim->to;
-            shrink_x = (6 - anim->step) * (cell.right - cell.left) / 8;
-        }
-    }
+    int shrink_x;
 
-    if (draw_piece == EMPTY) {
+    if (piece == EMPTY) {
         return;
     }
 
-    COLORREF main_color = draw_piece == RED ? g_redColor : g_blueColor;
+    if (shrink_level < 0) {
+        shrink_level = 0;
+    } else if (shrink_level >= CELL_CACHE_SHRINKS) {
+        shrink_level = CELL_CACHE_SHRINKS - 1;
+    }
+    shrink_x = shrink_level * (cell.right - cell.left) / 8;
+
+    COLORREF main_color = piece == RED ? g_redColor : g_blueColor;
     RECT white_rc = cell;
     RECT gray_rc = cell;
     RECT color_rc = cell;
@@ -3394,9 +3433,148 @@ static void DrawPiece(HDC hdc, RECT cell, int piece, const AnimCell *anim)
     DeleteObject(black_pen);
 }
 
+static void ResolvePieceFrame(int piece, const AnimCell *anim, int *draw_piece, int *shrink_level)
+{
+    *draw_piece = piece;
+    *shrink_level = 0;
+
+    if (anim && anim->active) {
+        if (anim->step <= 2) {
+            *draw_piece = anim->from;
+            *shrink_level = anim->step + 1;
+        } else {
+            *draw_piece = anim->to;
+            *shrink_level = 6 - anim->step;
+        }
+    }
+}
+
+static void DrawPiece(HDC hdc, RECT cell, int piece, const AnimCell *anim)
+{
+    int draw_piece;
+    int shrink_level;
+
+    ResolvePieceFrame(piece, anim, &draw_piece, &shrink_level);
+    DrawPieceRaw(hdc, cell, draw_piece, shrink_level);
+}
+
 static void DrawHintPiece(HDC hdc, RECT rc)
 {
-    DrawPiece(hdc, rc, RED, NULL);
+    DrawPieceRaw(hdc, rc, RED, 0);
+}
+
+static int IsCellCacheCurrent(int cell_w, int cell_h)
+{
+    return g_cellCache.valid &&
+        g_cellCache.cell_w == cell_w &&
+        g_cellCache.cell_h == cell_h &&
+        g_cellCache.mono_display == g_monoDisplay &&
+        g_cellCache.gdiplus_ready == g_gdiPlusReady &&
+        g_cellCache.window_gray == g_windowGray &&
+        g_cellCache.cell_gray == g_cellGray &&
+        g_cellCache.dark_gray == g_darkGray &&
+        g_cellCache.red_color == g_redColor &&
+        g_cellCache.blue_color == g_blueColor &&
+        g_cellCache.edge_light_color == g_edgeLightColor &&
+        g_cellCache.edge_dark_color == g_edgeDarkColor;
+}
+
+static int RenderCellCacheBitmap(HDC hdc, int index, int piece, int shrink_level)
+{
+    HDC cell_dc;
+    HBITMAP bitmap;
+    HGDIOBJ old_bitmap;
+    RECT rc;
+
+    cell_dc = CreateCompatibleDC(hdc);
+    if (!cell_dc) {
+        return 0;
+    }
+
+    bitmap = CreateCompatibleBitmap(hdc, g_cellCache.cell_w, g_cellCache.cell_h);
+    if (!bitmap) {
+        DeleteDC(cell_dc);
+        return 0;
+    }
+
+    old_bitmap = SelectObject(cell_dc, bitmap);
+    rc.left = 0;
+    rc.top = 0;
+    rc.right = g_cellCache.cell_w;
+    rc.bottom = g_cellCache.cell_h;
+    Draw3DCell(cell_dc, rc);
+    DrawPieceRaw(cell_dc, rc, piece, shrink_level);
+    if (old_bitmap) {
+        SelectObject(cell_dc, old_bitmap);
+    }
+    DeleteDC(cell_dc);
+
+    g_cellCache.bitmap[index] = bitmap;
+    return 1;
+}
+
+static int EnsureCellCache(HDC hdc, int cell_w, int cell_h)
+{
+    if (cell_w <= 0 || cell_h <= 0) {
+        return 0;
+    }
+    if (IsCellCacheCurrent(cell_w, cell_h)) {
+        return 1;
+    }
+
+    DestroyCellCache();
+    g_cellCache.cell_w = cell_w;
+    g_cellCache.cell_h = cell_h;
+    g_cellCache.mono_display = g_monoDisplay;
+    g_cellCache.gdiplus_ready = g_gdiPlusReady;
+    g_cellCache.window_gray = g_windowGray;
+    g_cellCache.cell_gray = g_cellGray;
+    g_cellCache.dark_gray = g_darkGray;
+    g_cellCache.red_color = g_redColor;
+    g_cellCache.blue_color = g_blueColor;
+    g_cellCache.edge_light_color = g_edgeLightColor;
+    g_cellCache.edge_dark_color = g_edgeDarkColor;
+
+    if (!RenderCellCacheBitmap(hdc, CellCacheIndex(EMPTY, 0), EMPTY, 0)) {
+        DestroyCellCache();
+        return 0;
+    }
+    for (int shrink = 0; shrink < CELL_CACHE_SHRINKS; ++shrink) {
+        if (!RenderCellCacheBitmap(hdc, CellCacheIndex(RED, shrink), RED, shrink) ||
+            !RenderCellCacheBitmap(hdc, CellCacheIndex(BLUE, shrink), BLUE, shrink)) {
+            DestroyCellCache();
+            return 0;
+        }
+    }
+
+    g_cellCache.valid = 1;
+    return 1;
+}
+
+static int DrawCachedCell(HDC hdc, HDC cell_dc, RECT cell, int piece, const AnimCell *anim)
+{
+    int draw_piece;
+    int shrink_level;
+    int index;
+    HGDIOBJ old_bitmap;
+
+    if (!cell_dc || !g_cellCache.valid) {
+        return 0;
+    }
+
+    ResolvePieceFrame(piece, anim, &draw_piece, &shrink_level);
+    index = CellCacheIndex(draw_piece, shrink_level);
+    if (!g_cellCache.bitmap[index]) {
+        return 0;
+    }
+
+    old_bitmap = SelectObject(cell_dc, g_cellCache.bitmap[index]);
+    if (!old_bitmap) {
+        return 0;
+    }
+    BitBlt(hdc, cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top, cell_dc, 0, 0, SRCCOPY);
+    SelectObject(cell_dc, old_bitmap);
+    return 1;
 }
 
 static void DrawMessageLine(HWND hwnd, HDC hdc, const Layout *layout)
@@ -3436,25 +3614,34 @@ static void DrawGame(HWND hwnd, HDC hdc)
 
     int depth_x = layout.depth_x;
     int depth_y = layout.depth_y;
+    int cache_ready = EnsureCellCache(hdc, layout.cell_w, layout.cell_h);
+    HDC cell_dc = cache_ready ? CreateCompatibleDC(hdc) : NULL;
 
     for (int r = 0; r < BOARD_N; ++r) {
         for (int c = 0; c < BOARD_N; ++c) {
             RECT cell = CellRect(&layout, r, c);
-            Draw3DCell(hdc, cell);
 
             AnimCell local_anim;
             AnimCell *anim = NULL;
+            int piece = g_game.cells[r][c];
             if (g_anim.active && g_anim.row == r && g_anim.col == c) {
                 local_anim = g_anim;
                 anim = &local_anim;
             }
             if (g_placeFlash.active && g_placeFlash.row == r && g_placeFlash.col == c) {
-                DrawPiece(hdc, cell, g_placeFlash.visible ? g_placeFlash.piece : EMPTY, NULL);
-            } else {
-                DrawPiece(hdc, cell, g_game.cells[r][c], anim);
+                piece = g_placeFlash.visible ? g_placeFlash.piece : EMPTY;
+                anim = NULL;
             }
 
+            if (!DrawCachedCell(hdc, cell_dc, cell, piece, anim)) {
+                Draw3DCell(hdc, cell);
+                DrawPiece(hdc, cell, piece, anim);
+            }
         }
+    }
+
+    if (cell_dc) {
+        DeleteDC(cell_dc);
     }
 
     RECT bottom_shadow = {
@@ -3515,6 +3702,45 @@ static void DrawGame(HWND hwnd, HDC hdc)
     }
 }
 
+static void DrawGameBuffered(HWND hwnd, HDC hdc)
+{
+    RECT client;
+    HDC mem_dc;
+    HBITMAP bitmap;
+    HGDIOBJ old_bitmap;
+    int width;
+    int height;
+
+    GetClientRect(hwnd, &client);
+    width = client.right - client.left;
+    height = client.bottom - client.top;
+    if (width <= 0 || height <= 0) {
+        return;
+    }
+
+    mem_dc = CreateCompatibleDC(hdc);
+    if (!mem_dc) {
+        DrawGame(hwnd, hdc);
+        return;
+    }
+
+    bitmap = CreateCompatibleBitmap(hdc, width, height);
+    if (!bitmap) {
+        DeleteDC(mem_dc);
+        DrawGame(hwnd, hdc);
+        return;
+    }
+
+    old_bitmap = SelectObject(mem_dc, bitmap);
+    DrawGame(hwnd, mem_dc);
+    BitBlt(hdc, 0, 0, width, height, mem_dc, 0, 0, SRCCOPY);
+    if (old_bitmap) {
+        SelectObject(mem_dc, old_bitmap);
+    }
+    DeleteObject(bitmap);
+    DeleteDC(mem_dc);
+}
+
 static void DrawSingleCell(HWND hwnd, HDC hdc, int row, int col, int hint)
 {
     Layout layout;
@@ -3522,10 +3748,22 @@ static void DrawSingleCell(HWND hwnd, HDC hdc, int row, int col, int hint)
 
     CalculateLayout(hwnd, &layout);
     cell = CellRect(&layout, row, col);
-    Draw3DCell(hdc, cell);
-    DrawPiece(hdc, cell, g_game.cells[row][col], NULL);
-    if (hint && g_game.cells[row][col] == EMPTY) {
-        DrawHintPiece(hdc, cell);
+    if (EnsureCellCache(hdc, layout.cell_w, layout.cell_h)) {
+        HDC cell_dc = CreateCompatibleDC(hdc);
+        int piece = (hint && g_game.cells[row][col] == EMPTY) ? RED : g_game.cells[row][col];
+        if (!DrawCachedCell(hdc, cell_dc, cell, piece, NULL)) {
+            Draw3DCell(hdc, cell);
+            DrawPieceRaw(hdc, cell, piece, 0);
+        }
+        if (cell_dc) {
+            DeleteDC(cell_dc);
+        }
+    } else {
+        Draw3DCell(hdc, cell);
+        DrawPiece(hdc, cell, g_game.cells[row][col], NULL);
+        if (hint && g_game.cells[row][col] == EMPTY) {
+            DrawHintPiece(hdc, cell);
+        }
     }
 }
 
@@ -3750,6 +3988,52 @@ static void HandleClick(HWND hwnd, LPARAM lparam)
     }
 }
 
+static int IsPointInRectInclusive(const RECT *rc, int x, int y)
+{
+    return x >= rc->left && x < rc->right && y >= rc->top && y < rc->bottom;
+}
+
+static int IsBlankClientPoint(HWND hwnd, int x, int y)
+{
+    Layout layout;
+    RECT occupied;
+
+    CalculateLayout(hwnd, &layout);
+    if (IsPointInRectInclusive(&layout.message, x, y)) {
+        return 0;
+    }
+
+    occupied = layout.board;
+    occupied.right += layout.depth_x * 2;
+    occupied.bottom += layout.depth_y * 2;
+    return !IsPointInRectInclusive(&occupied, x, y);
+}
+
+static void ShowTestContextMenu(HWND hwnd, LPARAM lparam)
+{
+    HMENU menu;
+    HMENU popup;
+    POINT pt;
+
+    if (IsGameBusy() || !IsBlankClientPoint(hwnd, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam))) {
+        return;
+    }
+
+    menu = APP_LOAD_MENU(g_hinst, MAKEINTRESOURCE(IDR_TESTMENU));
+    if (!menu) {
+        return;
+    }
+
+    popup = GetSubMenu(menu, 0);
+    if (popup) {
+        pt.x = GET_X_LPARAM(lparam);
+        pt.y = GET_Y_LPARAM(lparam);
+        ClientToScreen(hwnd, &pt);
+        TrackPopupMenu(popup, TPM_RIGHTBUTTON | TPM_LEFTALIGN | TPM_TOPALIGN, pt.x, pt.y, 0, hwnd, NULL);
+    }
+    DestroyMenu(menu);
+}
+
 static void TryPass(HWND hwnd)
 {
     if (g_game.game_over || IsGameBusy() || g_game.turn != RED) {
@@ -3969,12 +4253,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         UpdateMenuChecks(hwnd);
         return 0;
 
-    case WM_ERASEBKGND: {
-        RECT client;
-        GetClientRect(hwnd, &client);
-        FillClassicFace((HDC)wparam, &client, g_windowGray, 0);
+    case WM_ERASEBKGND:
         return 1;
-    }
 
     case WM_COMMAND:
     {
@@ -4062,6 +4342,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         }
         return 0;
 
+    case WM_RBUTTONUP:
+        SetFocus(hwnd);
+        ShowTestContextMenu(hwnd, lparam);
+        return 0;
+
     case WM_MOUSEMOVE: {
         int row;
         int col;
@@ -4134,6 +4419,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             dpi = (int)HIWORD(wparam);
         }
         g_currentDpi = NormalizeDpi(dpi);
+        DestroyCellCache();
         UpdateWindowIcons(hwnd);
         RefreshMessageFont(hwnd);
         if (suggested) {
@@ -4152,6 +4438,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
     case WM_MOVE:
         if (g_perMonitorDpiAware && UpdateWindowDpi(hwnd)) {
+            DestroyCellCache();
             UpdateWindowIcons(hwnd);
             RefreshMessageFont(hwnd);
             InvalidateRect(hwnd, NULL, TRUE);
@@ -4160,6 +4447,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
     case WM_WINDOWPOSCHANGED:
         if (g_perMonitorDpiAware && UpdateWindowDpi(hwnd)) {
+            DestroyCellCache();
             UpdateWindowIcons(hwnd);
             RefreshMessageFont(hwnd);
             InvalidateRect(hwnd, NULL, TRUE);
@@ -4167,10 +4455,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         break;
 
     case WM_SIZE:
+        DestroyCellCache();
         InvalidateRect(hwnd, NULL, TRUE);
         return 0;
 
     case WM_DISPLAYCHANGE:
+        DestroyCellCache();
         if (g_perMonitorDpiAware) {
             if (UpdateWindowDpi(hwnd)) {
                 UpdateWindowIcons(hwnd);
@@ -4185,6 +4475,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         return 0;
 
     case WM_SETTINGCHANGE:
+        DestroyCellCache();
         if (!g_perMonitorDpiAware) {
             g_currentDpi = QuerySystemDpi();
             UpdateWindowIcons(hwnd);
@@ -4195,6 +4486,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
     case WM_THEMECHANGED:
     case WM_SYSCOLORCHANGE:
+        DestroyCellCache();
         RefreshMessageFont(hwnd);
         RefreshAppTheme(hwnd);
         return 0;
@@ -4202,7 +4494,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     case WM_PAINT: {
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hwnd, &ps);
-        DrawGame(hwnd, hdc);
+        DrawGameBuffered(hwnd, hdc);
         EndPaint(hwnd, &ps);
         return 0;
     }
@@ -4216,6 +4508,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         if (g_mainWindow == hwnd) {
             g_mainWindow = NULL;
         }
+        DestroyCellCache();
         DestroyMessageFont();
         PostQuitMessage(0);
         return 0;
