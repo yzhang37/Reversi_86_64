@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <shellapi.h>
+#include <limits.h>
 #include "resource.h"
 
 #define BOARD_N 8
@@ -12,19 +13,31 @@
 #define TIMER_FLASH 0x29A
 #define MIN_TRACK_SIZE 200
 #define PROCESS_SYSTEM_DPI_AWARE_LOCAL 1
+#define PROCESS_PER_MONITOR_DPI_AWARE_LOCAL 2
+#define MDT_EFFECTIVE_DPI_LOCAL 0
 #define HH_DISPLAY_TOPIC_LOCAL 0x0000
 #define HH_DISPLAY_TOC_LOCAL 0x0001
 #define HH_DISPLAY_INDEX_LOCAL 0x0002
 #define HH_CLOSE_ALL_LOCAL 0x0012
 
 #ifndef DPI_AWARENESS_CONTEXT_SYSTEM_AWARE
-#define DPI_AWARENESS_CONTEXT_SYSTEM_AWARE ((HANDLE)-2)
+#define DPI_AWARENESS_CONTEXT_SYSTEM_AWARE ((HANDLE)(LONG_PTR)-2)
+#endif
+#ifndef DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
+#define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ((HANDLE)(LONG_PTR)-4)
 #endif
 #ifndef SM_XVIRTUALSCREEN
 #define SM_XVIRTUALSCREEN 76
 #define SM_YVIRTUALSCREEN 77
 #define SM_CXVIRTUALSCREEN 78
 #define SM_CYVIRTUALSCREEN 79
+#endif
+#ifndef MONITOR_DEFAULTTONEAREST
+DECLARE_HANDLE(HMONITOR);
+#define MONITOR_DEFAULTTONEAREST 2
+#endif
+#ifndef WM_DPICHANGED
+#define WM_DPICHANGED 0x02E0
 #endif
 
 #if defined(_MSC_VER)
@@ -202,14 +215,17 @@ static COLORREF g_darkGray;
 static COLORREF g_redColor;
 static COLORREF g_blueColor;
 static int g_deviceAspect = 1;
-static int g_systemDpi = 96;
+static int g_currentDpi = 96;
 static int g_enableSystemScaling = 0;
+static int g_perMonitorDpiAware = 0;
 static int g_useWideCommands = 0;
+static int g_inputLock = 0;
 static int g_cpuHasSse2 = 0;
 static int g_cpuHasAvx = 0;
 static int g_configSkillCmd = IDM_INTERMEDIATE;
 static int g_configAnimationCmd = IDM_ANIM_FAST;
 static int g_configHasWindowRect = 0;
+static int g_configRepairSettings = 0;
 static RECT g_configWindowRect;
 static ModernFindBestMoveProc g_modernFindBestMove = NULL;
 static HANDLE g_visualStylesActCtx = INVALID_HANDLE_VALUE;
@@ -238,6 +254,10 @@ typedef LONG (WINAPI *RtlGetVersionProc)(OSVERSIONINFOW *);
 typedef BOOL (WINAPI *SetProcessDpiAwarenessContextProc)(HANDLE);
 typedef HRESULT (WINAPI *SetProcessDpiAwarenessProc)(int);
 typedef BOOL (WINAPI *SetProcessDPIAwareProc)(void);
+typedef UINT (WINAPI *GetDpiForWindowProc)(HWND);
+typedef UINT (WINAPI *GetDpiForSystemProc)(void);
+typedef HRESULT (WINAPI *GetDpiForMonitorProc)(HMONITOR, int, UINT *, UINT *);
+typedef HMONITOR (WINAPI *MonitorFromWindowProc)(HWND, DWORD);
 typedef HANDLE (WINAPI *CreateActCtxProc)(const APP_ACTCTX *);
 typedef BOOL (WINAPI *ActivateActCtxProc)(HANDLE, ULONG_PTR *);
 typedef BOOL (WINAPI *DeactivateActCtxProc)(DWORD, ULONG_PTR);
@@ -254,6 +274,15 @@ static void AppZeroMemory(void *ptr, UINT_PTR size)
     while (size--) {
         *bytes++ = 0;
     }
+}
+
+static FARPROC AppGetProc(const char *module_name, const char *proc_name)
+{
+    HMODULE module = GetModuleHandleA(module_name);
+    if (!module) {
+        module = LoadLibraryA(module_name);
+    }
+    return module ? GetProcAddress(module, proc_name) : NULL;
 }
 
 #ifndef UNICODE
@@ -284,15 +313,6 @@ typedef LONG (WINAPI *RegCreateKeyExWProc)(
 typedef LONG (WINAPI *RegOpenKeyExWProc)(HKEY, LPCWSTR, DWORD, REGSAM, PHKEY);
 typedef LONG (WINAPI *RegQueryValueExWProc)(HKEY, LPCWSTR, LPDWORD, LPDWORD, LPBYTE, LPDWORD);
 typedef LONG (WINAPI *RegSetValueExWProc)(HKEY, LPCWSTR, DWORD, DWORD, const BYTE *, DWORD);
-
-static FARPROC AppGetProc(const char *module_name, const char *proc_name)
-{
-    HMODULE module = GetModuleHandleA(module_name);
-    if (!module) {
-        module = LoadLibraryA(module_name);
-    }
-    return module ? GetProcAddress(module, proc_name) : NULL;
-}
 
 static void AppToWide(const char *src, WCHAR *dst, int cch)
 {
@@ -709,6 +729,17 @@ static int IsWindowsVersionAtLeast(const OSVERSIONINFOW *version, DWORD major, D
         (version->dwMajorVersion == major && version->dwMinorVersion >= minor);
 }
 
+static int IsWindowsBuildAtLeast(const OSVERSIONINFOW *version, DWORD major, DWORD minor, DWORD build)
+{
+    if (!IsWindowsVersionAtLeast(version, major, minor)) {
+        return 0;
+    }
+    if (version->dwMajorVersion != major || version->dwMinorVersion != minor) {
+        return 1;
+    }
+    return version->dwBuildNumber >= build;
+}
+
 static void InitWideCommandMode(void)
 {
 #ifdef UNICODE
@@ -823,25 +854,27 @@ static void ShutdownClassicVisualStyles(void)
 static void InitSystemDpiAwareness(void)
 {
     OSVERSIONINFOW version;
+    g_enableSystemScaling = 0;
+    g_perMonitorDpiAware = 0;
+
     if (!QueryWindowsVersion(&version)) {
-        g_enableSystemScaling = 0;
         return;
     }
 
     if (!IsWindowsVersionAtLeast(&version, 6, 0)) {
-        g_enableSystemScaling = 0;
         return;
     }
 
-    g_enableSystemScaling = 1;
-
-    if (IsWindowsVersionAtLeast(&version, 10, 0)) {
+    if (IsWindowsBuildAtLeast(&version, 10, 0, 15063)) {
         HMODULE user32 = GetModuleHandleA("user32.dll");
         if (user32) {
             SetProcessDpiAwarenessContextProc set_context =
                 (SetProcessDpiAwarenessContextProc)GetProcAddress(
                     user32, "SetProcessDpiAwarenessContext");
-            if (set_context && set_context(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE)) {
+            if (set_context &&
+                set_context(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)) {
+                g_enableSystemScaling = 1;
+                g_perMonitorDpiAware = 1;
                 return;
             }
         }
@@ -854,9 +887,11 @@ static void InitSystemDpiAwareness(void)
                 (SetProcessDpiAwarenessProc)GetProcAddress(
                     shcore, "SetProcessDpiAwareness");
             if (set_awareness) {
-                HRESULT hr = set_awareness(PROCESS_SYSTEM_DPI_AWARE_LOCAL);
+                HRESULT hr = set_awareness(PROCESS_PER_MONITOR_DPI_AWARE_LOCAL);
                 FreeLibrary(shcore);
-                if (SUCCEEDED(hr) || hr == E_ACCESSDENIED) {
+                if (SUCCEEDED(hr)) {
+                    g_enableSystemScaling = 1;
+                    g_perMonitorDpiAware = 1;
                     return;
                 }
             } else {
@@ -870,23 +905,117 @@ static void InitSystemDpiAwareness(void)
         if (user32) {
             SetProcessDPIAwareProc set_dpi_aware =
                 (SetProcessDPIAwareProc)GetProcAddress(user32, "SetProcessDPIAware");
-            if (set_dpi_aware) {
-                set_dpi_aware();
+            if (set_dpi_aware && set_dpi_aware()) {
+                g_enableSystemScaling = 1;
             }
         }
     }
 }
 
-static void InitClassicColors(void)
+static int NormalizeDpi(int dpi)
+{
+    return dpi >= 24 && dpi <= 960 ? dpi : 96;
+}
+
+static int IsValidDpi(int dpi)
+{
+    return dpi >= 24 && dpi <= 960;
+}
+
+static int DpiFromHdc(HDC hdc)
+{
+    if (!hdc) {
+        return 96;
+    }
+    return NormalizeDpi(GetDeviceCaps(hdc, LOGPIXELSX));
+}
+
+static int QuerySystemDpi(void)
+{
+    if (!g_enableSystemScaling) {
+        return 96;
+    }
+
+    GetDpiForSystemProc get_dpi_for_system =
+        (GetDpiForSystemProc)AppGetProc("user32.dll", "GetDpiForSystem");
+    if (get_dpi_for_system) {
+        return NormalizeDpi((int)get_dpi_for_system());
+    }
+
+    HDC hdc = GetDC(NULL);
+    if (hdc) {
+        int dpi = DpiFromHdc(hdc);
+        ReleaseDC(NULL, hdc);
+        return dpi;
+    }
+    return 96;
+}
+
+static HMONITOR AppMonitorFromWindow(HWND hwnd)
+{
+    MonitorFromWindowProc monitor_from_window =
+        (MonitorFromWindowProc)AppGetProc("user32.dll", "MonitorFromWindow");
+    return monitor_from_window && hwnd ?
+        monitor_from_window(hwnd, MONITOR_DEFAULTTONEAREST) : NULL;
+}
+
+static int QueryMonitorDpi(HMONITOR monitor)
+{
+    if (!g_enableSystemScaling || !g_perMonitorDpiAware || !monitor) {
+        return 0;
+    }
+
+    GetDpiForMonitorProc get_dpi_for_monitor =
+        (GetDpiForMonitorProc)AppGetProc("shcore.dll", "GetDpiForMonitor");
+    if (get_dpi_for_monitor) {
+        UINT dpi_x = 0;
+        UINT dpi_y = 0;
+        if (SUCCEEDED(get_dpi_for_monitor(monitor, MDT_EFFECTIVE_DPI_LOCAL, &dpi_x, &dpi_y))) {
+            return NormalizeDpi((int)(dpi_x ? dpi_x : dpi_y));
+        }
+    }
+    return 0;
+}
+
+static int QueryWindowDpi(HWND hwnd)
+{
+    if (!g_enableSystemScaling) {
+        return 96;
+    }
+
+    if (g_perMonitorDpiAware && hwnd) {
+        GetDpiForWindowProc get_dpi_for_window =
+            (GetDpiForWindowProc)AppGetProc("user32.dll", "GetDpiForWindow");
+        if (get_dpi_for_window) {
+            int dpi = (int)get_dpi_for_window(hwnd);
+            if (IsValidDpi(dpi)) {
+                return dpi;
+            }
+        }
+
+        int monitor_dpi = QueryMonitorDpi(AppMonitorFromWindow(hwnd));
+        if (monitor_dpi) {
+            return monitor_dpi;
+        }
+    }
+
+    return QuerySystemDpi();
+}
+
+static int UpdateWindowDpi(HWND hwnd)
+{
+    int dpi = QueryWindowDpi(hwnd);
+    if (dpi != g_currentDpi) {
+        g_currentDpi = dpi;
+        return 1;
+    }
+    return 0;
+}
+
+static void RefreshClassicColors(void)
 {
     HDC hdc = GetDC(NULL);
     if (hdc) {
-        if (g_enableSystemScaling) {
-            g_systemDpi = GetDeviceCaps(hdc, LOGPIXELSX);
-        }
-        if (g_systemDpi <= 0 || !g_enableSystemScaling) {
-            g_systemDpi = 96;
-        }
         g_deviceAspect = GetDeviceCaps(hdc, VERTRES) == 200 ? 2 : 1;
         g_redColor = GetNearestColor(hdc, RGB(255, 0, 0));
         g_blueColor = GetNearestColor(hdc, RGB(0, 0, 255));
@@ -895,7 +1024,6 @@ static void InitClassicColors(void)
         g_darkGray = GetNearestColor(hdc, RGB(85, 85, 85));
         ReleaseDC(NULL, hdc);
     } else {
-        g_systemDpi = 96;
         g_deviceAspect = 1;
         g_redColor = RGB(255, 0, 0);
         g_blueColor = RGB(0, 0, 255);
@@ -903,6 +1031,12 @@ static void InitClassicColors(void)
         g_cellGray = RGB(192, 192, 192);
         g_darkGray = RGB(85, 85, 85);
     }
+}
+
+static void InitClassicColors(void)
+{
+    g_currentDpi = QuerySystemDpi();
+    RefreshClassicColors();
 }
 
 static void LoadText(UINT id, APP_CHAR *buffer, int cch)
@@ -926,12 +1060,12 @@ static int MaxInt(int a, int b)
 
 static int ScaleForDpi(int value)
 {
-    return g_enableSystemScaling ? MulDiv(value, g_systemDpi, 96) : value;
+    return g_enableSystemScaling ? MulDiv(value, g_currentDpi, 96) : value;
 }
 
 static int CurrentWindowDpi(void)
 {
-    return g_enableSystemScaling && g_systemDpi > 0 ? g_systemDpi : 96;
+    return g_enableSystemScaling && g_currentDpi > 0 ? g_currentDpi : 96;
 }
 
 static LONG ScaleWindowValueForDpi(LONG value, int from_dpi, int to_dpi)
@@ -1298,11 +1432,19 @@ static LONG AppRegOpenSettingsKey(const APP_CHAR *subkey, HKEY *key)
 
 static LONG AppRegQueryDword(HKEY key, const APP_CHAR *value_name, DWORD *value)
 {
-    DWORD type = REG_DWORD;
+    DWORD type = 0;
     DWORD cb = sizeof(DWORD);
+    DWORD read_value = 0;
 #ifdef UNICODE
-    return RegQueryValueExW(key, value_name, NULL, &type, (LPBYTE)value, &cb) == ERROR_SUCCESS &&
-        type == REG_DWORD && cb == sizeof(DWORD) ? ERROR_SUCCESS : ERROR_FILE_NOT_FOUND;
+    LONG result = RegQueryValueExW(key, value_name, NULL, &type, (LPBYTE)&read_value, &cb);
+    if (result != ERROR_SUCCESS) {
+        return result;
+    }
+    if (type != REG_DWORD || cb != sizeof(DWORD)) {
+        return ERROR_INVALID_DATA;
+    }
+    *value = read_value;
+    return ERROR_SUCCESS;
 #else
     LONG result;
     if (g_useWideCommands) {
@@ -1311,15 +1453,27 @@ static LONG AppRegQueryDword(HKEY key, const APP_CHAR *value_name, DWORD *value)
         if (query_value) {
             WCHAR wide_value[128];
             AppToWide(value_name, wide_value, 128);
-            result = query_value(key, wide_value, NULL, &type, (LPBYTE)value, &cb);
-            return result == ERROR_SUCCESS && type == REG_DWORD && cb == sizeof(DWORD) ?
-                ERROR_SUCCESS : ERROR_FILE_NOT_FOUND;
+            result = query_value(key, wide_value, NULL, &type, (LPBYTE)&read_value, &cb);
+            if (result != ERROR_SUCCESS) {
+                return result;
+            }
+            if (type != REG_DWORD || cb != sizeof(DWORD)) {
+                return ERROR_INVALID_DATA;
+            }
+            *value = read_value;
+            return ERROR_SUCCESS;
         }
     }
 
-    result = RegQueryValueExA(key, value_name, NULL, &type, (LPBYTE)value, &cb);
-    return result == ERROR_SUCCESS && type == REG_DWORD && cb == sizeof(DWORD) ?
-        ERROR_SUCCESS : ERROR_FILE_NOT_FOUND;
+    result = RegQueryValueExA(key, value_name, NULL, &type, (LPBYTE)&read_value, &cb);
+    if (result != ERROR_SUCCESS) {
+        return result;
+    }
+    if (type != REG_DWORD || cb != sizeof(DWORD)) {
+        return ERROR_INVALID_DATA;
+    }
+    *value = read_value;
+    return ERROR_SUCCESS;
 #endif
 }
 
@@ -1354,11 +1508,25 @@ static int OpenSettingsKey(HKEY *key, int create)
     return AppRegOpenSettingsKey(subkey, key) == ERROR_SUCCESS;
 }
 
-static int QuerySettingsDword(HKEY key, UINT name_id, DWORD *value)
+enum {
+    SETTINGS_VALUE_MISSING = 0,
+    SETTINGS_VALUE_OK = 1,
+    SETTINGS_VALUE_INVALID = 2
+};
+
+static int QuerySettingsDwordState(HKEY key, UINT name_id, DWORD *value)
 {
     APP_CHAR value_name[128];
+    LONG result;
     LoadText(name_id, value_name, 128);
-    return value_name[0] && AppRegQueryDword(key, value_name, value) == ERROR_SUCCESS;
+    if (!value_name[0]) {
+        return SETTINGS_VALUE_MISSING;
+    }
+    result = AppRegQueryDword(key, value_name, value);
+    if (result == ERROR_SUCCESS) {
+        return SETTINGS_VALUE_OK;
+    }
+    return result == ERROR_FILE_NOT_FOUND ? SETTINGS_VALUE_MISSING : SETTINGS_VALUE_INVALID;
 }
 
 static void SetSettingsDword(HKEY key, UINT name_id, DWORD value)
@@ -1410,6 +1578,76 @@ static int NormalizeAnimationCommand(int cmd)
     }
 }
 
+static int SkillCommandToSetting(int cmd)
+{
+    switch (NormalizeSkillCommand(cmd)) {
+    case IDM_BEGINNER:
+        return 0;
+    case IDM_INTERMEDIATE:
+        return 1;
+    case IDM_EXPERT:
+        return 2;
+    case IDM_MASTER:
+        return 3;
+    default:
+        return 1;
+    }
+}
+
+static int IsSkillSettingValid(int value)
+{
+    return value >= 0 && value <= 3;
+}
+
+static int SkillSettingToCommand(int value)
+{
+    switch (value) {
+    case 0:
+        return IDM_BEGINNER;
+    case 1:
+        return IDM_INTERMEDIATE;
+    case 2:
+        return IDM_EXPERT;
+    case 3:
+        return IDM_MASTER;
+    default:
+        return IDM_INTERMEDIATE;
+    }
+}
+
+static int AnimationCommandToSetting(int cmd)
+{
+    switch (NormalizeAnimationCommand(cmd)) {
+    case IDM_ANIM_NONE:
+        return 0;
+    case IDM_ANIM_SLOW:
+        return 1;
+    case IDM_ANIM_FAST:
+        return 2;
+    default:
+        return 2;
+    }
+}
+
+static int IsAnimationSettingValid(int value)
+{
+    return value >= 0 && value <= 2;
+}
+
+static int AnimationSettingToCommand(int value)
+{
+    switch (value) {
+    case 0:
+        return IDM_ANIM_NONE;
+    case 1:
+        return IDM_ANIM_SLOW;
+    case 2:
+        return IDM_ANIM_FAST;
+    default:
+        return IDM_ANIM_FAST;
+    }
+}
+
 static void GetDesktopBounds(RECT *desktop)
 {
     int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
@@ -1450,6 +1688,34 @@ static int IsSavedWindowRectUsable(const RECT *rect)
         rect->bottom <= desktop.bottom;
 }
 
+static int BuildSavedWindowRect(
+    DWORD x,
+    DWORD y,
+    DWORD width,
+    DWORD height,
+    DWORD saved_dpi,
+    RECT *rect)
+{
+    LONG left = WindowValueFromRegistry(x, saved_dpi);
+    LONG top = WindowValueFromRegistry(y, saved_dpi);
+    LONG scaled_width = WindowValueFromRegistry(width, saved_dpi);
+    LONG scaled_height = WindowValueFromRegistry(height, saved_dpi);
+    LONGLONG right = (LONGLONG)left + scaled_width;
+    LONGLONG bottom = (LONGLONG)top + scaled_height;
+
+    if (scaled_width <= 0 || scaled_height <= 0 ||
+        right < LONG_MIN || right > LONG_MAX ||
+        bottom < LONG_MIN || bottom > LONG_MAX) {
+        return 0;
+    }
+
+    rect->left = left;
+    rect->top = top;
+    rect->right = (LONG)right;
+    rect->bottom = (LONG)bottom;
+    return 1;
+}
+
 static void LoadGameSettings(void)
 {
     DWORD value;
@@ -1458,40 +1724,91 @@ static void LoadGameSettings(void)
     DWORD width;
     DWORD height;
     DWORD dpi;
+    int state;
+    int x_state;
+    int y_state;
+    int width_state;
+    int height_state;
+    int dpi_state;
     HKEY key;
 
     g_configSkillCmd = IDM_INTERMEDIATE;
     g_configAnimationCmd = IDM_ANIM_FAST;
     g_configHasWindowRect = 0;
+    g_configRepairSettings = 0;
 
     if (!OpenSettingsKey(&key, 0)) {
         return;
     }
 
-    if (QuerySettingsDword(key, IDS_SKILL_KEY, &value)) {
-        g_configSkillCmd = NormalizeSkillCommand((int)(LONG)value);
+    state = QuerySettingsDwordState(key, IDS_SKILL_KEY, &value);
+    if (state == SETTINGS_VALUE_OK) {
+        int setting = (int)(LONG)value;
+        if (IsSkillSettingValid(setting)) {
+            g_configSkillCmd = SkillSettingToCommand(setting);
+        } else {
+            g_configRepairSettings = 1;
+        }
+    } else {
+        g_configRepairSettings = 1;
     }
-    if (QuerySettingsDword(key, IDS_ANIMATION_KEY, &value)) {
-        g_configAnimationCmd = NormalizeAnimationCommand((int)(LONG)value);
+    state = QuerySettingsDwordState(key, IDS_ANIMATION_KEY, &value);
+    if (state == SETTINGS_VALUE_OK) {
+        int setting = (int)(LONG)value;
+        if (IsAnimationSettingValid(setting)) {
+            g_configAnimationCmd = AnimationSettingToCommand(setting);
+        } else {
+            g_configRepairSettings = 1;
+        }
+    } else {
+        g_configRepairSettings = 1;
     }
 
-    if (QuerySettingsDword(key, IDS_WINDOW_X_KEY, &x) &&
-        QuerySettingsDword(key, IDS_WINDOW_Y_KEY, &y) &&
-        QuerySettingsDword(key, IDS_WINDOW_WIDTH_KEY, &width) &&
-        QuerySettingsDword(key, IDS_WINDOW_HEIGHT_KEY, &height)) {
+    x_state = QuerySettingsDwordState(key, IDS_WINDOW_X_KEY, &x);
+    y_state = QuerySettingsDwordState(key, IDS_WINDOW_Y_KEY, &y);
+    width_state = QuerySettingsDwordState(key, IDS_WINDOW_WIDTH_KEY, &width);
+    height_state = QuerySettingsDwordState(key, IDS_WINDOW_HEIGHT_KEY, &height);
+    dpi_state = QuerySettingsDwordState(key, IDS_WINDOW_DPI_KEY, &dpi);
+
+    if (x_state == SETTINGS_VALUE_OK &&
+        y_state == SETTINGS_VALUE_OK &&
+        width_state == SETTINGS_VALUE_OK &&
+        height_state == SETTINGS_VALUE_OK) {
         DWORD saved_dpi = 0;
+        int window_invalid = 0;
         RECT saved;
-        if (QuerySettingsDword(key, IDS_WINDOW_DPI_KEY, &dpi)) {
-            saved_dpi = dpi;
+        if (dpi_state == SETTINGS_VALUE_OK) {
+            if (IsValidDpi((int)dpi)) {
+                saved_dpi = dpi;
+            } else {
+                window_invalid = 1;
+            }
+        } else {
+            if (dpi_state == SETTINGS_VALUE_INVALID) {
+                window_invalid = 1;
+            }
+            g_configRepairSettings = 1;
         }
-        saved.left = WindowValueFromRegistry(x, saved_dpi);
-        saved.top = WindowValueFromRegistry(y, saved_dpi);
-        saved.right = saved.left + WindowValueFromRegistry(width, saved_dpi);
-        saved.bottom = saved.top + WindowValueFromRegistry(height, saved_dpi);
-        if (IsSavedWindowRectUsable(&saved)) {
-            g_configWindowRect = saved;
-            g_configHasWindowRect = 1;
+        if (!window_invalid) {
+            if (BuildSavedWindowRect(x, y, width, height, saved_dpi, &saved) &&
+                IsSavedWindowRectUsable(&saved)) {
+                g_configWindowRect = saved;
+                g_configHasWindowRect = 1;
+            } else {
+                window_invalid = 1;
+            }
         }
+        if (window_invalid) {
+            g_configRepairSettings = 1;
+        }
+    } else if (x_state != SETTINGS_VALUE_MISSING ||
+        y_state != SETTINGS_VALUE_MISSING ||
+        width_state != SETTINGS_VALUE_MISSING ||
+        height_state != SETTINGS_VALUE_MISSING ||
+        dpi_state != SETTINGS_VALUE_MISSING) {
+        g_configRepairSettings = 1;
+    } else {
+        g_configRepairSettings = 1;
     }
 
     RegCloseKey(key);
@@ -1518,8 +1835,8 @@ static void SaveGameSettings(HWND hwnd)
         return;
     }
 
-    SetSettingsDword(key, IDS_SKILL_KEY, (DWORD)g_game.skill_cmd);
-    SetSettingsDword(key, IDS_ANIMATION_KEY, (DWORD)g_game.animation_cmd);
+    SetSettingsDword(key, IDS_SKILL_KEY, (DWORD)SkillCommandToSetting(g_game.skill_cmd));
+    SetSettingsDword(key, IDS_ANIMATION_KEY, (DWORD)AnimationCommandToSetting(g_game.animation_cmd));
 
     if (hwnd && IsWindow(hwnd)) {
         RECT rect;
@@ -1990,6 +2307,11 @@ static void SetGameOverMessage(HWND hwnd)
     SetMessage(hwnd, buffer, 1);
 }
 
+static int IsGameBusy(void)
+{
+    return g_inputLock > 0 || g_game.thinking || g_anim.active || g_placeFlash.active;
+}
+
 static void UpdateMenuChecks(HWND hwnd)
 {
     HMENU menu = GetMenu(hwnd);
@@ -1997,6 +2319,7 @@ static void UpdateMenuChecks(HWND hwnd)
         return;
     }
 
+    int busy = IsGameBusy();
     HMENU options = GetSubMenu(menu, 1);
     if (options) {
         if (!AppCheckMenuRadioItem(options, IDM_BEGINNER, IDM_MASTER, (UINT)g_game.skill_cmd)) {
@@ -2012,11 +2335,40 @@ static void UpdateMenuChecks(HWND hwnd)
             CheckMenuItem(options, IDM_ANIM_FAST, MF_BYCOMMAND | MF_UNCHECKED);
             CheckMenuItem(options, (UINT)g_game.animation_cmd, MF_BYCOMMAND | MF_CHECKED);
         }
+        EnableMenuItem(options, IDM_BEGINNER, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+        EnableMenuItem(options, IDM_INTERMEDIATE, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+        EnableMenuItem(options, IDM_EXPERT, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+        EnableMenuItem(options, IDM_MASTER, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+        EnableMenuItem(options, IDM_ANIM_NONE, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+        EnableMenuItem(options, IDM_ANIM_SLOW, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+        EnableMenuItem(options, IDM_ANIM_FAST, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
     }
 
-    EnableMenuItem(menu, IDM_PASS, MF_BYCOMMAND | (g_game.thinking ? MF_GRAYED : MF_ENABLED));
-    EnableMenuItem(menu, IDM_HINT, MF_BYCOMMAND | (g_game.thinking || g_game.game_over ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, 0, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, 1, MF_BYPOSITION | (busy ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, IDM_NEW, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, IDM_EXIT, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, IDM_PASS, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+    EnableMenuItem(menu, IDM_HINT, MF_BYCOMMAND | (busy || g_game.game_over ? MF_GRAYED : MF_ENABLED));
     DrawMenuBar(hwnd);
+}
+
+static void BeginInputLock(HWND hwnd)
+{
+    ++g_inputLock;
+    if (g_inputLock == 1) {
+        UpdateMenuChecks(hwnd);
+    }
+}
+
+static void EndInputLock(HWND hwnd)
+{
+    if (g_inputLock > 0) {
+        --g_inputLock;
+    }
+    if (g_inputLock == 0) {
+        UpdateMenuChecks(hwnd);
+    }
 }
 
 static void InitGameState(void)
@@ -2356,6 +2708,8 @@ static int ApplyMove(HWND hwnd, int row, int col, int player, int animate)
         return 0;
     }
 
+    BeginInputLock(hwnd);
+
     if (player == BLUE) {
         FlashComputerPlacement(hwnd, row, col);
     }
@@ -2372,6 +2726,7 @@ static int ApplyMove(HWND hwnd, int row, int col, int player, int animate)
         }
         InvalidateRect(hwnd, NULL, FALSE);
     }
+    EndInputLock(hwnd);
     return 1;
 }
 
@@ -2439,7 +2794,7 @@ static void FinishTurn(HWND hwnd)
 
 static void PlayerMove(HWND hwnd, int row, int col)
 {
-    if (g_game.game_over || g_game.thinking || g_game.turn != RED || g_game.must_pass) {
+    if (g_game.game_over || IsGameBusy() || g_game.turn != RED || g_game.must_pass) {
         MessageBeep(MB_ICONWARNING);
         return;
     }
@@ -2489,7 +2844,7 @@ static void HandleClick(HWND hwnd, LPARAM lparam)
 
 static void TryPass(HWND hwnd)
 {
-    if (g_game.game_over || g_game.thinking) {
+    if (g_game.game_over || IsGameBusy()) {
         return;
     }
 
@@ -2513,7 +2868,7 @@ static void TryPass(HWND hwnd)
 
 static void ShowHint(HWND hwnd)
 {
-    if (g_game.game_over || g_game.thinking || g_game.turn != RED || g_game.must_pass) {
+    if (g_game.game_over || IsGameBusy() || g_game.turn != RED || g_game.must_pass) {
         MessageBeep(MB_ICONWARNING);
         return;
     }
@@ -2609,7 +2964,7 @@ static void ShowHelp(HWND hwnd, int cmd)
 
 static void MoveSelection(HWND hwnd, int dr, int dc)
 {
-    if (g_game.game_over || g_game.thinking) {
+    if (g_game.game_over || IsGameBusy() || g_game.turn != RED || g_game.must_pass) {
         return;
     }
 
@@ -2636,6 +2991,10 @@ static void MoveSelection(HWND hwnd, int dr, int dc)
 
 static void HandleKey(HWND hwnd, WPARAM key)
 {
+    if (IsGameBusy()) {
+        return;
+    }
+
     switch (key) {
     case VK_F1:
         ShowHelp(hwnd, IDM_HELP_CONTENTS);
@@ -2678,7 +3037,12 @@ static HCURSOR LoadLegalMoveCursor(void)
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg) {
+    case WM_NCCREATE:
+        UpdateWindowDpi(hwnd);
+        return TRUE;
+
     case WM_CREATE:
+        UpdateWindowDpi(hwnd);
         SetMenu(hwnd, APP_LOAD_MENU(g_hinst, MAKEINTRESOURCE(IDR_MAINMENU)));
         InitGameState();
         SetTitle(hwnd);
@@ -2686,6 +3050,24 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         return 0;
 
     case WM_COMMAND:
+        if (IsGameBusy()) {
+            switch (LOWORD(wparam)) {
+            case IDM_NEW:
+            case IDM_PASS:
+            case IDM_HINT:
+            case IDM_EXIT:
+            case IDM_BEGINNER:
+            case IDM_INTERMEDIATE:
+            case IDM_EXPERT:
+            case IDM_MASTER:
+            case IDM_ANIM_NONE:
+            case IDM_ANIM_SLOW:
+            case IDM_ANIM_FAST:
+                return 0;
+            default:
+                break;
+            }
+        }
         switch (LOWORD(wparam)) {
         case IDM_NEW:
             NewGame(hwnd);
@@ -2732,13 +3114,15 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
     case WM_LBUTTONDOWN:
         SetFocus(hwnd);
-        HandleClick(hwnd, lparam);
+        if (!IsGameBusy()) {
+            HandleClick(hwnd, lparam);
+        }
         return 0;
 
     case WM_MOUSEMOVE: {
         int row;
         int col;
-        if (!g_game.game_over && !g_game.thinking && !g_game.must_pass &&
+        if (!g_game.game_over && !IsGameBusy() && g_game.turn == RED && !g_game.must_pass &&
             PointToCell(hwnd, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), &row, &col) &&
             CollectFlips(row, col, RED, NULL, 0) > 0) {
             SetCursor(LoadLegalMoveCursor());
@@ -2755,7 +3139,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             ScreenToClient(hwnd, &pt);
             int row;
             int col;
-            if (!g_game.game_over && !g_game.thinking && !g_game.must_pass &&
+            if (!g_game.game_over && !IsGameBusy() && g_game.turn == RED && !g_game.must_pass &&
                 PointToCell(hwnd, pt.x, pt.y, &row, &col) &&
                 CollectFlips(row, col, RED, NULL, 0) > 0) {
                 SetCursor(LoadLegalMoveCursor());
@@ -2792,9 +3176,59 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         return 0;
     }
 
+    case WM_DPICHANGED: {
+        RECT *suggested = (RECT *)lparam;
+        int dpi = (int)LOWORD(wparam);
+        if (!IsValidDpi(dpi)) {
+            dpi = (int)HIWORD(wparam);
+        }
+        g_currentDpi = NormalizeDpi(dpi);
+        if (suggested) {
+            SetWindowPos(
+                hwnd,
+                NULL,
+                suggested->left,
+                suggested->top,
+                suggested->right - suggested->left,
+                suggested->bottom - suggested->top,
+                SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+        InvalidateRect(hwnd, NULL, TRUE);
+        return 0;
+    }
+
+    case WM_MOVE:
+        if (g_perMonitorDpiAware && UpdateWindowDpi(hwnd)) {
+            InvalidateRect(hwnd, NULL, TRUE);
+        }
+        return 0;
+
+    case WM_WINDOWPOSCHANGED:
+        if (g_perMonitorDpiAware && UpdateWindowDpi(hwnd)) {
+            InvalidateRect(hwnd, NULL, TRUE);
+        }
+        break;
+
     case WM_SIZE:
         InvalidateRect(hwnd, NULL, TRUE);
         return 0;
+
+    case WM_DISPLAYCHANGE:
+        if (g_perMonitorDpiAware) {
+            UpdateWindowDpi(hwnd);
+        } else {
+            g_currentDpi = QuerySystemDpi();
+        }
+        RefreshClassicColors();
+        InvalidateRect(hwnd, NULL, TRUE);
+        return 0;
+
+    case WM_SETTINGCHANGE:
+        if (!g_perMonitorDpiAware) {
+            g_currentDpi = QuerySystemDpi();
+            InvalidateRect(hwnd, NULL, TRUE);
+        }
+        break;
 
     case WM_PAINT: {
         PAINTSTRUCT ps;
@@ -2824,6 +3258,23 @@ static int RunSelfTest(void)
 {
     InitGameState();
 
+    if (SkillSettingToCommand(SkillCommandToSetting(IDM_MASTER)) != IDM_MASTER ||
+        AnimationSettingToCommand(AnimationCommandToSetting(IDM_ANIM_SLOW)) != IDM_ANIM_SLOW ||
+        !IsSkillSettingValid(0) ||
+        !IsSkillSettingValid(3) ||
+        IsSkillSettingValid(-1) ||
+        IsSkillSettingValid(4) ||
+        !IsAnimationSettingValid(0) ||
+        !IsAnimationSettingValid(2) ||
+        IsAnimationSettingValid(-1) ||
+        IsAnimationSettingValid(3) ||
+        SkillSettingToCommand(-1) != IDM_INTERMEDIATE ||
+        SkillSettingToCommand(4) != IDM_INTERMEDIATE ||
+        AnimationSettingToCommand(-1) != IDM_ANIM_FAST ||
+        AnimationSettingToCommand(3) != IDM_ANIM_FAST) {
+        return 1;
+    }
+
     if (CountPieces(RED) != 2 || CountPieces(BLUE) != 2) {
         return 2;
     }
@@ -2847,8 +3298,8 @@ static int ReversiMain(HINSTANCE hinst, int show)
     g_hinst = hinst;
     InitWideCommandMode();
     InitModernDispatch();
-    InitClassicVisualStyles();
     InitSystemDpiAwareness();
+    InitClassicVisualStyles();
     InitClassicColors();
     LoadGameSettings();
 
@@ -2912,6 +3363,10 @@ static int ReversiMain(HINSTANCE hinst, int show)
 
     ShowWindow(hwnd, show);
     UpdateWindow(hwnd);
+    if (g_configRepairSettings) {
+        SaveGameSettings(hwnd);
+        g_configRepairSettings = 0;
+    }
 
     HACCEL accel = APP_LOAD_ACCELERATORS(hinst, MAKEINTRESOURCE(IDR_MAINACCEL));
     MSG msg;
