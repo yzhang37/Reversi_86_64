@@ -11,9 +11,19 @@
 
 #define TIMER_FLASH 0x29A
 #define PROCESS_SYSTEM_DPI_AWARE_LOCAL 1
+#define HH_DISPLAY_TOPIC_LOCAL 0x0000
+#define HH_DISPLAY_TOC_LOCAL 0x0001
+#define HH_DISPLAY_INDEX_LOCAL 0x0002
+#define HH_CLOSE_ALL_LOCAL 0x0012
 
 #ifndef DPI_AWARENESS_CONTEXT_SYSTEM_AWARE
 #define DPI_AWARENESS_CONTEXT_SYSTEM_AWARE ((HANDLE)-2)
+#endif
+#ifndef SM_XVIRTUALSCREEN
+#define SM_XVIRTUALSCREEN 76
+#define SM_YVIRTUALSCREEN 77
+#define SM_CXVIRTUALSCREEN 78
+#define SM_CYVIRTUALSCREEN 79
 #endif
 
 #ifdef UNICODE
@@ -21,6 +31,8 @@ typedef WCHAR APP_CHAR;
 #define APP_TEXT(value) L##value
 #define APP_GET_MODULE_HANDLE GetModuleHandleW
 #define APP_GET_MODULE_FILENAME GetModuleFileNameW
+#define APP_GET_FILE_ATTRIBUTES GetFileAttributesW
+#define APP_GET_WINDOWS_DIRECTORY GetWindowsDirectoryW
 #define APP_GET_COMMAND_LINE GetCommandLineW
 #define APP_GET_STARTUP_INFO GetStartupInfoW
 #define APP_GET_VERSION_EX GetVersionExW
@@ -53,6 +65,8 @@ typedef CHAR APP_CHAR;
 #define APP_TEXT(value) value
 #define APP_GET_MODULE_HANDLE GetModuleHandleA
 #define APP_GET_MODULE_FILENAME AppGetModuleFileName
+#define APP_GET_FILE_ATTRIBUTES AppGetFileAttributes
+#define APP_GET_WINDOWS_DIRECTORY AppGetWindowsDirectory
 #define APP_GET_COMMAND_LINE GetCommandLineA
 #define APP_GET_STARTUP_INFO GetStartupInfoA
 #define APP_GET_VERSION_EX GetVersionExA
@@ -113,6 +127,13 @@ typedef struct Move {
     int score;
 } Move;
 
+typedef int (__cdecl *ModernFindBestMoveProc)(const int *cells, int player, int depth, Move *best);
+
+#if defined(_M_IX86)
+extern int __cdecl ReversiDetectModernCpu(int *has_avx);
+extern int __cdecl ReversiModernFindBestMove(const int *cells, int player, int depth, Move *best);
+#endif
+
 typedef struct Flip {
     int row;
     int col;
@@ -168,6 +189,13 @@ static int g_deviceAspect = 1;
 static int g_systemDpi = 96;
 static int g_enableSystemScaling = 0;
 static int g_useWideCommands = 0;
+static int g_cpuHasSse2 = 0;
+static int g_cpuHasAvx = 0;
+static int g_configSkillCmd = IDM_INTERMEDIATE;
+static int g_configAnimationCmd = IDM_ANIM_FAST;
+static int g_configHasWindowRect = 0;
+static RECT g_configWindowRect;
+static ModernFindBestMoveProc g_modernFindBestMove = NULL;
 static HANDLE g_visualStylesActCtx = INVALID_HANDLE_VALUE;
 static ULONG_PTR g_visualStylesCookie = 0;
 
@@ -199,6 +227,10 @@ typedef BOOL (WINAPI *ActivateActCtxProc)(HANDLE, ULONG_PTR *);
 typedef BOOL (WINAPI *DeactivateActCtxProc)(DWORD, ULONG_PTR);
 typedef VOID (WINAPI *ReleaseActCtxProc)(HANDLE);
 typedef BOOL (WINAPI *CheckMenuRadioItemProc)(HMENU, UINT, UINT, UINT, UINT);
+typedef BOOL (WINAPI *WinHelpAProc)(HWND, LPCSTR, UINT, ULONG_PTR);
+typedef BOOL (WINAPI *WinHelpWProc)(HWND, LPCWSTR, UINT, ULONG_PTR);
+typedef HWND (WINAPI *HtmlHelpAProc)(HWND, LPCSTR, UINT, DWORD_PTR);
+typedef HWND (WINAPI *HtmlHelpWProc)(HWND, LPCWSTR, UINT, DWORD_PTR);
 
 static void AppZeroMemory(void *ptr, UINT_PTR size)
 {
@@ -228,6 +260,14 @@ typedef int (WINAPI *ShellAboutWProc)(HWND, LPCWSTR, LPCWSTR, HICON);
 typedef BOOL (WINAPI *GetTextExtentPoint32WProc)(HDC, LPCWSTR, int, LPSIZE);
 typedef BOOL (WINAPI *TextOutWProc)(HDC, int, int, LPCWSTR, int);
 typedef LPWSTR (WINAPI *GetCommandLineWProc)(void);
+typedef DWORD (WINAPI *GetModuleFileNameWProc)(HMODULE, LPWSTR, DWORD);
+typedef DWORD (WINAPI *GetFileAttributesWProc)(LPCWSTR);
+typedef UINT (WINAPI *GetWindowsDirectoryWProc)(LPWSTR, UINT);
+typedef LONG (WINAPI *RegCreateKeyExWProc)(
+    HKEY, LPCWSTR, DWORD, LPWSTR, DWORD, REGSAM, const SECURITY_ATTRIBUTES *, PHKEY, LPDWORD);
+typedef LONG (WINAPI *RegOpenKeyExWProc)(HKEY, LPCWSTR, DWORD, REGSAM, PHKEY);
+typedef LONG (WINAPI *RegQueryValueExWProc)(HKEY, LPCWSTR, LPDWORD, LPDWORD, LPBYTE, LPDWORD);
+typedef LONG (WINAPI *RegSetValueExWProc)(HKEY, LPCWSTR, DWORD, DWORD, const BYTE *, DWORD);
 
 static FARPROC AppGetProc(const char *module_name, const char *proc_name)
 {
@@ -304,7 +344,50 @@ static LPCWSTR AppResourceNameToWide(LPCSTR name, WCHAR *buffer, int cch)
 
 static DWORD AppGetModuleFileName(HMODULE module, char *buffer, DWORD cch)
 {
+    if (g_useWideCommands) {
+        GetModuleFileNameWProc get_module_file_name =
+            (GetModuleFileNameWProc)AppGetProc("kernel32.dll", "GetModuleFileNameW");
+        if (get_module_file_name) {
+            WCHAR wide[MAX_PATH];
+            DWORD got = get_module_file_name(module, wide, MAX_PATH);
+            if (got) {
+                AppFromWide(wide, buffer, (int)cch);
+                return (DWORD)APP_LSTRLEN(buffer);
+            }
+        }
+    }
     return GetModuleFileNameA(module, buffer, cch);
+}
+
+static DWORD AppGetFileAttributes(const char *path)
+{
+    if (g_useWideCommands) {
+        GetFileAttributesWProc get_file_attributes =
+            (GetFileAttributesWProc)AppGetProc("kernel32.dll", "GetFileAttributesW");
+        if (get_file_attributes) {
+            WCHAR wide[MAX_PATH];
+            AppToWide(path, wide, MAX_PATH);
+            return get_file_attributes(wide);
+        }
+    }
+    return GetFileAttributesA(path);
+}
+
+static UINT AppGetWindowsDirectory(char *buffer, UINT cch)
+{
+    if (g_useWideCommands) {
+        GetWindowsDirectoryWProc get_windows_directory =
+            (GetWindowsDirectoryWProc)AppGetProc("kernel32.dll", "GetWindowsDirectoryW");
+        if (get_windows_directory) {
+            WCHAR wide[MAX_PATH];
+            UINT got = get_windows_directory(wide, MAX_PATH);
+            if (got) {
+                AppFromWide(wide, buffer, (int)cch);
+                return (UINT)APP_LSTRLEN(buffer);
+            }
+        }
+    }
+    return GetWindowsDirectoryA(buffer, cch);
 }
 
 static int AppLoadString(HINSTANCE instance, UINT id, char *buffer, int cch)
@@ -623,6 +706,28 @@ static void InitWideCommandMode(void)
 #endif
 }
 
+static void InitModernDispatch(void)
+{
+#if defined(_M_IX86)
+    OSVERSIONINFOW version;
+    int has_avx = 0;
+    if (!QueryWindowsVersion(&version) ||
+        version.dwPlatformId != VER_PLATFORM_WIN32_NT ||
+        !IsWindowsVersionAtLeast(&version, 5, 0)) {
+        return;
+    }
+
+    g_cpuHasSse2 = ReversiDetectModernCpu(&has_avx);
+    g_cpuHasAvx = has_avx;
+    if (g_cpuHasSse2) {
+        g_modernFindBestMove = ReversiModernFindBestMove;
+    }
+#else
+    g_cpuHasSse2 = 1;
+    g_cpuHasAvx = 0;
+#endif
+}
+
 static void InitClassicVisualStyles(void)
 {
     OSVERSIONINFOW version;
@@ -826,6 +931,555 @@ static int AppStringContains(const APP_CHAR *text, const APP_CHAR *needle)
         }
     }
     return 0;
+}
+
+static int AppStrLen(const APP_CHAR *text)
+{
+    int len = 0;
+    while (text && text[len]) {
+        ++len;
+    }
+    return len;
+}
+
+static void AppStrCopy(APP_CHAR *dst, int cch, const APP_CHAR *src)
+{
+    int i = 0;
+    if (!dst || cch <= 0) {
+        return;
+    }
+    if (src) {
+        for (; i < cch - 1 && src[i]; ++i) {
+            dst[i] = src[i];
+        }
+    }
+    dst[i] = 0;
+}
+
+static void AppStrAppend(APP_CHAR *dst, int cch, const APP_CHAR *src)
+{
+    int len = AppStrLen(dst);
+    if (len < cch) {
+        AppStrCopy(dst + len, cch - len, src);
+    }
+}
+
+static int AppFileExists(const APP_CHAR *path)
+{
+    DWORD attrs = APP_GET_FILE_ATTRIBUTES(path);
+    return attrs != INVALID_FILE_ATTRIBUTES && !(attrs & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+static void AppEnsureTrailingSlash(APP_CHAR *path, int cch)
+{
+    int len = AppStrLen(path);
+    if (len > 0 && len < cch - 1 &&
+        path[len - 1] != APP_TEXT('\\') && path[len - 1] != APP_TEXT('/')) {
+        path[len] = APP_TEXT('\\');
+        path[len + 1] = 0;
+    }
+}
+
+static int AppBuildModuleFilePath(APP_CHAR *out, int cch, const APP_CHAR *file_name)
+{
+    if (!APP_GET_MODULE_FILENAME(g_hinst, out, (DWORD)cch)) {
+        return 0;
+    }
+
+    int slash = -1;
+    for (int i = 0; out[i]; ++i) {
+        if (out[i] == APP_TEXT('\\') || out[i] == APP_TEXT('/')) {
+            slash = i;
+        }
+    }
+    if (slash >= 0) {
+        out[slash + 1] = 0;
+    } else {
+        out[0] = 0;
+    }
+    AppStrAppend(out, cch, file_name);
+    return 1;
+}
+
+static int AppBuildWindowsHelpPath(APP_CHAR *out, int cch, const APP_CHAR *file_name)
+{
+    UINT len = APP_GET_WINDOWS_DIRECTORY(out, (UINT)cch);
+    if (!len || len >= (UINT)cch) {
+        return 0;
+    }
+    AppEnsureTrailingSlash(out, cch);
+    AppStrAppend(out, cch, APP_TEXT("Help\\"));
+    AppStrAppend(out, cch, file_name);
+    return 1;
+}
+
+static int AppResolveLocalHelpFile(UINT string_id, APP_CHAR *out, int cch)
+{
+    APP_CHAR file_name[MAX_PATH];
+    LoadText(string_id, file_name, MAX_PATH);
+    if (AppBuildModuleFilePath(out, cch, file_name) && AppFileExists(out)) {
+        return 1;
+    }
+    AppStrCopy(out, cch, file_name);
+    return AppFileExists(out);
+}
+
+static int AppResolveWindowsHelpFile(UINT string_id, APP_CHAR *out, int cch)
+{
+    APP_CHAR file_name[MAX_PATH];
+    LoadText(string_id, file_name, MAX_PATH);
+    if (AppBuildWindowsHelpPath(out, cch, file_name) && AppFileExists(out)) {
+        return 1;
+    }
+    AppStrCopy(out, cch, file_name);
+    return AppFileExists(out);
+}
+
+static int AppIsVistaOrNewer(void)
+{
+    OSVERSIONINFOW version;
+    return QueryWindowsVersion(&version) &&
+        version.dwPlatformId == VER_PLATFORM_WIN32_NT &&
+        IsWindowsVersionAtLeast(&version, 6, 0);
+}
+
+static int AppCanPreferChmHelp(void)
+{
+    OSVERSIONINFOW version;
+    if (!QueryWindowsVersion(&version)) {
+        return 0;
+    }
+
+    if (version.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+        return IsWindowsVersionAtLeast(&version, 5, 0);
+    }
+
+    if (version.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
+        return IsWindowsVersionAtLeast(&version, 4, 10);
+    }
+
+    return 0;
+}
+
+static HMODULE AppGetHtmlHelpModule(int allow_load)
+{
+    static int tried = 0;
+    static HMODULE module = NULL;
+    if (!allow_load && !tried) {
+        return NULL;
+    }
+    if (!tried) {
+        module = LoadLibraryA("hhctrl.ocx");
+        tried = 1;
+    }
+    return module;
+}
+
+static BOOL AppHtmlHelp(HWND hwnd, const APP_CHAR *path, UINT command)
+{
+    HMODULE module = AppGetHtmlHelpModule(1);
+    if (!module) {
+        return FALSE;
+    }
+
+#ifdef UNICODE
+    HtmlHelpWProc html_help = (HtmlHelpWProc)GetProcAddress(module, "HtmlHelpW");
+    if (html_help) {
+        return html_help(hwnd, path, command, 0) != NULL;
+    }
+#else
+    if (g_useWideCommands) {
+        HtmlHelpWProc html_help = (HtmlHelpWProc)GetProcAddress(module, "HtmlHelpW");
+        if (html_help) {
+            WCHAR wide_path[MAX_PATH];
+            AppToWide(path, wide_path, MAX_PATH);
+            return html_help(hwnd, wide_path, command, 0) != NULL;
+        }
+    }
+
+    HtmlHelpAProc html_help = (HtmlHelpAProc)GetProcAddress(module, "HtmlHelpA");
+    if (html_help) {
+        return html_help(hwnd, path, command, 0) != NULL;
+    }
+#endif
+    return FALSE;
+}
+
+static void AppCloseHtmlHelp(void)
+{
+    HMODULE module = AppGetHtmlHelpModule(0);
+    if (!module) {
+        return;
+    }
+
+#ifdef UNICODE
+    HtmlHelpWProc html_help = (HtmlHelpWProc)GetProcAddress(module, "HtmlHelpW");
+    if (html_help) {
+        html_help(NULL, NULL, HH_CLOSE_ALL_LOCAL, 0);
+    }
+#else
+    if (g_useWideCommands) {
+        HtmlHelpWProc html_help = (HtmlHelpWProc)GetProcAddress(module, "HtmlHelpW");
+        if (html_help) {
+            html_help(NULL, NULL, HH_CLOSE_ALL_LOCAL, 0);
+            return;
+        }
+    }
+
+    HtmlHelpAProc html_help = (HtmlHelpAProc)GetProcAddress(module, "HtmlHelpA");
+    if (html_help) {
+        html_help(NULL, NULL, HH_CLOSE_ALL_LOCAL, 0);
+    }
+#endif
+}
+
+static BOOL AppWinHelp(HWND hwnd, const APP_CHAR *path, UINT command, ULONG_PTR data)
+{
+    HMODULE user32 = GetModuleHandleA("user32.dll");
+    if (!user32) {
+        return FALSE;
+    }
+
+#ifdef UNICODE
+    WinHelpWProc win_help = (WinHelpWProc)GetProcAddress(user32, "WinHelpW");
+    if (win_help) {
+        return win_help(hwnd, path, command, data);
+    }
+#else
+    if (g_useWideCommands) {
+        WinHelpWProc win_help = (WinHelpWProc)GetProcAddress(user32, "WinHelpW");
+        if (win_help) {
+            WCHAR wide_path[MAX_PATH];
+            WCHAR wide_data[128];
+            LPCWSTR use_path = NULL;
+            ULONG_PTR use_data = data;
+            if (path) {
+                AppToWide(path, wide_path, MAX_PATH);
+                use_path = wide_path;
+            }
+            if (command == HELP_PARTIALKEY && data) {
+                AppToWide((const char *)data, wide_data, 128);
+                use_data = (ULONG_PTR)wide_data;
+            }
+            return win_help(hwnd, use_path, command, use_data);
+        }
+    }
+
+    WinHelpAProc win_help = (WinHelpAProc)GetProcAddress(user32, "WinHelpA");
+    if (win_help) {
+        return win_help(hwnd, path, command, data);
+    }
+#endif
+    return FALSE;
+}
+
+static int OpenLocalChmHelp(HWND hwnd, UINT command)
+{
+    APP_CHAR help_path[MAX_PATH];
+    return AppResolveLocalHelpFile(IDS_HELP_CHM_FILE, help_path, MAX_PATH) &&
+        AppHtmlHelp(hwnd, help_path, command);
+}
+
+static int OpenWindowsChmHelp(HWND hwnd, UINT command)
+{
+    APP_CHAR help_path[MAX_PATH];
+    return AppResolveWindowsHelpFile(IDS_WINDOWS_CHM_FILE, help_path, MAX_PATH) &&
+        AppHtmlHelp(hwnd, help_path, command);
+}
+
+static int OpenLocalWinHelp(HWND hwnd, UINT command, ULONG_PTR data)
+{
+    APP_CHAR help_path[MAX_PATH];
+    return AppResolveLocalHelpFile(IDS_HELP_FILE, help_path, MAX_PATH) &&
+        AppWinHelp(hwnd, help_path, command, data);
+}
+
+static int OpenWindowsWinHelp(HWND hwnd)
+{
+    APP_CHAR help_path[MAX_PATH];
+    return AppResolveWindowsHelpFile(IDS_WINDOWS_HELP_FILE, help_path, MAX_PATH) &&
+        AppWinHelp(hwnd, help_path, HELP_CONTENTS, 0);
+}
+
+static void CloseLegacyWinHelp(HWND hwnd)
+{
+    APP_CHAR help_path[MAX_PATH];
+    if (AppResolveLocalHelpFile(IDS_HELP_FILE, help_path, MAX_PATH)) {
+        AppWinHelp(hwnd, help_path, HELP_QUIT, 0);
+    }
+}
+
+static LONG AppRegCreateSettingsKey(const APP_CHAR *subkey, HKEY *key)
+{
+#ifdef UNICODE
+    return RegCreateKeyExW(
+        HKEY_CURRENT_USER, subkey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, key, NULL);
+#else
+    if (g_useWideCommands) {
+        RegCreateKeyExWProc create_key =
+            (RegCreateKeyExWProc)AppGetProc("advapi32.dll", "RegCreateKeyExW");
+        if (create_key) {
+            WCHAR wide_subkey[256];
+            AppToWide(subkey, wide_subkey, 256);
+            return create_key(
+                HKEY_CURRENT_USER, wide_subkey, 0, NULL,
+                REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, key, NULL);
+        }
+    }
+    return RegCreateKeyExA(
+        HKEY_CURRENT_USER, subkey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, key, NULL);
+#endif
+}
+
+static LONG AppRegOpenSettingsKey(const APP_CHAR *subkey, HKEY *key)
+{
+#ifdef UNICODE
+    return RegOpenKeyExW(HKEY_CURRENT_USER, subkey, 0, KEY_READ, key);
+#else
+    if (g_useWideCommands) {
+        RegOpenKeyExWProc open_key =
+            (RegOpenKeyExWProc)AppGetProc("advapi32.dll", "RegOpenKeyExW");
+        if (open_key) {
+            WCHAR wide_subkey[256];
+            AppToWide(subkey, wide_subkey, 256);
+            return open_key(HKEY_CURRENT_USER, wide_subkey, 0, KEY_READ, key);
+        }
+    }
+    return RegOpenKeyExA(HKEY_CURRENT_USER, subkey, 0, KEY_READ, key);
+#endif
+}
+
+static LONG AppRegQueryDword(HKEY key, const APP_CHAR *value_name, DWORD *value)
+{
+    DWORD type = REG_DWORD;
+    DWORD cb = sizeof(DWORD);
+#ifdef UNICODE
+    return RegQueryValueExW(key, value_name, NULL, &type, (LPBYTE)value, &cb) == ERROR_SUCCESS &&
+        type == REG_DWORD && cb == sizeof(DWORD) ? ERROR_SUCCESS : ERROR_FILE_NOT_FOUND;
+#else
+    LONG result;
+    if (g_useWideCommands) {
+        RegQueryValueExWProc query_value =
+            (RegQueryValueExWProc)AppGetProc("advapi32.dll", "RegQueryValueExW");
+        if (query_value) {
+            WCHAR wide_value[128];
+            AppToWide(value_name, wide_value, 128);
+            result = query_value(key, wide_value, NULL, &type, (LPBYTE)value, &cb);
+            return result == ERROR_SUCCESS && type == REG_DWORD && cb == sizeof(DWORD) ?
+                ERROR_SUCCESS : ERROR_FILE_NOT_FOUND;
+        }
+    }
+
+    result = RegQueryValueExA(key, value_name, NULL, &type, (LPBYTE)value, &cb);
+    return result == ERROR_SUCCESS && type == REG_DWORD && cb == sizeof(DWORD) ?
+        ERROR_SUCCESS : ERROR_FILE_NOT_FOUND;
+#endif
+}
+
+static LONG AppRegSetDword(HKEY key, const APP_CHAR *value_name, DWORD value)
+{
+#ifdef UNICODE
+    return RegSetValueExW(key, value_name, 0, REG_DWORD, (const BYTE *)&value, sizeof(value));
+#else
+    if (g_useWideCommands) {
+        RegSetValueExWProc set_value =
+            (RegSetValueExWProc)AppGetProc("advapi32.dll", "RegSetValueExW");
+        if (set_value) {
+            WCHAR wide_value[128];
+            AppToWide(value_name, wide_value, 128);
+            return set_value(key, wide_value, 0, REG_DWORD, (const BYTE *)&value, sizeof(value));
+        }
+    }
+    return RegSetValueExA(key, value_name, 0, REG_DWORD, (const BYTE *)&value, sizeof(value));
+#endif
+}
+
+static int OpenSettingsKey(HKEY *key, int create)
+{
+    APP_CHAR subkey[256];
+    LoadText(IDS_REGISTRY_KEY, subkey, 256);
+    if (!subkey[0]) {
+        return 0;
+    }
+    if (create) {
+        return AppRegCreateSettingsKey(subkey, key) == ERROR_SUCCESS;
+    }
+    return AppRegOpenSettingsKey(subkey, key) == ERROR_SUCCESS;
+}
+
+static int QuerySettingsDword(HKEY key, UINT name_id, DWORD *value)
+{
+    APP_CHAR value_name[128];
+    LoadText(name_id, value_name, 128);
+    return value_name[0] && AppRegQueryDword(key, value_name, value) == ERROR_SUCCESS;
+}
+
+static void SetSettingsDword(HKEY key, UINT name_id, DWORD value)
+{
+    APP_CHAR value_name[128];
+    LoadText(name_id, value_name, 128);
+    if (value_name[0]) {
+        AppRegSetDword(key, value_name, value);
+    }
+}
+
+static int SkillDepthForCommand(int cmd)
+{
+    switch (cmd) {
+    case IDM_BEGINNER:
+        return 1;
+    case IDM_EXPERT:
+        return 4;
+    case IDM_MASTER:
+        return 6;
+    case IDM_INTERMEDIATE:
+    default:
+        return 2;
+    }
+}
+
+static int NormalizeSkillCommand(int cmd)
+{
+    switch (cmd) {
+    case IDM_BEGINNER:
+    case IDM_INTERMEDIATE:
+    case IDM_EXPERT:
+    case IDM_MASTER:
+        return cmd;
+    default:
+        return IDM_INTERMEDIATE;
+    }
+}
+
+static int NormalizeAnimationCommand(int cmd)
+{
+    switch (cmd) {
+    case IDM_ANIM_NONE:
+    case IDM_ANIM_SLOW:
+    case IDM_ANIM_FAST:
+        return cmd;
+    default:
+        return IDM_ANIM_FAST;
+    }
+}
+
+static void GetDesktopBounds(RECT *desktop)
+{
+    int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    int top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+    if (width <= 0 || height <= 0) {
+        left = 0;
+        top = 0;
+        width = GetSystemMetrics(SM_CXSCREEN);
+        height = GetSystemMetrics(SM_CYSCREEN);
+    }
+
+    desktop->left = left;
+    desktop->top = top;
+    desktop->right = left + width;
+    desktop->bottom = top + height;
+}
+
+static int IsSavedWindowRectUsable(const RECT *rect)
+{
+    int width = rect->right - rect->left;
+    int height = rect->bottom - rect->top;
+    RECT desktop;
+    GetDesktopBounds(&desktop);
+
+    if (width < ScaleForDpi(220) || height < ScaleForDpi(220)) {
+        return 0;
+    }
+    if (desktop.right <= desktop.left || desktop.bottom <= desktop.top) {
+        return 0;
+    }
+
+    return rect->left >= desktop.left &&
+        rect->top >= desktop.top &&
+        rect->right <= desktop.right &&
+        rect->bottom <= desktop.bottom;
+}
+
+static void LoadGameSettings(void)
+{
+    DWORD value;
+    DWORD x;
+    DWORD y;
+    DWORD width;
+    DWORD height;
+    HKEY key;
+
+    g_configSkillCmd = IDM_INTERMEDIATE;
+    g_configAnimationCmd = IDM_ANIM_FAST;
+    g_configHasWindowRect = 0;
+
+    if (!OpenSettingsKey(&key, 0)) {
+        return;
+    }
+
+    if (QuerySettingsDword(key, IDS_SKILL_KEY, &value)) {
+        g_configSkillCmd = NormalizeSkillCommand((int)(LONG)value);
+    }
+    if (QuerySettingsDword(key, IDS_ANIMATION_KEY, &value)) {
+        g_configAnimationCmd = NormalizeAnimationCommand((int)(LONG)value);
+    }
+
+    if (QuerySettingsDword(key, IDS_WINDOW_X_KEY, &x) &&
+        QuerySettingsDword(key, IDS_WINDOW_Y_KEY, &y) &&
+        QuerySettingsDword(key, IDS_WINDOW_WIDTH_KEY, &width) &&
+        QuerySettingsDword(key, IDS_WINDOW_HEIGHT_KEY, &height)) {
+        RECT saved;
+        saved.left = (LONG)x;
+        saved.top = (LONG)y;
+        saved.right = saved.left + (LONG)width;
+        saved.bottom = saved.top + (LONG)height;
+        if (IsSavedWindowRectUsable(&saved)) {
+            g_configWindowRect = saved;
+            g_configHasWindowRect = 1;
+        }
+    }
+
+    RegCloseKey(key);
+}
+
+static int GetWindowRectToSave(HWND hwnd, RECT *rect)
+{
+    WINDOWPLACEMENT placement;
+    AppZeroMemory(&placement, sizeof(placement));
+    placement.length = sizeof(placement);
+    if (GetWindowPlacement(hwnd, &placement)) {
+        if (placement.showCmd == SW_SHOWMINIMIZED || placement.showCmd == SW_SHOWMAXIMIZED) {
+            *rect = placement.rcNormalPosition;
+            return 1;
+        }
+    }
+    return GetWindowRect(hwnd, rect);
+}
+
+static void SaveGameSettings(HWND hwnd)
+{
+    HKEY key;
+    if (!OpenSettingsKey(&key, 1)) {
+        return;
+    }
+
+    SetSettingsDword(key, IDS_SKILL_KEY, (DWORD)g_game.skill_cmd);
+    SetSettingsDword(key, IDS_ANIMATION_KEY, (DWORD)g_game.animation_cmd);
+
+    if (hwnd && IsWindow(hwnd)) {
+        RECT rect;
+        if (GetWindowRectToSave(hwnd, &rect)) {
+            SetSettingsDword(key, IDS_WINDOW_X_KEY, (DWORD)rect.left);
+            SetSettingsDword(key, IDS_WINDOW_Y_KEY, (DWORD)rect.top);
+            SetSettingsDword(key, IDS_WINDOW_WIDTH_KEY, (DWORD)(rect.right - rect.left));
+            SetSettingsDword(key, IDS_WINDOW_HEIGHT_KEY, (DWORD)(rect.bottom - rect.top));
+        }
+    }
+
+    RegCloseKey(key);
 }
 
 static BOOL AppCheckMenuRadioItem(HMENU menu, UINT first, UINT last, UINT check)
@@ -1079,7 +1733,7 @@ static int SearchBoard(int board[BOARD_N][BOARD_N], int depth, int player, int a
     return best;
 }
 
-static Move FindBestMove(int player)
+static Move FindBestMoveLegacy(int player)
 {
     Move best;
     best.row = -1;
@@ -1111,6 +1765,16 @@ static Move FindBestMove(int player)
     }
 
     return best;
+}
+
+static Move FindBestMove(int player)
+{
+    Move best;
+    if (g_modernFindBestMove &&
+        g_modernFindBestMove(&g_game.cells[0][0], player, g_game.search_depth, &best)) {
+        return best;
+    }
+    return FindBestMoveLegacy(player);
 }
 
 static void CalculateLayout(HWND hwnd, Layout *layout)
@@ -1310,9 +1974,9 @@ static void InitGameState(void)
     g_game.cells[4][3] = RED;
     g_game.cells[4][4] = BLUE;
     g_game.turn = RED;
-    g_game.skill_cmd = IDM_INTERMEDIATE;
-    g_game.search_depth = 2;
-    g_game.animation_cmd = IDM_ANIM_FAST;
+    g_game.skill_cmd = NormalizeSkillCommand(g_configSkillCmd);
+    g_game.search_depth = SkillDepthForCommand(g_game.skill_cmd);
+    g_game.animation_cmd = NormalizeAnimationCommand(g_configAnimationCmd);
     g_game.hint_row = -1;
     g_game.hint_col = -1;
     g_game.selected_row = 3;
@@ -1803,42 +2467,64 @@ static void ShowHint(HWND hwnd)
 
 static void SetSkill(HWND hwnd, int cmd)
 {
-    g_game.skill_cmd = cmd;
-    switch (cmd) {
-    case IDM_BEGINNER:
-        g_game.search_depth = 1;
-        break;
-    case IDM_INTERMEDIATE:
-        g_game.search_depth = 2;
-        break;
-    case IDM_EXPERT:
-        g_game.search_depth = 4;
-        break;
-    case IDM_MASTER:
-        g_game.search_depth = 6;
-        break;
-    default:
-        g_game.search_depth = 2;
-        break;
-    }
+    g_game.skill_cmd = NormalizeSkillCommand(cmd);
+    g_game.search_depth = SkillDepthForCommand(g_game.skill_cmd);
+    g_configSkillCmd = g_game.skill_cmd;
+    SaveGameSettings(hwnd);
     UpdateMenuChecks(hwnd);
 }
 
 static void SetAnimation(HWND hwnd, int cmd)
 {
-    g_game.animation_cmd = cmd;
+    g_game.animation_cmd = NormalizeAnimationCommand(cmd);
+    g_configAnimationCmd = g_game.animation_cmd;
+    SaveGameSettings(hwnd);
     UpdateMenuChecks(hwnd);
 }
 
 static void ShowHelp(HWND hwnd, int cmd)
 {
+    int opened = 0;
+    int force_chm = AppIsVistaOrNewer();
+    int prefer_chm = force_chm || AppCanPreferChmHelp();
+    const APP_CHAR empty_keyword[] = APP_TEXT("");
+
+    if (cmd == IDM_HELP_USING) {
+        if (prefer_chm) {
+            opened = OpenWindowsChmHelp(hwnd, HH_DISPLAY_TOC_LOCAL);
+        }
+        if (!opened && !force_chm) {
+            opened = AppWinHelp(hwnd, NULL, HELP_HELPONHELP, 0);
+        }
+        if (!opened && !force_chm) {
+            opened = OpenWindowsWinHelp(hwnd);
+        }
+    } else if (cmd == IDM_HELP_SEARCH) {
+        if (prefer_chm) {
+            opened = OpenLocalChmHelp(hwnd, HH_DISPLAY_INDEX_LOCAL);
+        }
+        if (!opened && !force_chm) {
+            opened = OpenLocalWinHelp(hwnd, HELP_PARTIALKEY, (ULONG_PTR)empty_keyword);
+        }
+    } else {
+        if (prefer_chm) {
+            opened = OpenLocalChmHelp(hwnd, HH_DISPLAY_TOC_LOCAL);
+        }
+        if (!opened && !force_chm) {
+            opened = OpenLocalWinHelp(hwnd, HELP_CONTENTS, 0);
+        }
+    }
+
+    if (opened) {
+        return;
+    }
+
     UINT text_id = IDS_HELP_CONTENTS_TEXT;
     if (cmd == IDM_HELP_SEARCH) {
         text_id = IDS_HELP_SEARCH_TEXT;
     } else if (cmd == IDM_HELP_USING) {
         text_id = IDS_HELP_USING_TEXT;
     }
-
     APP_CHAR text[512];
     APP_CHAR title[64];
     LoadText(text_id, text, 512);
@@ -2036,6 +2722,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     }
 
     case WM_DESTROY:
+        SaveGameSettings(hwnd);
+        AppCloseHtmlHelp();
+        if (!AppIsVistaOrNewer()) {
+            CloseLegacyWinHelp(hwnd);
+        }
         PostQuitMessage(0);
         return 0;
 
@@ -2072,9 +2763,11 @@ static int ReversiMain(HINSTANCE hinst, int show)
 {
     g_hinst = hinst;
     InitWideCommandMode();
+    InitModernDispatch();
     InitClassicVisualStyles();
     InitSystemDpiAwareness();
     InitClassicColors();
+    LoadGameSettings();
 
     if (AppCommandHasSelfTest()) {
         return RunSelfTest();
@@ -2101,15 +2794,26 @@ static int ReversiMain(HINSTANCE hinst, int show)
         return 1;
     }
 
+    int window_x = CW_USEDEFAULT;
+    int window_y = CW_USEDEFAULT;
+    int window_width = ScaleForDpi(500);
+    int window_height = ScaleForDpi(540);
+    if (g_configHasWindowRect) {
+        window_x = g_configWindowRect.left;
+        window_y = g_configWindowRect.top;
+        window_width = g_configWindowRect.right - g_configWindowRect.left;
+        window_height = g_configWindowRect.bottom - g_configWindowRect.top;
+    }
+
     HWND hwnd = APP_CREATE_WINDOW_EX(
         0,
         class_name,
         title,
         WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        ScaleForDpi(500),
-        ScaleForDpi(540),
+        window_x,
+        window_y,
+        window_width,
+        window_height,
         NULL,
         NULL,
         hinst,

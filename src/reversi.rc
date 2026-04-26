@@ -79,6 +79,14 @@ BEGIN
     IDS_FILE_DESCRIPTION "Microsoft Windows Reversi Application"
     IDS_ORIGINAL_FILENAME "REVERSI.EXE"
     IDS_HELP_TITLE "Reversi Help"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
 END
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
@@ -141,6 +149,14 @@ BEGIN
     IDS_FILE_DESCRIPTION "Microsoft Windows Reversi Application"
     IDS_ORIGINAL_FILENAME "REVERSI.EXE"
     IDS_HELP_TITLE "翻转棋帮助"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
 END
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
@@ -203,6 +219,14 @@ BEGIN
     IDS_FILE_DESCRIPTION "Microsoft Windows Reversi Application"
     IDS_ORIGINAL_FILENAME "REVERSI.EXE"
     IDS_HELP_TITLE "翻轉棋說明"
+    IDS_HELP_CHM_FILE "reversi.chm"
+    IDS_WINDOWS_HELP_FILE "windows.hlp"
+    IDS_WINDOWS_CHM_FILE "windows.chm"
+    IDS_REGISTRY_KEY "Software\\Microsoft\\reversi"
+    IDS_WINDOW_X_KEY "WindowX"
+    IDS_WINDOW_Y_KEY "WindowY"
+    IDS_WINDOW_WIDTH_KEY "WindowWidth"
+    IDS_WINDOW_HEIGHT_KEY "WindowHeight"
 END
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
