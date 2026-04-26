@@ -202,16 +202,6 @@ def popup_topic(topic_id, body):
     )
 
 
-def hidden_contents():
-    return (
-        footnote("!", "NoShow();Search()")
-        + footnote("#", "JP.RLA")
-        + r"\pard\sb45\sl-235\li295\ri125\fi-185\tx295 \f1\fs18 "
-        + rtf_text("如果没有目录文件，请使用“索引”查找帮助主题。")
-        + "\n\\par\n\\par\n\\page\n"
-    )
-
-
 def build_topics():
     topics = []
 
@@ -548,7 +538,6 @@ def build_rtf():
         + r"\pard\plain\f0\fs18"
         + "\n"
         + "".join(build_topics())
-        + hidden_contents()
         + "}"
     )
 
@@ -556,7 +545,7 @@ def build_rtf():
 def build_hpj():
     return """[OPTIONS]
 TITLE=“翻转棋”帮助
-CONTENTS=JP.RLA
+CONTENTS=TOPIC_OVERVIEW
 LCID=0x804 0x0 0x0
 COMPRESS=0
 
