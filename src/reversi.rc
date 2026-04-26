@@ -100,8 +100,8 @@ BEGIN
     IDS_WINDOW_WIDTH_KEY "WindowWidth"
     IDS_WINDOW_HEIGHT_KEY "WindowHeight"
     IDS_WINDOW_DPI_KEY "WindowDpi"
-    IDS_COMPUTER_PASS "I have no open square to move to and must pass."
-    IDS_COMPUTER_PASS_TEXT "Computer passes."
+    IDS_COMPUTER_PASS "The computer has no open square to move to and must pass."
+    IDS_COMPUTER_PASS_TEXT "The computer passes."
 END
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
@@ -130,10 +130,10 @@ BEGIN
     POPUP "测试(&T)"
     BEGIN
         MENUITEM "我让棋(&P)", IDM_TEST_PLAYER_PASS
-        MENUITEM "电脑让棋(&C)", IDM_TEST_COMPUTER_PASS
+        MENUITEM "计算机让棋(&C)", IDM_TEST_COMPUTER_PASS
         MENUITEM "我不能让棋(&N)", IDM_TEST_CANNOT_PASS
         MENUITEM "我必须让棋(&M)", IDM_TEST_MUST_PASS
-        MENUITEM "电脑必须让棋(&U)", IDM_TEST_COMPUTER_MUST_PASS
+        MENUITEM "计算机必须让棋(&U)", IDM_TEST_COMPUTER_MUST_PASS
         MENUITEM "双方无棋：结束(&E)", IDM_TEST_NO_MOVES
         MENUITEM SEPARATOR
         MENUITEM "我赢了(&W)", IDM_TEST_WIN
@@ -186,8 +186,8 @@ BEGIN
     IDS_WINDOW_WIDTH_KEY "WindowWidth"
     IDS_WINDOW_HEIGHT_KEY "WindowHeight"
     IDS_WINDOW_DPI_KEY "WindowDpi"
-    IDS_COMPUTER_PASS "我没有空位下棋，必须让棋"
-    IDS_COMPUTER_PASS_TEXT "电脑让棋"
+    IDS_COMPUTER_PASS "计算机没有空位下棋，必须让棋"
+    IDS_COMPUTER_PASS_TEXT "计算机让棋"
 END
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
@@ -272,7 +272,7 @@ BEGIN
     IDS_WINDOW_WIDTH_KEY "WindowWidth"
     IDS_WINDOW_HEIGHT_KEY "WindowHeight"
     IDS_WINDOW_DPI_KEY "WindowDpi"
-    IDS_COMPUTER_PASS "我沒有空位下棋，必須讓棋"
+    IDS_COMPUTER_PASS "電腦沒有空位下棋，必須讓棋"
     IDS_COMPUTER_PASS_TEXT "電腦讓棋"
 END
 
