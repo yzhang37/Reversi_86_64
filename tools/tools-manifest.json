@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "cacheDir": "tools/cache",
+  "vendorDir": "tools/vendor",
+  "tools": [
+    {
+      "id": "help-workshop",
+      "name": "Microsoft Help Workshop 4.03",
+      "purpose": "Compile WinHelp 4.0 HLP files from HPJ/RTF/CNT sources.",
+      "license": "Microsoft EULA. Do not redistribute from this repository.",
+      "url": "https://download.microsoft.com/download/word97win/Utility/4.03/WIN98/EN-US/Hcwsetup.exe",
+      "archive": "Hcwsetup.exe",
+      "sha256": "F666E3C1A12C750167F407C48D4371065C911942CAA42847E710B7584D23F81B",
+      "installedCheck": "tools/vendor/hcw/hcw.exe",
+      "notes": "The bootstrapper downloads and verifies the installer. If an existing local tools/hcw directory is present, it migrates it to tools/vendor/hcw. Otherwise run the installer manually or rerun with -RunInstallers, then place the installed files in tools/vendor/hcw."
+    },
+    {
+      "id": "helpdeco",
+      "name": "HelpDeco 2.1.4",
+      "purpose": "Decompile and inspect legacy WinHelp HLP files.",
+      "license": "GPL-2.0-or-later.",
+      "url": "https://downloads.sourceforge.net/project/helpdeco/helpdeco-2.1.4.tar.gz",
+      "archive": "helpdeco-2.1.4.tar.gz",
+      "sha256": "52A828C50BE410292130CFAA6194A5A86A2EB41DDF04512464E7F4998FCB89F4",
+      "installedCheck": "tools/vendor/helpdeco-2.1.4/helpdeco.exe",
+      "sourceDir": "tools/vendor/helpdeco-2.1.4",
+      "notes": "The bootstrapper extracts the source archive. If helpdeco.exe is missing and cl.exe is available, it attempts a local build."
+    }
+  ]
+}

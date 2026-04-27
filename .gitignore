@@ -1,6 +1,8 @@
 *.GID
 build/
 decompiled/
+tools/cache/
+tools/vendor/
 *.[eE][xX][eE]
 *.idb
 ida/

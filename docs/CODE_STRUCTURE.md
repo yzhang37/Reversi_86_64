@@ -56,6 +56,20 @@ src/lang/reversi_*.rcinc       Other localized resources.
 Normal user-facing strings belong in RC resources. Debug-only text may stay in
 C when the feature is intentionally hidden and not localized.
 
+## Tooling Layout
+
+Keep repository-authored tools in `tools/`. Put downloaded archives and
+third-party binaries under ignored local folders:
+
+```text
+tools/cache/
+tools/vendor/
+```
+
+Do not commit third-party tool payloads. Update `tools/tools-manifest.json` and
+`tools/bootstrap-tools.ps1` when a tool source, checksum, or install path
+changes.
+
 ## Compatibility Boundaries
 
 - x86 startup, imports, WndProc, and main code must remain legacy IA32-safe.

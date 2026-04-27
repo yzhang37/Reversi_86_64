@@ -25,6 +25,20 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 
 The build uses MSVC directly through `vcvarsall.bat`, not a project file.
 
+## Optional Tool Bootstrap
+
+Third-party tools are not tracked in Git. Download or prepare local WinHelp
+tools with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1
+```
+
+The bootstrapper reads `tools/tools-manifest.json`, downloads archives into
+`tools/cache/`, and prepares extracted tools under `tools/vendor/`. Both
+directories are ignored. Repository-authored tools such as
+`tools/export_rtf_markdown.py` remain tracked.
+
 ## Production Build
 
 For a production build with the hidden debug menu disabled by default:

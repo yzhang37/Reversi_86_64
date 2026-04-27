@@ -26,7 +26,7 @@ python help\zh-CN\make_hlp_sources.py
 编译 WinHelp：
 
 ```powershell
-.\tools\hcw\hcw.exe /C /E help\zh-CN\REVERSI.hpj
+.\tools\vendor\hcw\hcw.exe /C /E help\zh-CN\REVERSI.hpj
 ```
 
 把帮助文件复制到程序旁边：
@@ -43,7 +43,7 @@ Copy-Item help\zh-CN\REVERSI.cnt build\x64\REVERSI.CNT -Force
 反编译检查：
 
 ```powershell
-.\tools\helpdeco-2.1.4\helpdeco.exe help\zh-CN\REVERSI.HLP /p
+.\tools\vendor\helpdeco-2.1.4\helpdeco.exe help\zh-CN\REVERSI.HLP /p
 ```
 
 测试前清 WinHelp 缓存：

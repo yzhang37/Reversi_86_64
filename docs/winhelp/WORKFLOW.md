@@ -38,7 +38,7 @@ help/zh-CN/REVERSI.cnt
 ## 3. 编译 HLP
 
 ```powershell
-.\tools\hcw\hcw.exe /C /E help\zh-CN\REVERSI.hpj
+.\tools\vendor\hcw\hcw.exe /C /E help\zh-CN\REVERSI.hpj
 ```
 
 输出：

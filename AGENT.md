@@ -9,7 +9,7 @@ resources, and era feel as much as possible.
 - Run git commands with escalated permissions in this workspace. The sandbox
   can block `.git/index.lock`; use elevation for status, add, commit, diff,
   log, push, and similar git operations.
-- Never revert user changes. The tree often contains user-provided reference
+- Never revert user changes. The local tree may contain ignored reference
   binaries, WinHelp experiments, `.GID` caches, and documentation edits.
 - If `REVERSI.exe` is running and blocks a build, kill it directly.
 - Do not run `idaw.exe -?`, `idaw -?`, `idaq.exe -?`, or equivalent GUI IDA
@@ -38,6 +38,15 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
   `docs/CODE_STRUCTURE.md`.
 - Porting and behavior rules are in `docs/PORTING_NOTES.md`.
 - WinHelp-specific rules are in `docs/winhelp/`.
+- Optional third-party tools are restored with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1
+```
+
+- `tools/cache/` and `tools/vendor/` are ignored local state. Do not commit
+  downloaded third-party tools; only commit the manifest/bootstrap scripts and
+  repository-authored tools.
 
 ## Maintainable Code Golf
 

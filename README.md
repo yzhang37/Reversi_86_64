@@ -34,6 +34,12 @@ Requirements:
 - Visual Studio 2022 with MSVC x86/x64 tools
 - PowerShell
 
+Optional WinHelp tools can be downloaded or prepared locally with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1
+```
+
 Build both x86 and x64:
 
 ```powershell
@@ -71,7 +77,7 @@ python help\zh-CN\make_hlp_sources.py
 Compile the WinHelp file with Microsoft Help Workshop:
 
 ```powershell
-.\tools\hcw\hcw.exe /C /E help\zh-CN\REVERSI.hpj
+.\tools\vendor\hcw\hcw.exe /C /E help\zh-CN\REVERSI.hpj
 ```
 
 Generated files:

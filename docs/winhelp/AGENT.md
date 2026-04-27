@@ -16,6 +16,10 @@ games while preserving clean, editable source material.
   issues.
 - Repository-level source layout and Maintainable Code Golf rules live in
   `../CODE_STRUCTURE.md`.
+- Optional WinHelp tools are prepared with
+  `powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1`.
+  Third-party tool payloads live under ignored `tools/cache/` and
+  `tools/vendor/` directories.
 
 ## Primary Goals
 
@@ -126,7 +130,8 @@ why a square is legal
 - Use Songti/SimSun-style 9 point body text for Simplified Chinese.
 - Reset body style after headings with `\plain`, or the whole page can inherit
   bold style.
-- Use `WINHLP95.EXE` from the repository when testing classic behavior.
+- Use local `WINHLP95.EXE` when testing classic behavior, if it is present.
+- Use `tools/vendor/hcw/hcw.exe` for Help Workshop after bootstrapping tools.
 
 ## Known WinHelp Pitfalls
 
@@ -138,7 +143,7 @@ why a square is legal
 
 ## Commit Discipline
 
-WinHelp changes may include:
+WinHelp changes usually include:
 
 ```text
 help/zh-CN/make_hlp_sources.py
@@ -146,19 +151,13 @@ help/zh-CN/REVERSI.rtf
 help/zh-CN/REVERSI.hpj
 help/zh-CN/REVERSI.cnt
 help/zh-CN/REVERSI.HLP
-REVERSI.HLP
-REVERSI.cnt
-build/x86/REVERSI.HLP
-build/x86/REVERSI.CNT
-build/x64/REVERSI.HLP
-build/x64/REVERSI.CNT
 docs/winhelp/*.md
 ```
 
-Generated `.GID` caches should not be committed.
+Generated `.GID` caches, build outputs, decompiled output, and third-party
+tools should not be committed.
 
 Official Microsoft game HLP/CHM/EXE files, Help Workshop files, and decompiled
-outputs may be present in the repository as reference material. Do not delete
-or rewrite them casually. For ordinary focused commits, stage only the files
-related to the task; if the user explicitly asks for a whole-repository sync,
-include the reference assets too.
+outputs may be present locally as reference material, but generated/decompiled
+payloads and third-party tool binaries are ignored. Do not commit them unless
+the user explicitly changes the repository policy.
