@@ -2,6 +2,8 @@ param(
     [switch]$Production,
     [switch]$Mui,
     [switch]$KeepIntermediate,
+    [switch]$Clean,
+    [switch]$Rebuild,
     [string[]]$Locale,
     [switch]$ListLocales
 )
@@ -276,6 +278,38 @@ function Remove-IntermediateFiles {
     }
 }
 
+function Clear-OutputPath {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $buildRoot = [IO.Path]::GetFullPath((Join-Path $Root 'build'))
+    $target = [IO.Path]::GetFullPath($Path)
+    $withinBuildTree = $target -eq $buildRoot -or $target.StartsWith($buildRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)
+    if (!$withinBuildTree) {
+        throw "Refusing to clean unexpected path: $target"
+    }
+
+    if (Test-Path $target) {
+        Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Invoke-Clean {
+    param(
+        [Parameter(Mandatory = $true)]$SelectedLanguages,
+        [switch]$MuiBuild
+    )
+
+    if ($MuiBuild) {
+        Clear-MuiOutput -Path (Join-Path $Root 'build\MUI')
+        return
+    }
+
+    foreach ($language in $SelectedLanguages) {
+        $localeOutput = Join-Path $Root ("build\$($language.Locale)")
+        Clear-OutputPath -Path $localeOutput
+    }
+}
+
 function Set-PeVersion {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
@@ -400,6 +434,13 @@ if ($ListLocales) {
 
 $selectedLanguages = Select-Languages
 $built = @()
+
+if ($Clean -or $Rebuild) {
+    Invoke-Clean -SelectedLanguages $selectedLanguages -MuiBuild:$Mui
+    if ($Clean) {
+        exit 0
+    }
+}
 
 if ($Mui) {
     $built = New-Object System.Collections.Generic.List[string]

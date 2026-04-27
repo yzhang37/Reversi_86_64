@@ -24,10 +24,23 @@ resources, and era feel as much as possible.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build.ps1
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Clean
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Rebuild
 powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale zh-CN
 powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale all
 powershell -ExecutionPolicy Bypass -File .\build.ps1 -Mui -Locale all
 powershell -ExecutionPolicy Bypass -File .\build.ps1 -KeepIntermediate
+```
+
+- Makefile shortcuts:
+
+```bash
+make
+make clean
+make rebuild
+make mui
+make mui-clean
+make mui-rebuild
 ```
 
 - Smoke tests:

@@ -48,6 +48,13 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale all
 ```
 
+One-click clean and rebuild:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Clean
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Rebuild
+```
+
 List available locales or build only the ones you want:
 
 ```powershell
@@ -66,6 +73,17 @@ Keep compiler/resource intermediates for debugging:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build.ps1 -KeepIntermediate
+```
+
+Common tasks via Makefile:
+
+```bash
+make                 # same as default build
+make clean           # clean current locale scope outputs
+make rebuild         # clean then build
+make mui             # build MUI-style outputs
+make mui-clean       # clean MUI outputs
+make mui-rebuild     # clean then build MUI outputs
 ```
 
 Build an application-local MUI-style package:
@@ -121,6 +139,9 @@ Optional self-test:
 .\build\en-US\x86\REVERSI.exe --self-test
 .\build\en-US\x64\REVERSI.exe --self-test
 ```
+
+If `make` is not installed, use any `nmake`-compatible wrapper and
+replace `make` with `nmake`.
 
 ## Build WinHelp
 

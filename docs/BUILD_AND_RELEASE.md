@@ -54,6 +54,11 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale all
 ```
 
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Clean
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Rebuild
+```
+
 The default build emits all supported locale/architecture pairs. To build only
 one or more locales during development, or to list the supported locale names:
 
@@ -67,6 +72,19 @@ The build uses MSVC directly through `vcvarsall.bat`, not a project file.
 By default, build intermediates (`obj/`, `.obj`, `.res`, copied `.rcinc`) are
 removed from output folders. Use `-KeepIntermediate` when you need them for
 resource inspection or debugging.
+
+### Makefile
+
+The root `Makefile` exposes the most common targets:
+
+```bash
+make
+make clean
+make rebuild
+make mui
+make mui-clean
+make mui-rebuild
+```
 
 ## MUI-Style Build
 
