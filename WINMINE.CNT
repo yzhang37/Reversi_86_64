@@ -1,5 +1,0 @@
-:Base winmine.hlp>proc4
-:Title “扫雷”帮助
-:Index Minesweeper Help =winmine.hlp
-1 规则=MINE_PLAY
-1 策略与技巧=MINE_TIPS

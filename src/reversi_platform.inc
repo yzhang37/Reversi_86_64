@@ -532,8 +532,10 @@ static int AppShellAbout(HWND hwnd, const char *title, const char *text, HICON i
             WCHAR wide_title[128];
             WCHAR wide_text[256];
             AppToWide(title, wide_title, 128);
-            AppToWide(text, wide_text, 256);
-            return shell_about(hwnd, wide_title, wide_text, icon);
+            if (text) {
+                AppToWide(text, wide_text, 256);
+            }
+            return shell_about(hwnd, wide_title, text ? wide_text : NULL, icon);
         }
     }
     return ShellAboutA(hwnd, title, text, icon);

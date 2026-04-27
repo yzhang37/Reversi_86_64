@@ -3,6 +3,11 @@ build/
 decompiled/
 tools/cache/
 tools/vendor/
+/references/vendor/
 *.[eE][xX][eE]
+/*.[cC][hH][mM]
+/*.[hH][lL][pP]
+/*.[cC][nN][tT]
+/*.[rR][eE][gG]
 *.idb
 ida/

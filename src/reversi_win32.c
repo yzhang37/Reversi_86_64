@@ -972,10 +972,10 @@ static void EndInputLock(HWND hwnd)
 static void InitGameState(void)
 {
     AppZeroMemory(&g_game, sizeof(g_game));
-    g_game.cells[3][3] = BLUE;
-    g_game.cells[3][4] = RED;
-    g_game.cells[4][3] = RED;
-    g_game.cells[4][4] = BLUE;
+    g_game.cells[3][3] = RED;
+    g_game.cells[3][4] = BLUE;
+    g_game.cells[4][3] = BLUE;
+    g_game.cells[4][4] = RED;
     g_game.turn = RED;
     g_game.skill_cmd = NormalizeSkillCommand(g_configSkillCmd);
     g_game.search_depth = SkillDepthForCommand(g_game.skill_cmd);
@@ -1655,11 +1655,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case IDM_ABOUT:
         {
             APP_CHAR title[64];
-            APP_CHAR text[128];
             HICON icon = APP_LOAD_ICON(g_hinst, MAKEINTRESOURCE(IDI_REVERSI));
             LoadText(IDS_APP_TITLE, title, 64);
-            LoadText(IDS_ABOUT_TEXT, text, 128);
-            APP_SHELL_ABOUT(hwnd, title, text, icon);
+            APP_SHELL_ABOUT(hwnd, title, NULL, icon);
             return 0;
         }
         default:
@@ -1910,12 +1908,12 @@ static int RunSelfTest(void)
     if (CountPieces(RED) != 2 || CountPieces(BLUE) != 2) {
         return 4;
     }
-    if (CollectFlips(2, 3, RED, NULL, 0) != 1 || !HasLegalMove(RED)) {
+    if (CollectFlips(2, 4, RED, NULL, 0) != 1 || !HasLegalMove(RED)) {
         return 5;
     }
     int board[BOARD_N][BOARD_N];
     CopyBoard(board, g_game.cells);
-    if (!ApplyMoveOnBoard(board, 2, 3, RED) || board[3][3] != RED) {
+    if (!ApplyMoveOnBoard(board, 2, 4, RED) || board[3][4] != RED) {
         return 6;
     }
     Move move = FindBestMove(BLUE);

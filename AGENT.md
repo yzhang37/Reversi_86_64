@@ -47,6 +47,10 @@ powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1
 - `tools/cache/` and `tools/vendor/` are ignored local state. Do not commit
   downloaded third-party tools; only commit the manifest/bootstrap scripts and
   repository-authored tools.
+- `references/vendor/` is ignored local state for third-party reference files:
+  Microsoft game samples, CHM/HLP/CNT files, WinHelp viewers, GID caches,
+  comparison executables, and similar external material. Keep those out of the
+  repository and use tracked notes/manifests when the knowledge matters.
 
 ## Maintainable Code Golf
 
