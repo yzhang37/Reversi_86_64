@@ -453,32 +453,44 @@ static int ShadowDirection(void)
     return MirrorBoardView() ? -1 : 1;
 }
 
+static RECT RectFromEdges(int left, int top, int right, int bottom)
+{
+    RECT rc;
+
+    if (left <= right) {
+        rc.left = left;
+        rc.right = right;
+    } else {
+        rc.left = right;
+        rc.right = left;
+    }
+    rc.top = top;
+    rc.bottom = bottom;
+    return rc;
+}
+
 static void DrawBoardShadows(HDC hdc, const Layout *layout, int depth_x, int depth_y)
 {
     int direction = ShadowDirection();
+    int side_edge = direction > 0 ? layout->board.right : layout->board.left;
+    int far_edge = direction > 0 ? layout->board.left : layout->board.right;
+    int edge_side = side_edge + direction * depth_x;
+    int edge_far = far_edge + direction * depth_x;
+    int cast_x = depth_x * 2;
+    int cast_y = depth_y * 2;
+    int rtl_bias = (1 - direction) / 2;
 
-    RECT bottom_shadow;
-    RECT side_shadow;
-    if (direction < 0) {
-        bottom_shadow.left = layout->board.left - depth_x * 2;
-        bottom_shadow.top = layout->board.bottom;
-        bottom_shadow.right = layout->board.right - depth_x * 2;
-        bottom_shadow.bottom = layout->board.bottom + depth_y * 2;
-        side_shadow.left = layout->board.left - depth_x * 2;
-        side_shadow.top = layout->board.top + depth_y * 2;
-        side_shadow.right = layout->board.left;
-        side_shadow.bottom = layout->board.bottom + depth_y * 2;
-    } else {
-        bottom_shadow.left = layout->board.left + depth_x * 2;
-        bottom_shadow.top = layout->board.bottom;
-        bottom_shadow.right = layout->board.right + depth_x * 2;
-        bottom_shadow.bottom = layout->board.bottom + depth_y * 2;
-        side_shadow.left = layout->board.right;
-        side_shadow.top = layout->board.top + depth_y * 2;
-        side_shadow.right = layout->board.right + depth_x * 2;
-        side_shadow.bottom = layout->board.bottom + depth_y * 2;
-    }
-
+    /* REVERSI 16 draws a deeper black cast shadow than the outlined bevel. */
+    RECT bottom_shadow = RectFromEdges(
+        layout->board.left + direction * cast_x,
+        layout->board.bottom,
+        layout->board.right + direction * cast_x,
+        layout->board.bottom + cast_y);
+    RECT side_shadow = RectFromEdges(
+        side_edge,
+        layout->board.top + cast_y,
+        side_edge + direction * cast_x + rtl_bias,
+        layout->board.bottom + cast_y);
     HBRUSH black = (HBRUSH)GetStockObject(BLACK_BRUSH);
     FillRect(hdc, &bottom_shadow, black);
     FillRect(hdc, &side_shadow, black);
@@ -486,7 +498,7 @@ static void DrawBoardShadows(HDC hdc, const Layout *layout, int depth_x, int dep
     HBRUSH slope = (HBRUSH)GetStockObject(DKGRAY_BRUSH);
     for (int i = 1; i < depth_x; ++i) {
         RECT side_strip;
-        side_strip.left = (direction > 0) ? (layout->board.right + i - 1) : (layout->board.left - i);
+        side_strip.left = side_edge + direction * i;
         side_strip.top = layout->board.top + i / g_deviceAspect;
         side_strip.right = side_strip.left + 1;
         side_strip.bottom = layout->board.bottom + i / g_deviceAspect;
@@ -505,31 +517,17 @@ static void DrawBoardShadows(HDC hdc, const Layout *layout, int depth_x, int dep
 
     HPEN edge = CreatePen(PS_SOLID, 1, g_edgeDarkColor);
     HGDIOBJ old_pen = SelectObject(hdc, edge);
-    if (direction < 0) {
-        MoveToEx(hdc, layout->board.left, layout->board.bottom, NULL);
-        LineTo(hdc, layout->board.left, layout->board.top);
-        LineTo(hdc, layout->board.left - depth_x, layout->board.top + depth_y);
-        LineTo(hdc, layout->board.left - depth_x, layout->board.bottom + depth_y);
-        LineTo(hdc, layout->board.right - depth_x, layout->board.bottom + depth_y);
-        LineTo(hdc, layout->board.right, layout->board.bottom);
-        LineTo(hdc, layout->board.left, layout->board.bottom);
-        LineTo(hdc, layout->board.left - depth_x, layout->board.bottom + depth_y);
-        MoveToEx(hdc, layout->board.left, layout->board.top, NULL);
-        LineTo(hdc, layout->board.right, layout->board.top);
-        LineTo(hdc, layout->board.right, layout->board.bottom);
-    } else {
-        MoveToEx(hdc, layout->board.right, layout->board.bottom, NULL);
-        LineTo(hdc, layout->board.right, layout->board.top);
-        LineTo(hdc, layout->board.right + depth_x, layout->board.top + depth_y);
-        LineTo(hdc, layout->board.right + depth_x, layout->board.bottom + depth_y);
-        LineTo(hdc, layout->board.left + depth_x, layout->board.bottom + depth_y);
-        LineTo(hdc, layout->board.left, layout->board.bottom);
-        LineTo(hdc, layout->board.right, layout->board.bottom);
-        LineTo(hdc, layout->board.right + depth_x, layout->board.bottom + depth_y);
-        MoveToEx(hdc, layout->board.right, layout->board.top, NULL);
-        LineTo(hdc, layout->board.left, layout->board.top);
-        LineTo(hdc, layout->board.left, layout->board.bottom);
-    }
+    MoveToEx(hdc, side_edge, layout->board.bottom, NULL);
+    LineTo(hdc, side_edge, layout->board.top);
+    LineTo(hdc, edge_side, layout->board.top + depth_y);
+    LineTo(hdc, edge_side, layout->board.bottom + depth_y);
+    LineTo(hdc, edge_far, layout->board.bottom + depth_y);
+    LineTo(hdc, far_edge, layout->board.bottom);
+    LineTo(hdc, side_edge, layout->board.bottom);
+    LineTo(hdc, edge_side, layout->board.bottom + depth_y);
+    MoveToEx(hdc, side_edge, layout->board.top, NULL);
+    LineTo(hdc, far_edge, layout->board.top);
+    LineTo(hdc, far_edge, layout->board.bottom);
     SelectObject(hdc, old_pen);
     DeleteObject(edge);
 }
