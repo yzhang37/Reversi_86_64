@@ -15,7 +15,7 @@ BEGIN
     POPUP "&Opzioni"
     BEGIN
         MENUITEM "&Principiante", IDM_BEGINNER
-        MENUITEM "&Intermedio", IDM_INTERMEDIATE
+        MENUITEM "&Novizio", IDM_NOVICE
         MENUITEM "&Esperto", IDM_EXPERT
         MENUITEM "&Maestro", IDM_MASTER
         MENUITEM SEPARATOR
@@ -52,8 +52,8 @@ BEGIN
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "Questa è una breve descrizione del programma Reversi:\n\nRegole di Reversi: racchiudi le pedine del computer in una riga orizzontale, verticale o diagonale per girarle nel tuo colore.\n\nLe tue pedine sono rosse. Le pedine del computer sono blu. Puoi muovere solo dove il puntatore diventa una croce."
-    IDS_HELP_SEARCH_TEXT "Il file della Guida di Reversi non è stato trovato. Verificare che il file della Guida sia installato, quindi riprovare."
-    IDS_HELP_USING_TEXT "Impossibile aprire la Guida sull'uso della Guida. Verificare che la Guida di Windows sia installata, quindi riprovare."
+    IDS_HELP_SEARCH_TEXT "Il file della Guida di Reversi non è stato trovato.\n\nVerificare che il file della Guida sia installato, quindi riprovare."
+    IDS_HELP_USING_TEXT "Impossibile aprire la Guida sull'uso della Guida.\n\nVerificare che la Guida di Windows sia installata, quindi riprovare."
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "Impossibile registrare la classe della finestra."
     IDS_CREATE_FAIL "Impossibile creare la finestra."

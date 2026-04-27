@@ -17,6 +17,209 @@ static FARPROC AppGetProc(const char *module_name, const char *proc_name)
     return module ? GetProcAddress(module, proc_name) : NULL;
 }
 
+typedef DWORD (WINAPI *SetLayoutProc)(HDC, DWORD);
+typedef DWORD (WINAPI *GetLayoutProc)(HDC);
+typedef BOOL (WINAPI *SetProcessDefaultLayoutProc)(DWORD);
+
+static int AppIsUtf8Trail(BYTE value)
+{
+    return (value & 0xC0) == 0x80;
+}
+
+static void AppUtf8ToWide(const char *src, WCHAR *dst, int cch)
+{
+    int out = 0;
+    const BYTE *in = (const BYTE *)src;
+
+    if (!dst || cch <= 0) {
+        return;
+    }
+    dst[0] = 0;
+    if (!src) {
+        return;
+    }
+
+    while (*in && out + 1 < cch) {
+        DWORD ch = *in++;
+        if (ch >= 0x80) {
+            int need = 0;
+            DWORD min_value = 0;
+            if ((ch & 0xE0) == 0xC0) {
+                ch &= 0x1F;
+                need = 1;
+                min_value = 0x80;
+            } else if ((ch & 0xF0) == 0xE0) {
+                ch &= 0x0F;
+                need = 2;
+                min_value = 0x800;
+            } else if ((ch & 0xF8) == 0xF0) {
+                ch &= 0x07;
+                need = 3;
+                min_value = 0x10000;
+            } else {
+                ch = '?';
+            }
+
+            if (need) {
+                const BYTE *trail = in;
+                int valid = 1;
+                for (int i = 0; i < need; ++i) {
+                    if (!AppIsUtf8Trail(trail[i])) {
+                        valid = 0;
+                        break;
+                    }
+                    ch = (ch << 6) | (trail[i] & 0x3F);
+                }
+                if (valid && ch >= min_value && ch <= 0x10FFFF &&
+                    !(ch >= 0xD800 && ch <= 0xDFFF)) {
+                    in += need;
+                } else {
+                    ch = '?';
+                }
+            }
+        }
+
+        if (ch <= 0xFFFF) {
+            dst[out++] = (WCHAR)ch;
+        } else {
+            if (out + 2 >= cch) {
+                break;
+            }
+            ch -= 0x10000;
+            dst[out++] = (WCHAR)(0xD800 | (ch >> 10));
+            dst[out++] = (WCHAR)(0xDC00 | (ch & 0x3FF));
+        }
+    }
+    dst[out] = 0;
+}
+
+static void AppWideToUtf8(const WCHAR *src, char *dst, int cch)
+{
+    int out = 0;
+
+    if (!dst || cch <= 0) {
+        return;
+    }
+    dst[0] = 0;
+    if (!src) {
+        return;
+    }
+
+    while (*src && out + 1 < cch) {
+        DWORD ch = *src++;
+        if (ch >= 0xD800 && ch <= 0xDBFF && *src >= 0xDC00 && *src <= 0xDFFF) {
+            ch = 0x10000 + ((ch - 0xD800) << 10) + (*src++ - 0xDC00);
+        } else if (ch >= 0xD800 && ch <= 0xDFFF) {
+            ch = '?';
+        }
+
+        if (ch < 0x80) {
+            if (out + 1 >= cch) {
+                break;
+            }
+            dst[out++] = (char)ch;
+        } else if (ch < 0x800) {
+            if (out + 2 >= cch) {
+                break;
+            }
+            dst[out++] = (char)(0xC0 | (ch >> 6));
+            dst[out++] = (char)(0x80 | (ch & 0x3F));
+        } else if (ch < 0x10000) {
+            if (out + 3 >= cch) {
+                break;
+            }
+            dst[out++] = (char)(0xE0 | (ch >> 12));
+            dst[out++] = (char)(0x80 | ((ch >> 6) & 0x3F));
+            dst[out++] = (char)(0x80 | (ch & 0x3F));
+        } else {
+            if (out + 4 >= cch) {
+                break;
+            }
+            dst[out++] = (char)(0xF0 | (ch >> 18));
+            dst[out++] = (char)(0x80 | ((ch >> 12) & 0x3F));
+            dst[out++] = (char)(0x80 | ((ch >> 6) & 0x3F));
+            dst[out++] = (char)(0x80 | (ch & 0x3F));
+        }
+    }
+    dst[out] = 0;
+}
+
+static DWORD AppBeginLtrDrawing(HDC hdc, int *restore)
+{
+    SetLayoutProc set_layout;
+    GetLayoutProc get_layout;
+    DWORD old_layout = 0;
+
+    if (restore) {
+        *restore = 0;
+    }
+    if (!g_rtlLayout || !hdc) {
+        return 0;
+    }
+
+    set_layout = (SetLayoutProc)AppGetProc("gdi32.dll", "SetLayout");
+    if (!set_layout) {
+        return 0;
+    }
+
+    get_layout = (GetLayoutProc)AppGetProc("gdi32.dll", "GetLayout");
+    if (get_layout) {
+        old_layout = get_layout(hdc);
+    }
+    if (set_layout(hdc, 0) == GDI_ERROR) {
+        return 0;
+    }
+    if (restore) {
+        *restore = 1;
+    }
+    return old_layout;
+}
+
+static void AppEndLtrDrawing(HDC hdc, DWORD old_layout, int restore)
+{
+    SetLayoutProc set_layout;
+    if (!restore || !hdc) {
+        return;
+    }
+    set_layout = (SetLayoutProc)AppGetProc("gdi32.dll", "SetLayout");
+    if (set_layout) {
+        set_layout(hdc, old_layout);
+    }
+}
+
+static UINT AppMessageBoxFlags(UINT type)
+{
+    return g_rtlLayout ? (type | MB_RIGHT | MB_RTLREADING) : type;
+}
+
+static DWORD AppMainWindowExStyle(void)
+{
+    if (!g_rtlLayout) {
+        return 0;
+    }
+    if (!g_useWideCommands) {
+        return WS_EX_RIGHT | WS_EX_RTLREADING;
+    }
+    return WS_EX_RIGHT | WS_EX_RTLREADING | WS_EX_LAYOUTRTL | WS_EX_NOINHERITLAYOUT;
+}
+
+static void InitLocaleLayout(void)
+{
+#if defined(REVERSI_LANG_AR_SA) || defined(REVERSI_LANG_HE_IL)
+    g_rtlLayout = 1;
+#else
+    g_rtlLayout = 0;
+#endif
+
+    if (g_rtlLayout && g_useWideCommands) {
+        SetProcessDefaultLayoutProc set_layout =
+            (SetProcessDefaultLayoutProc)AppGetProc("user32.dll", "SetProcessDefaultLayout");
+        if (set_layout) {
+            set_layout(LAYOUT_RTL);
+        }
+    }
+}
+
 static RECT AppVirtualScreenRect(void)
 {
     RECT rc;
@@ -119,7 +322,7 @@ static int AppMessageBox(HWND hwnd, const WCHAR *text, const WCHAR *caption, UIN
     int result;
 
     BeginMessageBoxCentering(hwnd);
-    result = MessageBoxW(hwnd, text, caption, type);
+    result = MessageBoxW(hwnd, text, caption, AppMessageBoxFlags(type));
     EndMessageBoxCentering();
     return result;
 }
@@ -179,8 +382,12 @@ static void AppToWide(const char *src, WCHAR *dst, int cch)
     if (!src) {
         return;
     }
-    MultiByteToWideChar(CP_ACP, 0, src, -1, dst, cch);
-    dst[cch - 1] = 0;
+    if (g_useWideCommands) {
+        AppUtf8ToWide(src, dst, cch);
+    } else {
+        MultiByteToWideChar(CP_ACP, 0, src, -1, dst, cch);
+        dst[cch - 1] = 0;
+    }
 }
 
 static void AppFromWide(const WCHAR *src, char *dst, int cch)
@@ -192,8 +399,12 @@ static void AppFromWide(const WCHAR *src, char *dst, int cch)
     if (!src) {
         return;
     }
-    WideCharToMultiByte(CP_ACP, 0, src, -1, dst, cch, NULL, NULL);
-    dst[cch - 1] = 0;
+    if (g_useWideCommands) {
+        AppWideToUtf8(src, dst, cch);
+    } else {
+        WideCharToMultiByte(CP_ACP, 0, src, -1, dst, cch, NULL, NULL);
+        dst[cch - 1] = 0;
+    }
 }
 
 static int AppWideLen(const WCHAR *text)
@@ -513,12 +724,12 @@ static int AppMessageBox(HWND hwnd, const char *text, const char *caption, UINT 
             WCHAR wide_caption[128];
             AppToWide(text, wide_text, 512);
             AppToWide(caption, wide_caption, 128);
-            result = message_box(hwnd, wide_text, wide_caption, type);
+            result = message_box(hwnd, wide_text, wide_caption, AppMessageBoxFlags(type));
             EndMessageBoxCentering();
             return result;
         }
     }
-    result = MessageBoxA(hwnd, text, caption, type);
+    result = MessageBoxA(hwnd, text, caption, AppMessageBoxFlags(type));
     EndMessageBoxCentering();
     return result;
 }

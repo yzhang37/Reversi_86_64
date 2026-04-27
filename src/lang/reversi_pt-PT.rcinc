@@ -15,7 +15,7 @@ BEGIN
     POPUP "&Opções"
     BEGIN
         MENUITEM "&Principiante", IDM_BEGINNER
-        MENUITEM "&Intermédio", IDM_INTERMEDIATE
+        MENUITEM "&Novato", IDM_NOVICE
         MENUITEM "&Perito", IDM_EXPERT
         MENUITEM "&Mestre", IDM_MASTER
         MENUITEM SEPARATOR
@@ -52,8 +52,8 @@ BEGIN
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "Segue-se uma breve descrição do programa Reversi:\n\nRegras do Reversi: cerque as peças do computador numa linha horizontal, vertical ou diagonal para as virar para a sua cor.\n\nAs suas peças são vermelhas. As peças do computador são azuis. Só pode jogar onde o ponteiro muda para uma cruz."
-    IDS_HELP_SEARCH_TEXT "Não foi possível encontrar o ficheiro de Ajuda do Reversi. Certifique-se de que o ficheiro de Ajuda está instalado e tente novamente."
-    IDS_HELP_USING_TEXT "Não foi possível abrir a Ajuda sobre como utilizar a Ajuda. Certifique-se de que a Ajuda do Windows está instalada e tente novamente."
+    IDS_HELP_SEARCH_TEXT "Não foi possível encontrar o ficheiro de Ajuda do Reversi.\n\nCertifique-se de que o ficheiro de Ajuda está instalado e tente novamente."
+    IDS_HELP_USING_TEXT "Não foi possível abrir a Ajuda sobre como utilizar a Ajuda.\n\nCertifique-se de que a Ajuda do Windows está instalada e tente novamente."
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "Não foi possível registar a classe da janela."
     IDS_CREATE_FAIL "Não foi possível criar a janela."

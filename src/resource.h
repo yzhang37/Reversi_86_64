@@ -12,7 +12,7 @@
 #define IDM_HELP_USING 32
 #define IDM_ABOUT 33
 #define IDM_BEGINNER 41
-#define IDM_INTERMEDIATE 42
+#define IDM_NOVICE 42
 #define IDM_EXPERT 44
 #define IDM_MASTER 46
 #define IDM_HINT 50

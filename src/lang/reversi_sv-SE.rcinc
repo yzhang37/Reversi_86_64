@@ -15,7 +15,7 @@ BEGIN
     POPUP "&Alternativ"
     BEGIN
         MENUITEM "&Nybörjare", IDM_BEGINNER
-        MENUITEM "&Medel", IDM_INTERMEDIATE
+        MENUITEM "&Novis", IDM_NOVICE
         MENUITEM "&Expert", IDM_EXPERT
         MENUITEM "&Mästare", IDM_MASTER
         MENUITEM SEPARATOR
@@ -52,8 +52,8 @@ BEGIN
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "Här är en kort beskrivning av Reversi:\n\nRegler för Reversi: fånga datorns brickor i en vågrät, lodrät eller diagonal rad för att vända dem till din färg.\n\nDina brickor är röda. Datorns brickor är blå. Du kan bara spela där pekaren ändras till ett kors."
-    IDS_HELP_SEARCH_TEXT "Hjälpfilen för Reversi hittades inte. Kontrollera att hjälpfilen är installerad och försök igen."
-    IDS_HELP_USING_TEXT "Hjälpen om hur Hjälp används kunde inte öppnas. Kontrollera att Windows Hjälp är installerad och försök igen."
+    IDS_HELP_SEARCH_TEXT "Hjälpfilen för Reversi hittades inte.\n\nKontrollera att hjälpfilen är installerad och försök igen."
+    IDS_HELP_USING_TEXT "Hjälpen om hur Hjälp används kunde inte öppnas.\n\nKontrollera att Windows Hjälp är installerad och försök igen."
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "Det gick inte att registrera fönsterklassen."
     IDS_CREATE_FAIL "Det gick inte att skapa fönstret."

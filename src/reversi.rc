@@ -34,20 +34,38 @@ BEGIN
     VK_F2, IDM_NEW, VIRTKEY
 END
 
-#include "lang/reversi_en-US.rcinc"
+#if defined(REVERSI_LANG_ZH_CN)
 #include "lang/reversi_zh-CN.rcinc"
+#elif defined(REVERSI_LANG_ZH_TW)
 #include "lang/reversi_zh-TW.rcinc"
+#elif defined(REVERSI_LANG_JA_JP)
 #include "lang/reversi_ja-JP.rcinc"
+#elif defined(REVERSI_LANG_KO_KR)
 #include "lang/reversi_ko-KR.rcinc"
+#elif defined(REVERSI_LANG_FR_FR)
 #include "lang/reversi_fr-FR.rcinc"
+#elif defined(REVERSI_LANG_DE_DE)
 #include "lang/reversi_de-DE.rcinc"
+#elif defined(REVERSI_LANG_ES_ES)
 #include "lang/reversi_es-ES.rcinc"
+#elif defined(REVERSI_LANG_SV_SE)
 #include "lang/reversi_sv-SE.rcinc"
+#elif defined(REVERSI_LANG_FI_FI)
 #include "lang/reversi_fi-FI.rcinc"
+#elif defined(REVERSI_LANG_PT_PT)
 #include "lang/reversi_pt-PT.rcinc"
+#elif defined(REVERSI_LANG_IT_IT)
 #include "lang/reversi_it-IT.rcinc"
+#elif defined(REVERSI_LANG_RU_RU)
 #include "lang/reversi_ru-RU.rcinc"
+#elif defined(REVERSI_LANG_UK_UA)
 #include "lang/reversi_uk-UA.rcinc"
+#elif defined(REVERSI_LANG_AR_SA)
 #include "lang/reversi_ar-SA.rcinc"
+#elif defined(REVERSI_LANG_HE_IL)
 #include "lang/reversi_he-IL.rcinc"
+#else
+#include "lang/reversi_en-US.rcinc"
+#endif
+
 #include "reversi_version.rcinc"

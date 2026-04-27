@@ -345,7 +345,7 @@ static int SkillDepthForCommand(int cmd)
         return 4;
     case IDM_MASTER:
         return 6;
-    case IDM_INTERMEDIATE:
+    case IDM_NOVICE:
     default:
         return 2;
     }
@@ -355,12 +355,12 @@ static int NormalizeSkillCommand(int cmd)
 {
     switch (cmd) {
     case IDM_BEGINNER:
-    case IDM_INTERMEDIATE:
+    case IDM_NOVICE:
     case IDM_EXPERT:
     case IDM_MASTER:
         return cmd;
     default:
-        return IDM_INTERMEDIATE;
+        return IDM_NOVICE;
     }
 }
 
@@ -381,7 +381,7 @@ static int SkillCommandToSetting(int cmd)
     switch (NormalizeSkillCommand(cmd)) {
     case IDM_BEGINNER:
         return 0;
-    case IDM_INTERMEDIATE:
+    case IDM_NOVICE:
         return 1;
     case IDM_EXPERT:
         return 2;
@@ -403,13 +403,13 @@ static int SkillSettingToCommand(int value)
     case 0:
         return IDM_BEGINNER;
     case 1:
-        return IDM_INTERMEDIATE;
+        return IDM_NOVICE;
     case 2:
         return IDM_EXPERT;
     case 3:
         return IDM_MASTER;
     default:
-        return IDM_INTERMEDIATE;
+        return IDM_NOVICE;
     }
 }
 
@@ -530,7 +530,7 @@ static void LoadGameSettings(void)
     int dpi_state;
     HKEY key;
 
-    g_configSkillCmd = IDM_INTERMEDIATE;
+    g_configSkillCmd = IDM_NOVICE;
     g_configAnimationCmd = IDM_ANIM_FAST;
     g_configHasWindowRect = 0;
     g_configRepairSettings = 0;

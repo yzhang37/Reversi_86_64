@@ -15,7 +15,7 @@ BEGIN
     POPUP "خيارات(&O)"
     BEGIN
         MENUITEM "مبتدئ(&B)", IDM_BEGINNER
-        MENUITEM "متوسط(&N)", IDM_INTERMEDIATE
+        MENUITEM "مستجد(&N)", IDM_NOVICE
         MENUITEM "خبير(&E)", IDM_EXPERT
         MENUITEM "محترف(&M)", IDM_MASTER
         MENUITEM SEPARATOR
@@ -52,8 +52,8 @@ BEGIN
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "فيما يلي وصف موجز لبرنامج ريفيرسي:\n\nقواعد ريفيرسي: أحط قطع الكمبيوتر في خط أفقي أو عمودي أو قطري لتحويلها إلى لونك.\n\nقطعك حمراء. قطع الكمبيوتر زرقاء. يمكنك اللعب فقط حيث يتحول المؤشر إلى صليب."
-    IDS_HELP_SEARCH_TEXT "تعذر العثور على ملف تعليمات ريفيرسي. تأكد من تثبيت ملف التعليمات ثم حاول مرة أخرى."
-    IDS_HELP_USING_TEXT "تعذر فتح تعليمات كيفية استخدام التعليمات. تأكد من تثبيت تعليمات Windows ثم حاول مرة أخرى."
+    IDS_HELP_SEARCH_TEXT "تعذر العثور على ملف تعليمات ريفيرسي.\n\nتأكد من تثبيت ملف التعليمات ثم حاول مرة أخرى."
+    IDS_HELP_USING_TEXT "تعذر فتح تعليمات كيفية استخدام التعليمات.\n\nتأكد من تثبيت تعليمات Windows ثم حاول مرة أخرى."
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "تعذر تسجيل فئة النافذة."
     IDS_CREATE_FAIL "تعذر إنشاء النافذة."

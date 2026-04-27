@@ -15,7 +15,7 @@ BEGIN
     POPUP "&Opciones"
     BEGIN
         MENUITEM "&Principiante", IDM_BEGINNER
-        MENUITEM "&Intermedio", IDM_INTERMEDIATE
+        MENUITEM "&Novato", IDM_NOVICE
         MENUITEM "&Experto", IDM_EXPERT
         MENUITEM "&Maestro", IDM_MASTER
         MENUITEM SEPARATOR
@@ -52,8 +52,8 @@ BEGIN
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "Esta es una breve descripción del programa Reversi:\n\nReglas de Reversi: atrape las fichas del ordenador en una línea horizontal, vertical o diagonal para cambiarlas a su color.\n\nSus fichas son rojas. Las fichas del ordenador son azules. Solo puede mover donde el puntero cambia a una cruz."
-    IDS_HELP_SEARCH_TEXT "No se encontró el archivo de ayuda de Reversi. Asegúrese de que el archivo de ayuda esté instalado e inténtelo de nuevo."
-    IDS_HELP_USING_TEXT "No se pudo abrir la ayuda sobre cómo usar la ayuda. Asegúrese de que la Ayuda de Windows esté instalada e inténtelo de nuevo."
+    IDS_HELP_SEARCH_TEXT "No se encontró el archivo de ayuda de Reversi.\n\nAsegúrese de que el archivo de ayuda esté instalado e inténtelo de nuevo."
+    IDS_HELP_USING_TEXT "No se pudo abrir la ayuda sobre cómo usar la ayuda.\n\nAsegúrese de que la Ayuda de Windows esté instalada e inténtelo de nuevo."
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "No se pudo registrar la clase de ventana."
     IDS_CREATE_FAIL "No se pudo crear la ventana."

@@ -14,8 +14,8 @@ BEGIN
     END
     POPUP "&Параметры"
     BEGIN
-        MENUITEM "&Новичок", IDM_BEGINNER
-        MENUITEM "&Средний", IDM_INTERMEDIATE
+        MENUITEM "&Начинающий", IDM_BEGINNER
+        MENUITEM "&Новичок", IDM_NOVICE
         MENUITEM "&Эксперт", IDM_EXPERT
         MENUITEM "&Мастер", IDM_MASTER
         MENUITEM SEPARATOR
@@ -52,8 +52,8 @@ BEGIN
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "Краткое описание программы Реверси:\n\nПравила Реверси: окружите фишки компьютера по горизонтали, вертикали или диагонали, чтобы перевернуть их в свой цвет.\n\nВаши фишки красные. Фишки компьютера синие. Ход можно сделать только там, где указатель становится крестиком."
-    IDS_HELP_SEARCH_TEXT "Файл справки Реверси не найден. Убедитесь, что файл справки установлен, и повторите попытку."
-    IDS_HELP_USING_TEXT "Не удалось открыть справку по использованию справки. Убедитесь, что справка Windows установлена, и повторите попытку."
+    IDS_HELP_SEARCH_TEXT "Файл справки Реверси не найден.\n\nУбедитесь, что файл справки установлен, и повторите попытку."
+    IDS_HELP_USING_TEXT "Не удалось открыть справку по использованию справки.\n\nУбедитесь, что справка Windows установлена, и повторите попытку."
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "Не удалось зарегистрировать класс окна."
     IDS_CREATE_FAIL "Не удалось создать окно."

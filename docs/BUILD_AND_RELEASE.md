@@ -5,22 +5,34 @@ This file records the current build contract for the native Reversi port.
 ## Outputs
 
 ```text
-build/x86/REVERSI.exe
-build/x64/REVERSI.exe
+build/<locale>/x86/REVERSI.exe
+build/<locale>/x64/REVERSI.exe
 ```
 
-Help files are copied into build outputs when matching root files exist:
+Each executable contains only one locale's resources. Supported locale folders:
 
 ```text
-REVERSI.HLP
-REVERSI.CNT
-REVERSI.CHM
+en-US zh-CN zh-TW ja-JP ko-KR fr-FR de-DE es-ES
+sv-SE fi-FI pt-PT it-IT ru-RU uk-UA ar-SA he-IL
 ```
+
+Help files are copied into build outputs when matching files exist under
+`help/<locale>/` as `REVERSI.HLP`, `REVERSI.CNT`, or `REVERSI.CHM`.
 
 ## Standard Build
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build.ps1
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale all
+```
+
+The default build emits all supported locale/architecture pairs. To build only
+one or more locales during development, or to list the supported locale names:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -ListLocales
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale zh-CN
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale en-US,zh-CN,ja-JP
 ```
 
 The build uses MSVC directly through `vcvarsall.bat`, not a project file.
@@ -71,15 +83,19 @@ reversi_paint.inc
 
 `src/reversi.rc` is also an index file. Localized menus/string tables are under
 `src/lang/*.rcinc`; version metadata is in `src/reversi_version.rcinc`.
+`build.ps1` selects one locale with a `REVERSI_LANG_*` define so release
+executables do not carry unrelated language resources.
 
 ## Self-Test
 
 ```powershell
-.\build\x86\REVERSI.exe --self-test
-.\build\x64\REVERSI.exe --self-test
+.\build\en-US\x86\REVERSI.exe --self-test
+.\build\en-US\x64\REVERSI.exe --self-test
 ```
 
-Run both after code or resource changes.
+Run the affected locale/architecture pairs after code or resource changes. For
+full release verification, run `--self-test` across every `build/<locale>`
+output.
 
 ## x86 Build Contract
 

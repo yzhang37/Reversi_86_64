@@ -1,5 +1,7 @@
 param(
-    [switch]$Production
+    [switch]$Production,
+    [string[]]$Locale,
+    [switch]$ListLocales
 )
 
 $ErrorActionPreference = 'Stop'
@@ -9,6 +11,25 @@ $Source = Join-Path $Root 'src\reversi_win32.c'
 $CpuSource = Join-Path $Root 'src\reversi_cpu_x86.c'
 $ModernSource = Join-Path $Root 'src\reversi_modern_x86.c'
 $Resource = Join-Path $Root 'src\reversi.rc'
+
+$Languages = @(
+    @{ Locale = 'en-US'; Define = 'REVERSI_LANG_EN_US' },
+    @{ Locale = 'zh-CN'; Define = 'REVERSI_LANG_ZH_CN' },
+    @{ Locale = 'zh-TW'; Define = 'REVERSI_LANG_ZH_TW' },
+    @{ Locale = 'ja-JP'; Define = 'REVERSI_LANG_JA_JP' },
+    @{ Locale = 'ko-KR'; Define = 'REVERSI_LANG_KO_KR' },
+    @{ Locale = 'fr-FR'; Define = 'REVERSI_LANG_FR_FR' },
+    @{ Locale = 'de-DE'; Define = 'REVERSI_LANG_DE_DE' },
+    @{ Locale = 'es-ES'; Define = 'REVERSI_LANG_ES_ES' },
+    @{ Locale = 'sv-SE'; Define = 'REVERSI_LANG_SV_SE' },
+    @{ Locale = 'fi-FI'; Define = 'REVERSI_LANG_FI_FI' },
+    @{ Locale = 'pt-PT'; Define = 'REVERSI_LANG_PT_PT' },
+    @{ Locale = 'it-IT'; Define = 'REVERSI_LANG_IT_IT' },
+    @{ Locale = 'ru-RU'; Define = 'REVERSI_LANG_RU_RU' },
+    @{ Locale = 'uk-UA'; Define = 'REVERSI_LANG_UK_UA' },
+    @{ Locale = 'ar-SA'; Define = 'REVERSI_LANG_AR_SA' },
+    @{ Locale = 'he-IL'; Define = 'REVERSI_LANG_HE_IL' }
+)
 
 function Find-VisualStudio {
     $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
@@ -35,6 +56,39 @@ function Find-VisualStudio {
     }
 
     throw 'Visual Studio with MSVC was not found.'
+}
+
+function Select-Languages {
+    if (!$Locale -or $Locale.Count -eq 0) {
+        return $Languages
+    }
+
+    $requested = @()
+    foreach ($entry in $Locale) {
+        $requested += $entry -split ',' | Where-Object { $_.Trim().Length -gt 0 } | ForEach-Object { $_.Trim() }
+    }
+
+    $selected = @()
+    foreach ($name in $requested) {
+        if ($name -ieq 'all') {
+            return $Languages
+        }
+
+        $match = $Languages | Where-Object { $_.Locale -ieq $name } | Select-Object -First 1
+        if (!$match) {
+            $known = ($Languages | ForEach-Object { $_.Locale }) -join ', '
+            throw "Unknown locale '$name'. Known locales: $known"
+        }
+        $selected += $match
+    }
+    return $selected
+}
+
+function Show-Languages {
+    Write-Host 'Supported locales:'
+    foreach ($language in $Languages) {
+        Write-Host ('  ' + $language.Locale)
+    }
 }
 
 function Invoke-Build {
@@ -81,7 +135,7 @@ function Invoke-Build {
 
     $cmd = '"' + $vcvars + '" ' + $Arch +
         ' && cd /d "' + $Root + '"' +
-        ' && rc /nologo /I "' + (Join-Path $Root 'src') + '" /fo "' + $res + '" "' + $Resource + '"' +
+        ' && rc /nologo ' + $Defines + ' /I "' + (Join-Path $Root 'src') + '" /fo "' + $res + '" "' + $Resource + '"' +
         ' && cl /nologo ' + $Optimization + ' /W4 /utf-8 /GS- /Zl ' + $CompilerOptions + ' ' + $Defines + ' ' +
         '/c /Fo"' + $mainObj + '" "' + $Source + '"' +
         $cpuCompile +
@@ -100,11 +154,13 @@ function Invoke-Build {
 
 function Copy-HelpFiles {
     param(
-        [Parameter(Mandatory = $true)][string]$OutputDir
+        [Parameter(Mandatory = $true)][string]$OutputDir,
+        [Parameter(Mandatory = $true)][string]$Locale
     )
 
+    $helpDir = Join-Path $Root ("help\$Locale")
     foreach ($file in @('REVERSI.HLP', 'REVERSI.CNT', 'REVERSI.CHM')) {
-        $sourcePath = Join-Path $Root $file
+        $sourcePath = Join-Path $helpDir $file
         if (Test-Path $sourcePath) {
             $destName = $file.ToLowerInvariant()
             Copy-Item -LiteralPath $sourcePath -Destination (Join-Path $OutputDir $destName) -Force
@@ -129,32 +185,46 @@ function Set-PeVersion {
     [IO.File]::WriteAllBytes($Path, $bytes)
 }
 
-$x86Output = Join-Path $Root 'build\x86'
-$x64Output = Join-Path $Root 'build\x64'
 $productionDefine = if ($Production) { ' /DREVERSI_PRODUCTION' } else { '' }
+if ($ListLocales) {
+    Show-Languages
+    exit 0
+}
 
-Invoke-Build `
-    -Arch 'x86' `
-    -OutputDir $x86Output `
-    -Defines ('/DWINVER=0x0400 /D_WIN32_WINNT=0x0400 /D_WIN32_WINDOWS=0x0400' + $productionDefine) `
-    -CompilerOptions '/arch:IA32' `
-    -Subsystem '5.01' `
-    -OsVersion '5.01'
-Set-PeVersion -Path (Join-Path $x86Output 'REVERSI.exe') -Major 4 -Minor 0
-Copy-HelpFiles -OutputDir $x86Output
+$selectedLanguages = Select-Languages
+$built = @()
 
-Invoke-Build `
-    -Arch 'x64' `
-    -OutputDir $x64Output `
-    -Defines ('/DUNICODE /D_UNICODE /DWINVER=0x0600 /D_WIN32_WINNT=0x0600' + $productionDefine) `
-    -Optimization '/O1' `
-    -CompilerOptions '/Gy /Gw' `
-    -LinkerOptions '/OPT:REF /OPT:ICF' `
-    -Subsystem '6.0' `
-    -OsVersion '6.0'
-Copy-HelpFiles -OutputDir $x64Output
+foreach ($language in $selectedLanguages) {
+    $localeDefine = ' /DREVERSI_SINGLE_LANGUAGE /D' + $language.Define
+    $x86Output = Join-Path $Root ("build\$($language.Locale)\x86")
+    $x64Output = Join-Path $Root ("build\$($language.Locale)\x64")
+
+    Invoke-Build `
+        -Arch 'x86' `
+        -OutputDir $x86Output `
+        -Defines ('/DWINVER=0x0400 /D_WIN32_WINNT=0x0400 /D_WIN32_WINDOWS=0x0400' + $productionDefine + $localeDefine) `
+        -CompilerOptions '/arch:IA32' `
+        -Subsystem '5.01' `
+        -OsVersion '5.01'
+    Set-PeVersion -Path (Join-Path $x86Output 'REVERSI.exe') -Major 4 -Minor 0
+    Copy-HelpFiles -OutputDir $x86Output -Locale $language.Locale
+    $built += Join-Path $x86Output 'REVERSI.exe'
+
+    Invoke-Build `
+        -Arch 'x64' `
+        -OutputDir $x64Output `
+        -Defines ('/DUNICODE /D_UNICODE /DWINVER=0x0600 /D_WIN32_WINNT=0x0600' + $productionDefine + $localeDefine) `
+        -Optimization '/O1' `
+        -CompilerOptions '/Gy /Gw' `
+        -LinkerOptions '/OPT:REF /OPT:ICF' `
+        -Subsystem '6.0' `
+        -OsVersion '6.0'
+    Copy-HelpFiles -OutputDir $x64Output -Locale $language.Locale
+    $built += Join-Path $x64Output 'REVERSI.exe'
+}
 
 Write-Host ''
 Write-Host 'Done:'
-Write-Host ('  ' + (Join-Path $x86Output 'REVERSI.exe'))
-Write-Host ('  ' + (Join-Path $x64Output 'REVERSI.exe'))
+foreach ($path in $built) {
+    Write-Host ('  ' + $path)
+}

@@ -15,7 +15,7 @@ BEGIN
     POPUP "&Asetukset"
     BEGIN
         MENUITEM "&Aloittelija", IDM_BEGINNER
-        MENUITEM "&Keskitaso", IDM_INTERMEDIATE
+        MENUITEM "&Noviisi", IDM_NOVICE
         MENUITEM "A&siantuntija", IDM_EXPERT
         MENUITEM "&Mestari", IDM_MASTER
         MENUITEM SEPARATOR
@@ -52,8 +52,8 @@ BEGIN
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "Tässä on lyhyt kuvaus Reversi-ohjelmasta:\n\nReversin säännöt: sulje tietokoneen kiekot vaakasuoraan, pystysuoraan tai vinoon riviin, jolloin ne kääntyvät sinun värisi puolelle.\n\nSinun kiekot ovat punaisia. Tietokoneen kiekot ovat sinisiä. Voit siirtää vain kohtaan, jossa osoitin muuttuu ristiksi."
-    IDS_HELP_SEARCH_TEXT "Reversin ohjetiedostoa ei löytynyt. Varmista, että ohjetiedosto on asennettu, ja yritä uudelleen."
-    IDS_HELP_USING_TEXT "Ohjeen käyttämisen ohjetta ei voitu avata. Varmista, että Windowsin ohje on asennettu, ja yritä uudelleen."
+    IDS_HELP_SEARCH_TEXT "Reversin ohjetiedostoa ei löytynyt.\n\nVarmista, että ohjetiedosto on asennettu, ja yritä uudelleen."
+    IDS_HELP_USING_TEXT "Ohjeen käyttämisen ohjetta ei voitu avata.\n\nVarmista, että Windowsin ohje on asennettu, ja yritä uudelleen."
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "Ikkunaluokkaa ei voi rekisteröidä."
     IDS_CREATE_FAIL "Ikkunaa ei voi luoda."

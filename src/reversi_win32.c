@@ -31,6 +31,33 @@
 #ifndef MB_EXCLAMATION
 #define MB_EXCLAMATION MB_ICONEXCLAMATION
 #endif
+#ifndef MB_RIGHT
+#define MB_RIGHT 0x00080000L
+#endif
+#ifndef MB_RTLREADING
+#define MB_RTLREADING 0x00100000L
+#endif
+#ifndef WS_EX_RIGHT
+#define WS_EX_RIGHT 0x00001000L
+#endif
+#ifndef WS_EX_RTLREADING
+#define WS_EX_RTLREADING 0x00002000L
+#endif
+#ifndef WS_EX_NOINHERITLAYOUT
+#define WS_EX_NOINHERITLAYOUT 0x00100000L
+#endif
+#ifndef WS_EX_LAYOUTRTL
+#define WS_EX_LAYOUTRTL 0x00400000L
+#endif
+#ifndef LAYOUT_RTL
+#define LAYOUT_RTL 0x00000001
+#endif
+#ifndef TPM_LAYOUTRTL
+#define TPM_LAYOUTRTL 0x8000L
+#endif
+#ifndef TPM_RIGHTALIGN
+#define TPM_RIGHTALIGN 0x0008L
+#endif
 
 #ifndef DPI_AWARENESS_CONTEXT_SYSTEM_AWARE
 #define DPI_AWARENESS_CONTEXT_SYSTEM_AWARE ((HANDLE)(LONG_PTR)-2)
@@ -266,6 +293,7 @@ typedef struct CellCache {
     int cell_h;
     int mono_display;
     int gdiplus_ready;
+    int rtl_layout;
     COLORREF window_gray;
     COLORREF cell_gray;
     COLORREF dark_gray;
@@ -297,6 +325,7 @@ static int g_currentDpi = 96;
 static int g_enableSystemScaling = 0;
 static int g_perMonitorDpiAware = 0;
 static int g_useWideCommands = 0;
+static int g_rtlLayout = 0;
 static int g_darkModeSupported = 0;
 static int g_darkModeEnabled = 0;
 static int g_inputLock = 0;
@@ -308,7 +337,7 @@ static int g_forceGdiPieces = 0;
 static int g_scratchBoard = 0;
 static int g_cpuHasSse2 = 0;
 static int g_cpuHasAvx = 0;
-static int g_configSkillCmd = IDM_INTERMEDIATE;
+static int g_configSkillCmd = IDM_NOVICE;
 static int g_configAnimationCmd = IDM_ANIM_FAST;
 static int g_configHasWindowRect = 0;
 static int g_configRepairSettings = 0;
@@ -786,10 +815,26 @@ static void CalculateLayout(HWND hwnd, Layout *layout)
     layout->message.bottom = text_h;
 }
 
+static int MirrorBoardView(void)
+{
+    return g_rtlLayout;
+}
+
+static int VisualColForLogical(int col)
+{
+    return MirrorBoardView() ? (BOARD_N - 1 - col) : col;
+}
+
+static int LogicalColForVisual(int col)
+{
+    return MirrorBoardView() ? (BOARD_N - 1 - col) : col;
+}
+
 static RECT CellRect(const Layout *layout, int row, int col)
 {
     RECT rc;
-    rc.left = layout->board.left + col * layout->cell_w;
+    int visual_col = VisualColForLogical(col);
+    rc.left = layout->board.left + visual_col * layout->cell_w;
     rc.top = layout->board.top + row * layout->cell_h;
     rc.right = rc.left + layout->cell_w;
     rc.bottom = rc.top + layout->cell_h;
@@ -890,7 +935,7 @@ static void UpdateMenuChecks(HWND hwnd)
     if (options) {
         if (!AppCheckMenuRadioItem(options, IDM_BEGINNER, IDM_MASTER, (UINT)g_game.skill_cmd)) {
             CheckMenuItem(options, IDM_BEGINNER, MF_BYCOMMAND | MF_UNCHECKED);
-            CheckMenuItem(options, IDM_INTERMEDIATE, MF_BYCOMMAND | MF_UNCHECKED);
+            CheckMenuItem(options, IDM_NOVICE, MF_BYCOMMAND | MF_UNCHECKED);
             CheckMenuItem(options, IDM_EXPERT, MF_BYCOMMAND | MF_UNCHECKED);
             CheckMenuItem(options, IDM_MASTER, MF_BYCOMMAND | MF_UNCHECKED);
             CheckMenuItem(options, (UINT)g_game.skill_cmd, MF_BYCOMMAND | MF_CHECKED);
@@ -902,7 +947,7 @@ static void UpdateMenuChecks(HWND hwnd)
             CheckMenuItem(options, (UINT)g_game.animation_cmd, MF_BYCOMMAND | MF_CHECKED);
         }
         EnableMenuItem(options, IDM_BEGINNER, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
-        EnableMenuItem(options, IDM_INTERMEDIATE, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
+        EnableMenuItem(options, IDM_NOVICE, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
         EnableMenuItem(options, IDM_EXPERT, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
         EnableMenuItem(options, IDM_MASTER, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
         EnableMenuItem(options, IDM_ANIM_NONE, MF_BYCOMMAND | (busy ? MF_GRAYED : MF_ENABLED));
@@ -987,7 +1032,7 @@ static void InitGameState(void)
 
 static void NewGame(HWND hwnd)
 {
-    int skill_cmd = g_game.skill_cmd ? g_game.skill_cmd : IDM_INTERMEDIATE;
+    int skill_cmd = g_game.skill_cmd ? g_game.skill_cmd : IDM_NOVICE;
     int depth = g_game.search_depth ? g_game.search_depth : 2;
     int animation_cmd = g_game.animation_cmd ? g_game.animation_cmd : IDM_ANIM_FAST;
 
@@ -1231,7 +1276,7 @@ static int PointToCell(HWND hwnd, int x, int y, int *row, int *col)
         return 0;
     }
 
-    *col = (x - layout.board.left) / layout.cell_w;
+    *col = LogicalColForVisual((x - layout.board.left) / layout.cell_w);
     *row = (y - layout.board.top) / layout.cell_h;
     return OnBoard(*row, *col);
 }
@@ -1309,7 +1354,11 @@ static int IsBlankClientPoint(HWND hwnd, int x, int y)
     }
 
     occupied = layout.board;
-    occupied.right += layout.depth_x * 2;
+    if (MirrorBoardView()) {
+        occupied.left -= layout.depth_x * 2;
+    } else {
+        occupied.right += layout.depth_x * 2;
+    }
     occupied.bottom += layout.depth_y * 2;
     return !IsPointInRectInclusive(&occupied, x, y);
 }
@@ -1334,7 +1383,8 @@ static void ShowTestContextMenu(HWND hwnd, LPARAM lparam)
     ClientToScreen(hwnd, &pt);
     TrackPopupMenu(
         g_testContextMenu,
-        TPM_RIGHTBUTTON | TPM_LEFTALIGN | TPM_TOPALIGN,
+        TPM_RIGHTBUTTON | TPM_TOPALIGN |
+            (g_rtlLayout ? (TPM_RIGHTALIGN | TPM_LAYOUTRTL) : TPM_LEFTALIGN),
         pt.x,
         pt.y,
         0,
@@ -1595,7 +1645,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             case IDM_HINT:
             case IDM_EXIT:
             case IDM_BEGINNER:
-            case IDM_INTERMEDIATE:
+            case IDM_NOVICE:
             case IDM_EXPERT:
             case IDM_MASTER:
             case IDM_ANIM_NONE:
@@ -1624,7 +1674,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             DestroyWindow(hwnd);
             return 0;
         case IDM_BEGINNER:
-        case IDM_INTERMEDIATE:
+        case IDM_NOVICE:
         case IDM_EXPERT:
         case IDM_MASTER:
             SetSkill(hwnd, LOWORD(wparam));
@@ -1847,9 +1897,13 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         return 0;
 
     case WM_PAINT: {
+        int restore_layout = 0;
+        DWORD old_layout;
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hwnd, &ps);
+        old_layout = AppBeginLtrDrawing(hdc, &restore_layout);
         DrawGameBuffered(hwnd, hdc);
+        AppEndLtrDrawing(hdc, old_layout, restore_layout);
         EndPaint(hwnd, &ps);
         return 0;
     }
@@ -1890,8 +1944,8 @@ static int RunSelfTest(void)
         !IsAnimationSettingValid(2) ||
         IsAnimationSettingValid(-1) ||
         IsAnimationSettingValid(3) ||
-        SkillSettingToCommand(-1) != IDM_INTERMEDIATE ||
-        SkillSettingToCommand(4) != IDM_INTERMEDIATE ||
+        SkillSettingToCommand(-1) != IDM_NOVICE ||
+        SkillSettingToCommand(4) != IDM_NOVICE ||
         AnimationSettingToCommand(-1) != IDM_ANIM_FAST ||
         AnimationSettingToCommand(3) != IDM_ANIM_FAST) {
         return 1;
@@ -1949,6 +2003,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
 {
     g_hinst = hinst;
     InitWideCommandMode();
+    InitLocaleLayout();
     InitModernDispatch();
     InitSystemDpiAwareness();
     InitClassicVisualStyles();
@@ -2002,7 +2057,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
     }
 
     HWND hwnd = APP_CREATE_WINDOW_EX(
-        0,
+        AppMainWindowExStyle(),
         class_name,
         title,
         WS_OVERLAPPEDWINDOW,

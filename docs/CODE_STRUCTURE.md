@@ -45,8 +45,8 @@ new shard unless it removes real navigation cost.
 short.
 
 ```text
-src/reversi.rc                 Icon, manifest, accelerator, include list.
-src/reversi_version.rcinc      VERSIONINFO and VarFileInfo translations.
+src/reversi.rc                 Icon, manifest, accelerator, selected locale.
+src/reversi_version.rcinc      Single-locale VERSIONINFO and VarFileInfo.
 src/lang/reversi_en-US.rcinc   English menu and string table.
 src/lang/reversi_zh-CN.rcinc   Simplified Chinese menu and string table.
 src/lang/reversi_zh-TW.rcinc   Traditional Chinese menu and string table.
@@ -56,12 +56,12 @@ src/lang/reversi_*.rcinc       Other localized resources.
 Normal user-facing strings belong in RC resources. Debug-only text may stay in
 C when the feature is intentionally hidden and not localized.
 
-This is a builtin multi-language RC build, not a MUI satellite-resource build.
-Do not rely on Windows 95-era resource loading to fall back to en-US when a
-localized `STRINGTABLE` block exists but omits a particular string id. Keep
-file names, registry value names, internal profile keys, and resource lookup
-names duplicated in each language rcinc for compatibility. If the project later
-moves to MUI files, the resource packaging rules can be revisited.
+This is a per-locale builtin RC build, not a MUI satellite-resource build.
+`build.ps1` defines one `REVERSI_LANG_*` symbol per output folder, so each
+release executable carries only its selected language. Keep file names,
+registry value names, internal profile keys, and resource lookup names
+duplicated in each language rcinc for compatibility. If the project later moves
+to MUI files, the resource packaging rules can be revisited.
 
 ## Tooling Layout
 
@@ -90,8 +90,8 @@ changes.
 Before finishing a cleanup:
 
 1. Confirm behavior was not intentionally changed.
-2. Build both x86 and x64.
-3. Run both `--self-test` binaries.
+2. Build the affected locale for both x86 and x64, or build all locales.
+3. Run `--self-test` on the affected locale binaries.
 4. Check that resource includes still compile with UTF-8.
 5. Keep release/debug toggles intact; normal RC files should not define the
    hidden debug string id 4919.

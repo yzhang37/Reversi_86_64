@@ -15,7 +15,7 @@ BEGIN
     POPUP "&Optionen"
     BEGIN
         MENUITEM "&Anfänger", IDM_BEGINNER
-        MENUITEM "&Mittel", IDM_INTERMEDIATE
+        MENUITEM "&Neuling", IDM_NOVICE
         MENUITEM "&Experte", IDM_EXPERT
         MENUITEM "&Meister", IDM_MASTER
         MENUITEM SEPARATOR
@@ -52,8 +52,8 @@ BEGIN
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "Dies ist eine kurze Beschreibung des Reversi-Programms:\n\nReversi-Regeln: Schließen Sie die Steine des Computers waagerecht, senkrecht oder diagonal ein, um sie in Ihre Farbe umzudrehen.\n\nIhre Steine sind rot. Die Steine des Computers sind blau. Sie können nur dort ziehen, wo der Mauszeiger zu einem Kreuz wird."
-    IDS_HELP_SEARCH_TEXT "Die Reversi-Hilfedatei wurde nicht gefunden. Stellen Sie sicher, dass die Hilfedatei installiert ist, und versuchen Sie es erneut."
-    IDS_HELP_USING_TEXT "Die Hilfe zur Verwendung der Hilfe konnte nicht geöffnet werden. Stellen Sie sicher, dass die Windows-Hilfe installiert ist, und versuchen Sie es erneut."
+    IDS_HELP_SEARCH_TEXT "Die Reversi-Hilfedatei wurde nicht gefunden.\n\nStellen Sie sicher, dass die Hilfedatei installiert ist, und versuchen Sie es erneut."
+    IDS_HELP_USING_TEXT "Die Hilfe zur Verwendung der Hilfe konnte nicht geöffnet werden.\n\nStellen Sie sicher, dass die Windows-Hilfe installiert ist, und versuchen Sie es erneut."
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "Die Fensterklasse konnte nicht registriert werden."
     IDS_CREATE_FAIL "Das Fenster konnte nicht erstellt werden."

@@ -15,7 +15,7 @@ BEGIN
     POPUP "옵션(&O)"
     BEGIN
         MENUITEM "초급(&B)", IDM_BEGINNER
-        MENUITEM "중급(&N)", IDM_INTERMEDIATE
+        MENUITEM "초보자(&N)", IDM_NOVICE
         MENUITEM "고급(&E)", IDM_EXPERT
         MENUITEM "마스터(&M)", IDM_MASTER
         MENUITEM SEPARATOR
@@ -52,8 +52,8 @@ BEGIN
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "리버시 프로그램의 간단한 설명입니다.\n\n리버시 규칙: 가로, 세로 또는 대각선으로 컴퓨터의 말을 끼우면 그 말을 내 색으로 뒤집을 수 있습니다.\n\n내 말은 빨간색이고 컴퓨터 말은 파란색입니다. 마우스 포인터가 십자 모양으로 바뀌는 곳에만 둘 수 있습니다."
-    IDS_HELP_SEARCH_TEXT "리버시 도움말 파일을 찾을 수 없습니다. 도움말 파일이 설치되어 있는지 확인한 후 다시 시도하십시오."
-    IDS_HELP_USING_TEXT "도움말 사용 방법을 열 수 없습니다. Windows 도움말이 설치되어 있는지 확인한 후 다시 시도하십시오."
+    IDS_HELP_SEARCH_TEXT "리버시 도움말 파일을 찾을 수 없습니다.\n\n도움말 파일이 설치되어 있는지 확인한 후 다시 시도하십시오."
+    IDS_HELP_USING_TEXT "도움말 사용 방법을 열 수 없습니다.\n\nWindows 도움말이 설치되어 있는지 확인한 후 다시 시도하십시오."
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "창 클래스를 등록할 수 없습니다."
     IDS_CREATE_FAIL "창을 만들 수 없습니다."

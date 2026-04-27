@@ -15,7 +15,7 @@ BEGIN
     POPUP "オプション(&O)"
     BEGIN
         MENUITEM "初級(&B)", IDM_BEGINNER
-        MENUITEM "中級(&N)", IDM_INTERMEDIATE
+        MENUITEM "初心者(&N)", IDM_NOVICE
         MENUITEM "上級(&E)", IDM_EXPERT
         MENUITEM "達人(&M)", IDM_MASTER
         MENUITEM SEPARATOR
@@ -52,8 +52,8 @@ BEGIN
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "リバーシ プログラムの簡単な説明です。\n\nリバーシのルール: 横、縦、または斜めの列でコンピューターの石をはさむと、その石を自分の色に返せます。\n\nあなたの石は赤、コンピューターの石は青です。マウスポインターが十字に変わる場所にだけ置けます。"
-    IDS_HELP_SEARCH_TEXT "リバーシのヘルプ ファイルが見つかりません。ヘルプ ファイルがインストールされていることを確認して、もう一度お試しください。"
-    IDS_HELP_USING_TEXT "ヘルプの使い方を開けません。Windows ヘルプがインストールされていることを確認して、もう一度お試しください。"
+    IDS_HELP_SEARCH_TEXT "リバーシのヘルプ ファイルが見つかりません。\n\nヘルプ ファイルがインストールされていることを確認して、もう一度お試しください。"
+    IDS_HELP_USING_TEXT "ヘルプの使い方を開けません。\n\nWindows ヘルプがインストールされていることを確認して、もう一度お試しください。"
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "ウィンドウ クラスを登録できません。"
     IDS_CREATE_FAIL "ウィンドウを作成できません。"

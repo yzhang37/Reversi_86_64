@@ -11,7 +11,7 @@ The key point: this project was generated and iteratively refined with an LLM. I
 - Classic 3D board rendering using system colors, shadows, highlights, and low-color fallback behavior.
 - Modern Windows features when available: visual styles, high-DPI support, per-monitor DPI scaling, multi-monitor scale changes, and optional antialiased piece rendering.
 - Legacy-safe x86 startup and imports, with runtime dispatch to modern CPU helpers only when the OS and CPU support them.
-- Localized resources for English, Chinese, Japanese, Korean, French, German, Spanish, Swedish, Finnish, Portuguese, Italian, Russian, Ukrainian, Arabic, and Hebrew.
+- Per-locale release builds for English, Chinese, Japanese, Korean, French, German, Spanish, Swedish, Finnish, Portuguese, Italian, Russian, Ukrainian, Arabic, and Hebrew.
 - WinHelp 4.0 help sources and build workflow.
 
 ## Downloads
@@ -22,8 +22,8 @@ Prebuilt packages are published through GitHub Releases:
 
 Recommended release artifacts:
 
-- `Reversi-x86.zip` - 32-bit compatibility build for Windows 95/NT-era systems and later 32-bit Windows.
-- `Reversi-x64.zip` - 64-bit build for XP x64, Server 2003 x64, and later 64-bit Windows.
+- `Reversi-<locale>-x86.zip` - 32-bit compatibility build for Windows 95/NT-era systems and later 32-bit Windows.
+- `Reversi-<locale>-x64.zip` - 64-bit build for XP x64, Server 2003 x64, and later 64-bit Windows.
 - `Reversi-source.zip` - source snapshot, resources, and help sources.
 
 ## Build
@@ -40,10 +40,20 @@ Optional WinHelp tools can be downloaded or prepared locally with:
 powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1
 ```
 
-Build both x86 and x64:
+Build all supported locale/architecture pairs:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build.ps1
+# or, explicitly:
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale all
+```
+
+List available locales or build only the ones you want:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -ListLocales
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale zh-CN
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale en-US,zh-CN,ja-JP
 ```
 
 Build production binaries with the hidden development menu disabled by default:
@@ -55,15 +65,19 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1 -Production
 Outputs:
 
 ```text
-build\x86\REVERSI.exe
-build\x64\REVERSI.exe
+build\<locale>\x86\REVERSI.exe
+build\<locale>\x64\REVERSI.exe
 ```
+
+Each executable contains only its selected locale resources. For example,
+`build\zh-CN\x86\REVERSI.exe` contains Simplified Chinese resources, while
+`build\en-US\x64\REVERSI.exe` contains English resources.
 
 Optional self-test:
 
 ```powershell
-.\build\x86\REVERSI.exe --self-test
-.\build\x64\REVERSI.exe --self-test
+.\build\en-US\x86\REVERSI.exe --self-test
+.\build\en-US\x64\REVERSI.exe --self-test
 ```
 
 ## Build WinHelp
@@ -89,14 +103,9 @@ help\zh-CN\REVERSI.cnt
 help\zh-CN\REVERSI.HLP
 ```
 
-Copy the compiled help files beside the built executables:
-
-```powershell
-Copy-Item help\zh-CN\REVERSI.HLP build\x86\reversi.hlp -Force
-Copy-Item help\zh-CN\REVERSI.cnt build\x86\reversi.cnt -Force
-Copy-Item help\zh-CN\REVERSI.HLP build\x64\reversi.hlp -Force
-Copy-Item help\zh-CN\REVERSI.cnt build\x64\reversi.cnt -Force
-```
+The build script copies matching locale help files automatically. Currently
+`help\zh-CN\REVERSI.HLP` and `help\zh-CN\REVERSI.cnt` are copied into the
+Simplified Chinese output folders as `reversi.hlp` and `reversi.cnt`.
 
 See `docs\winhelp\WORKFLOW.md` for the full help-authoring notes.
 

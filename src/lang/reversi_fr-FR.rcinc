@@ -15,7 +15,7 @@ BEGIN
     POPUP "&Options"
     BEGIN
         MENUITEM "&Débutant", IDM_BEGINNER
-        MENUITEM "&Intermédiaire", IDM_INTERMEDIATE
+        MENUITEM "&Novice", IDM_NOVICE
         MENUITEM "&Expert", IDM_EXPERT
         MENUITEM "&Maître", IDM_MASTER
         MENUITEM SEPARATOR
@@ -52,8 +52,8 @@ BEGIN
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "Voici une brève description du programme Reversi :\n\nRègles du Reversi : encadrez les pions de l'ordinateur sur une ligne horizontale, verticale ou diagonale pour les retourner à votre couleur.\n\nVos pions sont rouges. Les pions de l'ordinateur sont bleus. Vous ne pouvez jouer que là où le pointeur devient une croix."
-    IDS_HELP_SEARCH_TEXT "Le fichier d'aide de Reversi est introuvable. Vérifiez que le fichier d'aide est installé, puis réessayez."
-    IDS_HELP_USING_TEXT "Impossible d'ouvrir l'aide sur l'utilisation de l'aide. Vérifiez que l'aide Windows est installée, puis réessayez."
+    IDS_HELP_SEARCH_TEXT "Le fichier d'aide de Reversi est introuvable.\n\nVérifiez que le fichier d'aide est installé, puis réessayez."
+    IDS_HELP_USING_TEXT "Impossible d'ouvrir l'aide sur l'utilisation de l'aide.\n\nVérifiez que l'aide Windows est installée, puis réessayez."
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "Impossible d'enregistrer la classe de fenêtre."
     IDS_CREATE_FAIL "Impossible de créer la fenêtre."

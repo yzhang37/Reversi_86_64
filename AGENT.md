@@ -24,16 +24,19 @@ resources, and era feel as much as possible.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build.ps1
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale zh-CN
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale all
 ```
 
 - Smoke tests:
 
 ```powershell
-.\build\x86\REVERSI.exe --self-test
-.\build\x64\REVERSI.exe --self-test
+.\build\en-US\x86\REVERSI.exe --self-test
+.\build\en-US\x64\REVERSI.exe --self-test
 ```
 
 - Build and release details are in `docs/BUILD_AND_RELEASE.md`.
+- UI and localization terminology is in `docs/TERMINOLOGY.md`.
 - Source layout and Maintainable Code Golf rules are in
   `docs/CODE_STRUCTURE.md`.
 - Porting and behavior rules are in `docs/PORTING_NOTES.md`.
@@ -83,6 +86,8 @@ powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1
 
 - `src/reversi.rc` is an index file. Language resources live in
   `src/lang/*.rcinc`; version metadata lives in `src/reversi_version.rcinc`.
+  `build.ps1` selects one locale with a `REVERSI_LANG_*` define and writes
+  outputs under `build/<locale>/x86` and `build/<locale>/x64`.
 - UI strings belong in resource files unless a feature is explicitly debug
   only. Supported resource languages are:
   - English, United States: 1033 / `0409`
@@ -107,12 +112,18 @@ powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1
   `4.0.0.0`.
 - Keep icons, version metadata, menus, about text, and string resources in the
   resource file. Do not hard-code normal user-facing text in C.
-- This project currently uses builtin multi-language RC resources, not MUI
-  satellite files. Windows 95-era resource loading cannot be trusted to fall
-  back to en-US when a localized `STRINGTABLE` block exists but omits a string
-  id. Keep invariant resource names, file names, registry paths, and registry
-  value names duplicated in each language rcinc unless the project later moves
-  to a MUI packaging model.
+- Before changing any RC resource, string table, menu, version metadata,
+  WinHelp/CHM file, help generator, or help text, check `docs/TERMINOLOGY.md`
+  for the canonical project terms. If a term looks suspicious, inconsistent,
+  or absent from the glossary, pause and reconcile the terminology instead of
+  guessing locally.
+- This project currently uses per-locale builtin RC resources, not MUI
+  satellite files. Each release EXE should contain only its selected locale.
+  Windows 95-era resource loading cannot be trusted to fall back to en-US when
+  a localized `STRINGTABLE` block exists but omits a string id. Keep invariant
+  resource names, file names, registry paths, and registry value names
+  duplicated in each language rcinc unless the project later moves to a MUI
+  packaging model.
 - Hidden debug context menu exception: the debug menu labels are hardcoded in
   English in C and are not localized.
 

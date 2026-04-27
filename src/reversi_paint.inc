@@ -31,18 +31,33 @@ static void Draw3DCell(HDC hdc, RECT rc)
     HPEN black = CreatePen(PS_SOLID, 1, g_edgeDarkColor);
     HGDIOBJ old_pen = SelectObject(hdc, gray);
 
-    MoveToEx(hdc, rc.left + 2, rc.bottom - 2, NULL);
-    LineTo(hdc, rc.right - 2, rc.bottom - 2);
-    LineTo(hdc, rc.right - 2, rc.top + 1);
+    if (MirrorBoardView()) {
+        MoveToEx(hdc, rc.right - 2, rc.bottom - 2, NULL);
+        LineTo(hdc, rc.left + 2, rc.bottom - 2);
+        LineTo(hdc, rc.left + 2, rc.top + 1);
 
-    SelectObject(hdc, white);
-    LineTo(hdc, rc.left + 1, rc.top + 1);
-    LineTo(hdc, rc.left + 1, rc.bottom);
+        SelectObject(hdc, white);
+        LineTo(hdc, rc.right - 1, rc.top + 1);
+        LineTo(hdc, rc.right - 1, rc.bottom);
 
-    SelectObject(hdc, black);
-    MoveToEx(hdc, rc.left + 2, rc.bottom - 1, NULL);
-    LineTo(hdc, rc.right - 1, rc.bottom - 1);
-    LineTo(hdc, rc.right - 1, rc.top);
+        SelectObject(hdc, black);
+        MoveToEx(hdc, rc.right - 2, rc.bottom - 1, NULL);
+        LineTo(hdc, rc.left + 1, rc.bottom - 1);
+        LineTo(hdc, rc.left + 1, rc.top);
+    } else {
+        MoveToEx(hdc, rc.left + 2, rc.bottom - 2, NULL);
+        LineTo(hdc, rc.right - 2, rc.bottom - 2);
+        LineTo(hdc, rc.right - 2, rc.top + 1);
+
+        SelectObject(hdc, white);
+        LineTo(hdc, rc.left + 1, rc.top + 1);
+        LineTo(hdc, rc.left + 1, rc.bottom);
+
+        SelectObject(hdc, black);
+        MoveToEx(hdc, rc.left + 2, rc.bottom - 1, NULL);
+        LineTo(hdc, rc.right - 1, rc.bottom - 1);
+        LineTo(hdc, rc.right - 1, rc.top);
+    }
 
     SelectObject(hdc, old_pen);
     DeleteObject(gray);
@@ -165,18 +180,33 @@ static void DrawPieceRaw(HDC hdc, RECT cell, int piece, int shrink_level)
     RECT white_rc = cell;
     RECT gray_rc = cell;
     RECT color_rc = cell;
-    white_rc.left += 3;
-    white_rc.top += 3;
-    white_rc.right -= 6;
-    white_rc.bottom -= 6;
-    gray_rc.left += 6;
-    gray_rc.top += 6;
-    gray_rc.right -= 3;
-    gray_rc.bottom -= 3;
-    color_rc.left += 4;
-    color_rc.top += 4;
-    color_rc.right -= 5;
-    color_rc.bottom -= 5;
+    if (MirrorBoardView()) {
+        white_rc.left += 6;
+        white_rc.top += 3;
+        white_rc.right -= 3;
+        white_rc.bottom -= 6;
+        gray_rc.left += 3;
+        gray_rc.top += 6;
+        gray_rc.right -= 6;
+        gray_rc.bottom -= 3;
+        color_rc.left += 5;
+        color_rc.top += 4;
+        color_rc.right -= 4;
+        color_rc.bottom -= 5;
+    } else {
+        white_rc.left += 3;
+        white_rc.top += 3;
+        white_rc.right -= 6;
+        white_rc.bottom -= 6;
+        gray_rc.left += 6;
+        gray_rc.top += 6;
+        gray_rc.right -= 3;
+        gray_rc.bottom -= 3;
+        color_rc.left += 4;
+        color_rc.top += 4;
+        color_rc.right -= 5;
+        color_rc.bottom -= 5;
+    }
     InflateRect(&white_rc, -shrink_x, 0);
     InflateRect(&gray_rc, -shrink_x, 0);
     InflateRect(&color_rc, -shrink_x, 0);
@@ -248,6 +278,7 @@ static int IsCellCacheCurrent(int cell_w, int cell_h)
         g_cellCache.cell_w != cell_w ||
         g_cellCache.cell_h != cell_h ||
         g_cellCache.mono_display != g_monoDisplay ||
+        g_cellCache.rtl_layout != MirrorBoardView() ||
         g_cellCache.window_gray != g_windowGray ||
         g_cellCache.cell_gray != g_cellGray ||
         g_cellCache.dark_gray != g_darkGray ||
@@ -323,6 +354,7 @@ static int EnsureCellCache(HDC hdc, int cell_w, int cell_h)
     g_cellCache.cell_h = cell_h;
     g_cellCache.mono_display = g_monoDisplay;
     g_cellCache.gdiplus_ready = use_gdiplus;
+    g_cellCache.rtl_layout = MirrorBoardView();
     g_cellCache.window_gray = g_windowGray;
     g_cellCache.cell_gray = g_cellGray;
     g_cellCache.dark_gray = g_darkGray;
@@ -458,55 +490,90 @@ static void DrawGame(HWND hwnd, HDC hdc)
         DeleteDC(cell_dc);
     }
 
-    RECT bottom_shadow = {
-        layout.board.left + depth_x * 2,
-        layout.board.bottom,
-        layout.board.right + depth_x * 2,
-        layout.board.bottom + depth_y * 2
-    };
-    RECT side_shadow = {
-        layout.board.right,
-        layout.board.top + depth_y * 2,
-        layout.board.right + depth_x * 2,
-        layout.board.bottom + depth_y * 2
-    };
+    RECT bottom_shadow;
+    RECT side_shadow;
+    if (MirrorBoardView()) {
+        bottom_shadow.left = layout.board.left - depth_x * 2;
+        bottom_shadow.top = layout.board.bottom;
+        bottom_shadow.right = layout.board.right - depth_x * 2;
+        bottom_shadow.bottom = layout.board.bottom + depth_y * 2;
+        side_shadow.left = layout.board.left - depth_x * 2;
+        side_shadow.top = layout.board.top + depth_y * 2;
+        side_shadow.right = layout.board.left;
+        side_shadow.bottom = layout.board.bottom + depth_y * 2;
+    } else {
+        bottom_shadow.left = layout.board.left + depth_x * 2;
+        bottom_shadow.top = layout.board.bottom;
+        bottom_shadow.right = layout.board.right + depth_x * 2;
+        bottom_shadow.bottom = layout.board.bottom + depth_y * 2;
+        side_shadow.left = layout.board.right;
+        side_shadow.top = layout.board.top + depth_y * 2;
+        side_shadow.right = layout.board.right + depth_x * 2;
+        side_shadow.bottom = layout.board.bottom + depth_y * 2;
+    }
     HBRUSH black = (HBRUSH)GetStockObject(BLACK_BRUSH);
     FillRect(hdc, &bottom_shadow, black);
     FillRect(hdc, &side_shadow, black);
 
     HBRUSH slope = (HBRUSH)GetStockObject(DKGRAY_BRUSH);
     for (int i = 1; i < depth_x; ++i) {
-        RECT side_strip = {
-            layout.board.right + i,
-            layout.board.top + i / g_deviceAspect,
-            layout.board.right + i + 1,
-            layout.board.bottom + i / g_deviceAspect
-        };
+        RECT side_strip;
+        if (MirrorBoardView()) {
+            side_strip.left = layout.board.left - i - 1;
+            side_strip.top = layout.board.top + i / g_deviceAspect;
+            side_strip.right = layout.board.left - i;
+            side_strip.bottom = layout.board.bottom + i / g_deviceAspect;
+        } else {
+            side_strip.left = layout.board.right + i;
+            side_strip.top = layout.board.top + i / g_deviceAspect;
+            side_strip.right = layout.board.right + i + 1;
+            side_strip.bottom = layout.board.bottom + i / g_deviceAspect;
+        }
         FillRect(hdc, &side_strip, slope);
     }
     for (int i = 1; i < depth_y; ++i) {
-        RECT bottom_strip = {
-            layout.board.left + g_deviceAspect * i,
-            layout.board.bottom + i,
-            layout.board.right + g_deviceAspect * i,
-            layout.board.bottom + i + 1
-        };
+        RECT bottom_strip;
+        if (MirrorBoardView()) {
+            bottom_strip.left = layout.board.left - g_deviceAspect * i;
+            bottom_strip.top = layout.board.bottom + i;
+            bottom_strip.right = layout.board.right - g_deviceAspect * i;
+            bottom_strip.bottom = layout.board.bottom + i + 1;
+        } else {
+            bottom_strip.left = layout.board.left + g_deviceAspect * i;
+            bottom_strip.top = layout.board.bottom + i;
+            bottom_strip.right = layout.board.right + g_deviceAspect * i;
+            bottom_strip.bottom = layout.board.bottom + i + 1;
+        }
         FillRect(hdc, &bottom_strip, slope);
     }
 
     HPEN edge = CreatePen(PS_SOLID, 1, g_edgeDarkColor);
     HGDIOBJ old_pen = SelectObject(hdc, edge);
-    MoveToEx(hdc, layout.board.right, layout.board.bottom, NULL);
-    LineTo(hdc, layout.board.right, layout.board.top);
-    LineTo(hdc, layout.board.right + depth_x, layout.board.top + depth_y);
-    LineTo(hdc, layout.board.right + depth_x, layout.board.bottom + depth_y);
-    LineTo(hdc, layout.board.left + depth_x, layout.board.bottom + depth_y);
-    LineTo(hdc, layout.board.left, layout.board.bottom);
-    LineTo(hdc, layout.board.right, layout.board.bottom);
-    LineTo(hdc, layout.board.right + depth_x, layout.board.bottom + depth_y);
-    MoveToEx(hdc, layout.board.right, layout.board.top, NULL);
-    LineTo(hdc, layout.board.left, layout.board.top);
-    LineTo(hdc, layout.board.left, layout.board.bottom);
+    if (MirrorBoardView()) {
+        MoveToEx(hdc, layout.board.left, layout.board.bottom, NULL);
+        LineTo(hdc, layout.board.left, layout.board.top);
+        LineTo(hdc, layout.board.left - depth_x, layout.board.top + depth_y);
+        LineTo(hdc, layout.board.left - depth_x, layout.board.bottom + depth_y);
+        LineTo(hdc, layout.board.right - depth_x, layout.board.bottom + depth_y);
+        LineTo(hdc, layout.board.right, layout.board.bottom);
+        LineTo(hdc, layout.board.left, layout.board.bottom);
+        LineTo(hdc, layout.board.left - depth_x, layout.board.bottom + depth_y);
+        MoveToEx(hdc, layout.board.left, layout.board.top, NULL);
+        LineTo(hdc, layout.board.right, layout.board.top);
+        LineTo(hdc, layout.board.right, layout.board.bottom);
+    } else {
+        MoveToEx(hdc, layout.board.right, layout.board.bottom, NULL);
+        LineTo(hdc, layout.board.right, layout.board.top);
+        LineTo(hdc, layout.board.right + depth_x, layout.board.top + depth_y);
+        LineTo(hdc, layout.board.right + depth_x, layout.board.bottom + depth_y);
+        LineTo(hdc, layout.board.left + depth_x, layout.board.bottom + depth_y);
+        LineTo(hdc, layout.board.left, layout.board.bottom);
+        LineTo(hdc, layout.board.right, layout.board.bottom);
+        LineTo(hdc, layout.board.right + depth_x, layout.board.bottom + depth_y);
+        MoveToEx(hdc, layout.board.right, layout.board.top, NULL);
+        LineTo(hdc, layout.board.left, layout.board.top);
+        LineTo(hdc, layout.board.left, layout.board.bottom);
+    }
 
     SelectObject(hdc, old_pen);
     DeleteObject(edge);
@@ -585,11 +652,14 @@ static void FlashHintCell(HWND hwnd, int row, int col)
 {
     HDC hdc = GetDC(hwnd);
     HCURSOR old_cursor;
+    int restore_layout = 0;
+    DWORD old_layout;
 
     if (!hdc) {
         return;
     }
 
+    old_layout = AppBeginLtrDrawing(hdc, &restore_layout);
     g_hintBlankCursor = 1;
     old_cursor = SetCursor(NULL);
     for (int i = 0; i < 4; ++i) {
@@ -598,6 +668,7 @@ static void FlashHintCell(HWND hwnd, int row, int col)
     }
     g_hintBlankCursor = 0;
     SetCursor(old_cursor);
+    AppEndLtrDrawing(hdc, old_layout, restore_layout);
     ReleaseDC(hwnd, hdc);
 }
 

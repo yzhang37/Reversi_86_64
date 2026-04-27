@@ -192,7 +192,7 @@ static int InitTestContextMenu(void)
 
 static void PrepareTestGame(HWND hwnd)
 {
-    int skill_cmd = g_game.skill_cmd ? g_game.skill_cmd : IDM_INTERMEDIATE;
+    int skill_cmd = g_game.skill_cmd ? g_game.skill_cmd : IDM_NOVICE;
     int depth = g_game.search_depth ? g_game.search_depth : 2;
     int animation_cmd = g_game.animation_cmd ? g_game.animation_cmd : IDM_ANIM_FAST;
 

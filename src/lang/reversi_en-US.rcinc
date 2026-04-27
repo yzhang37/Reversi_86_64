@@ -15,13 +15,13 @@ BEGIN
     POPUP "&Options"
     BEGIN
         MENUITEM "&Beginner", IDM_BEGINNER
-        MENUITEM "I&ntermediate", IDM_INTERMEDIATE
+        MENUITEM "&Novice", IDM_NOVICE
         MENUITEM "&Expert", IDM_EXPERT
         MENUITEM "&Master", IDM_MASTER
         MENUITEM SEPARATOR
-        MENUITEM "&Disabled Animation", IDM_ANIM_NONE
-        MENUITEM "&Slow Animation", IDM_ANIM_SLOW
-        MENUITEM "&Fast Animation", IDM_ANIM_FAST
+        MENUITEM "&Don't Animate", IDM_ANIM_NONE
+        MENUITEM "&Slow Animate", IDM_ANIM_SLOW
+        MENUITEM "&Fast Animate", IDM_ANIM_FAST
     END
     POPUP "&Help"
     BEGIN
@@ -40,20 +40,20 @@ BEGIN
     IDS_PRACTICE_TITLE "Reversi Practice Game"
     IDS_PASS_TEXT "Pass"
     IDS_MUST_PASS "You have no open square to move to and must pass."
-    IDS_DRAW "Draw"
+    IDS_DRAW "Tie Game"
     IDS_LOST_FMT "You lost by %d"
     IDS_WON_FMT "You won by %d"
     IDS_ABOUT_MENU "About..."
-    IDS_INVALID_MOVE "You can move only where the mouse pointer changes to a cross."
-    IDS_CANNOT_PASS "You cannot pass. Move the mouse pointer to a square where it changes to a cross."
+    IDS_INVALID_MOVE "You may only move to a space where the cursor is a cross."
+    IDS_CANNOT_PASS "You may not pass.  Move where the cursor is a cross."
     IDS_HELP_FILE "reversi.hlp"
     IDS_INI_FILE "reversi.ini"
     IDS_PROFILE_APP "Reversi"
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "Here is a brief description of Reversi:\n\nReversi rules: trap the computer's circles in a horizontal, vertical, or diagonal line to turn them into your color.\n\nYour circles are red. The computer's circles are blue. You can move only where the cursor changes to a cross."
-    IDS_HELP_SEARCH_TEXT "The Reversi help file could not be found. Make sure the help file is installed, and then try again."
-    IDS_HELP_USING_TEXT "Help for the Help viewer could not be opened. Make sure Windows Help is installed, and then try again."
+    IDS_HELP_SEARCH_TEXT "The Reversi help file could not be found.\n\nMake sure the help file is installed, and then try again."
+    IDS_HELP_USING_TEXT "Help for the Help viewer could not be opened.\n\nMake sure Windows Help is installed, and then try again."
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "Unable to register window class."
     IDS_CREATE_FAIL "Unable to create window."

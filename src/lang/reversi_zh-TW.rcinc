@@ -15,7 +15,7 @@ BEGIN
     POPUP "選項(&O)"
     BEGIN
         MENUITEM "初級(&B)", IDM_BEGINNER
-        MENUITEM "中級(&N)", IDM_INTERMEDIATE
+        MENUITEM "新手(&N)", IDM_NOVICE
         MENUITEM "高級(&E)", IDM_EXPERT
         MENUITEM "大師(&M)", IDM_MASTER
         MENUITEM SEPARATOR
@@ -52,8 +52,8 @@ BEGIN
     IDS_ANIMATION_KEY "Animation"
     IDS_SKILL_KEY "Skill"
     IDS_HELP_CONTENTS_TEXT "以下是「翻轉棋程式」的簡短說明：\n\n翻轉棋規則：在一條橫、直或斜線上夾住電腦棋子，就可以把它們翻成你的顏色。\n\n你的棋子是紅色，電腦棋子是藍色。只有滑鼠游標變成十字準心的位置才能落子。"
-    IDS_HELP_SEARCH_TEXT "找不到翻轉棋說明檔。請確認說明檔已安裝，然後再試一次。"
-    IDS_HELP_USING_TEXT "無法開啟「如何使用說明」的說明。請確認 Windows 說明已安裝，然後再試一次。"
+    IDS_HELP_SEARCH_TEXT "找不到翻轉棋說明檔。\n\n請確認說明檔已安裝，然後再試一次。"
+    IDS_HELP_USING_TEXT "無法開啟「如何使用說明」的說明。\n\n請確認 Windows 說明已安裝，然後再試一次。"
     IDS_ABOUT_TEXT "Microsoft Windows Reversi Application"
     IDS_REGISTER_FAIL "無法註冊視窗類別。"
     IDS_CREATE_FAIL "無法建立視窗。"

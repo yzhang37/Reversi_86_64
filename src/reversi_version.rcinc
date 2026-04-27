@@ -1,6 +1,120 @@
-/* Included by reversi.rc. Version information and locale translation table. */
+/* Included by reversi.rc. Single-locale VERSIONINFO selected by build.ps1. */
 
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#if defined(REVERSI_LANG_ZH_CN)
+#define REVERSI_VER_LANG_ID 0x0804
+#define REVERSI_VER_LANG LANG_CHINESE
+#define REVERSI_VER_SUBLANG SUBLANG_CHINESE_SIMPLIFIED
+#define REVERSI_VER_BLOCK "080404b0"
+#define REVERSI_VER_DESC "Microsoft Windows 翻转棋应用程序"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_ZH_TW)
+#define REVERSI_VER_LANG_ID 0x0404
+#define REVERSI_VER_LANG LANG_CHINESE
+#define REVERSI_VER_SUBLANG SUBLANG_CHINESE_TRADITIONAL
+#define REVERSI_VER_BLOCK "040404b0"
+#define REVERSI_VER_DESC "Microsoft Windows 翻轉棋應用程式"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_JA_JP)
+#define REVERSI_VER_LANG_ID 0x0411
+#define REVERSI_VER_LANG LANG_JAPANESE
+#define REVERSI_VER_SUBLANG SUBLANG_DEFAULT
+#define REVERSI_VER_BLOCK "041104b0"
+#define REVERSI_VER_DESC "Microsoft Windows リバーシ アプリケーション"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_KO_KR)
+#define REVERSI_VER_LANG_ID 0x0412
+#define REVERSI_VER_LANG LANG_KOREAN
+#define REVERSI_VER_SUBLANG SUBLANG_DEFAULT
+#define REVERSI_VER_BLOCK "041204b0"
+#define REVERSI_VER_DESC "Microsoft Windows 리버시 응용 프로그램"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_FR_FR)
+#define REVERSI_VER_LANG_ID 0x040c
+#define REVERSI_VER_LANG LANG_FRENCH
+#define REVERSI_VER_SUBLANG SUBLANG_FRENCH
+#define REVERSI_VER_BLOCK "040c04b0"
+#define REVERSI_VER_DESC "Application Reversi Microsoft Windows"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_DE_DE)
+#define REVERSI_VER_LANG_ID 0x0407
+#define REVERSI_VER_LANG LANG_GERMAN
+#define REVERSI_VER_SUBLANG SUBLANG_GERMAN
+#define REVERSI_VER_BLOCK "040704b0"
+#define REVERSI_VER_DESC "Microsoft Windows Reversi-Anwendung"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_ES_ES)
+#define REVERSI_VER_LANG_ID 0x040a
+#define REVERSI_VER_LANG LANG_SPANISH
+#define REVERSI_VER_SUBLANG SUBLANG_SPANISH
+#define REVERSI_VER_BLOCK "040a04b0"
+#define REVERSI_VER_DESC "Aplicación Reversi de Microsoft Windows"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_SV_SE)
+#define REVERSI_VER_LANG_ID 0x041d
+#define REVERSI_VER_LANG LANG_SWEDISH
+#define REVERSI_VER_SUBLANG SUBLANG_SWEDISH
+#define REVERSI_VER_BLOCK "041d04b0"
+#define REVERSI_VER_DESC "Microsoft Windows Reversi-program"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_FI_FI)
+#define REVERSI_VER_LANG_ID 0x040b
+#define REVERSI_VER_LANG LANG_FINNISH
+#define REVERSI_VER_SUBLANG SUBLANG_DEFAULT
+#define REVERSI_VER_BLOCK "040b04b0"
+#define REVERSI_VER_DESC "Microsoft Windows Reversi -sovellus"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_PT_PT)
+#define REVERSI_VER_LANG_ID 0x0816
+#define REVERSI_VER_LANG LANG_PORTUGUESE
+#define REVERSI_VER_SUBLANG SUBLANG_PORTUGUESE
+#define REVERSI_VER_BLOCK "081604b0"
+#define REVERSI_VER_DESC "Aplicação Reversi do Microsoft Windows"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_IT_IT)
+#define REVERSI_VER_LANG_ID 0x0410
+#define REVERSI_VER_LANG LANG_ITALIAN
+#define REVERSI_VER_SUBLANG SUBLANG_ITALIAN
+#define REVERSI_VER_BLOCK "041004b0"
+#define REVERSI_VER_DESC "Applicazione Reversi per Microsoft Windows"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_RU_RU)
+#define REVERSI_VER_LANG_ID 0x0419
+#define REVERSI_VER_LANG LANG_RUSSIAN
+#define REVERSI_VER_SUBLANG SUBLANG_DEFAULT
+#define REVERSI_VER_BLOCK "041904b0"
+#define REVERSI_VER_DESC "Приложение Microsoft Windows Reversi"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_UK_UA)
+#define REVERSI_VER_LANG_ID 0x0422
+#define REVERSI_VER_LANG LANG_UKRAINIAN
+#define REVERSI_VER_SUBLANG SUBLANG_DEFAULT
+#define REVERSI_VER_BLOCK "042204b0"
+#define REVERSI_VER_DESC "Програма Microsoft Windows Reversi"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_AR_SA)
+#define REVERSI_VER_LANG_ID 0x0401
+#define REVERSI_VER_LANG LANG_ARABIC
+#define REVERSI_VER_SUBLANG SUBLANG_DEFAULT
+#define REVERSI_VER_BLOCK "040104b0"
+#define REVERSI_VER_DESC "تطبيق ريفيرسي لـ Microsoft Windows"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#elif defined(REVERSI_LANG_HE_IL)
+#define REVERSI_VER_LANG_ID 0x040d
+#define REVERSI_VER_LANG LANG_HEBREW
+#define REVERSI_VER_SUBLANG SUBLANG_DEFAULT
+#define REVERSI_VER_BLOCK "040d04b0"
+#define REVERSI_VER_DESC "יישום רברסי של Microsoft Windows"
+#define REVERSI_VER_COPYRIGHT "(C) Microsoft Corporation. All rights reserved."
+#else
+#define REVERSI_VER_LANG_ID 0x0409
+#define REVERSI_VER_LANG LANG_ENGLISH
+#define REVERSI_VER_SUBLANG SUBLANG_ENGLISH_US
+#define REVERSI_VER_BLOCK "040904b0"
+#define REVERSI_VER_DESC "Microsoft Windows Reversi Application"
+#define REVERSI_VER_COPYRIGHT "© Microsoft Corporation. All rights reserved."
+#endif
+
+LANGUAGE REVERSI_VER_LANG, REVERSI_VER_SUBLANG
 1 VERSIONINFO
  FILEVERSION VER_FILE_VERSION
  PRODUCTVERSION VER_PRODUCT_VERSION
@@ -12,178 +126,13 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904b0"
+        BLOCK REVERSI_VER_BLOCK
         BEGIN
             VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Microsoft Windows Reversi Application"
+            VALUE "FileDescription", REVERSI_VER_DESC
             VALUE "FileVersion", VER_FILE_VERSION_STR
             VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "© Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "080404b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Microsoft Windows 翻转棋应用程序"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "040404b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Microsoft Windows 翻轉棋應用程式"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "041104b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Microsoft Windows リバーシ アプリケーション"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "041204b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Microsoft Windows 리버시 응용 프로그램"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "040c04b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Application Reversi Microsoft Windows"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "040704b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Microsoft Windows Reversi-Anwendung"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "040a04b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Aplicación Reversi de Microsoft Windows"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "041d04b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Microsoft Windows Reversi-program"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "040b04b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Microsoft Windows Reversi -sovellus"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "081604b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Aplicação Reversi do Microsoft Windows"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "041004b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Applicazione Reversi per Microsoft Windows"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "041904b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Приложение Microsoft Windows Reversi"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "042204b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Програма Microsoft Windows Reversi"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "040104b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "تطبيق ريفيرسي لـ Microsoft Windows"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "REVERSI.EXE"
-            VALUE "ProductName", "Microsoft Windows"
-            VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
-        END
-        BLOCK "040d04b0"
-        BEGIN
-            VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "יישום רברסי של Microsoft Windows"
-            VALUE "FileVersion", VER_FILE_VERSION_STR
-            VALUE "InternalName", "Reversi"
-            VALUE "LegalCopyright", "(C) Microsoft Corporation. All rights reserved."
+            VALUE "LegalCopyright", REVERSI_VER_COPYRIGHT
             VALUE "OriginalFilename", "REVERSI.EXE"
             VALUE "ProductName", "Microsoft Windows"
             VALUE "ProductVersion", VER_PRODUCT_VERSION_STR
@@ -191,6 +140,6 @@ BEGIN
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x0409, 1200, 0x0804, 1200, 0x0404, 1200, 0x0411, 1200, 0x0412, 1200, 0x040c, 1200, 0x0407, 1200, 0x040a, 1200, 0x041d, 1200, 0x040b, 1200, 0x0816, 1200, 0x0410, 1200, 0x0419, 1200, 0x0422, 1200, 0x0401, 1200, 0x040d, 1200
+        VALUE "Translation", REVERSI_VER_LANG_ID, 1200
     END
 END
