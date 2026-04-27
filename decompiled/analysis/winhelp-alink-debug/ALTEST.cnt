@@ -1,6 +1,0 @@
-:Base ALTEST.HLP>main
-:Title ALink Test
-:Index ALink Test =ALTEST.HLP
-:Link ALTEST.HLP
-1 Launcher=LAUNCH
-1 Target=TARGET_TOPIC

@@ -1,5 +1,6 @@
-build/*/obj/
 *.GID
+build/
+decompiled/
+*.[eE][xX][eE]
 *.idb
 ida/
-calc.exe
