@@ -126,16 +126,16 @@ function Invoke-Build {
     $cpuObj = Join-Path $objDir 'reversi_cpu_x86.obj'
     $modernObj = Join-Path $objDir 'reversi_modern_x86.obj'
     $linkObjects = '"' + $mainObj + '" "' + $res + '"'
-    $cpuCompile = ''
-    $modernCompile = ''
 
     if ($Arch -eq 'x86') {
-        $cpuCompile =
-            ' && cl /nologo ' + $Optimization + ' /W4 /utf-8 /GS- /Zl /arch:IA32 ' + $Defines + ' ' +
-            '/c /Fo"' + $cpuObj + '" "' + $CpuSource + '"'
-        $modernCompile =
-            ' && cl /nologo ' + $Optimization + ' /W4 /utf-8 /GS- /Zl /arch:SSE2 ' + $Defines + ' ' +
-            '/c /Fo"' + $modernObj + '" "' + $ModernSource + '"'
+        $baseDefines = ($Defines -replace ' *\/DREVERSI_LANG_[A-Za-z0-9_]+', '').Trim()
+        $cacheDir = Join-Path $Root 'build\.cache\obj\x86'
+        $sharedCpuObj = Join-Path $cacheDir 'reversi_cpu_x86.obj'
+        $sharedModernObj = Join-Path $cacheDir 'reversi_modern_x86.obj'
+        Ensure-SharedX86Object -SourcePath $CpuSource -OutputPath $sharedCpuObj -Defines $baseDefines -Optimization $Optimization -CompileArch 'IA32'
+        Ensure-SharedX86Object -SourcePath $ModernSource -OutputPath $sharedModernObj -Defines $baseDefines -Optimization $Optimization -CompileArch 'SSE2'
+        Copy-Item -LiteralPath $sharedCpuObj -Destination $cpuObj -Force
+        Copy-Item -LiteralPath $sharedModernObj -Destination $modernObj -Force
         $linkObjects += ' "' + $cpuObj + '" "' + $modernObj + '"'
     }
 
@@ -144,8 +144,6 @@ function Invoke-Build {
         ' && rc /nologo ' + $Defines + ' /I "' + (Join-Path $Root 'src') + '" /fo "' + $res + '" "' + $Resource + '"' +
         ' && cl /nologo ' + $Optimization + ' /W4 /utf-8 /GS- /Zl ' + $CompilerOptions + ' ' + $Defines + ' ' +
         '/c /Fo"' + $mainObj + '" "' + $Source + '"' +
-        $cpuCompile +
-        $modernCompile +
         ' && link /nologo /NODEFAULTLIB /ENTRY:ReversiEntry /SUBSYSTEM:WINDOWS,' + $Subsystem +
         ' ' + $LinkerOptions +
         ' /OSVERSION:' + $OsVersion + ' /OUT:"' + $exe + '" ' + $linkObjects +
@@ -230,12 +228,16 @@ function Copy-LocaleHelpFiles {
 
     $helpDir = Join-Path $Root ("help\$Locale")
     New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
+    $copied = @()
     foreach ($file in @('REVERSI.HLP', 'REVERSI.CNT', 'REVERSI.CHM')) {
         $sourcePath = Join-Path $helpDir $file
         if (Test-Path $sourcePath) {
-            Copy-Item -LiteralPath $sourcePath -Destination (Join-Path $OutputDir $file) -Force
+            $destination = Join-Path $OutputDir $file
+            Copy-Item -LiteralPath $sourcePath -Destination $destination -Force
+            $copied += $destination
         }
     }
+    return $copied
 }
 
 function Copy-LocaleResourceFiles {
@@ -261,6 +263,45 @@ function Remove-ArchHelpFiles {
 
     foreach ($file in @('reversi.hlp', 'reversi.cnt', 'reversi.chm', 'REVERSI.HLP', 'REVERSI.CNT', 'REVERSI.CHM')) {
         Remove-Item -LiteralPath (Join-Path $OutputDir $file) -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Ensure-SharedX86Object {
+    param(
+        [Parameter(Mandatory = $true)][string]$SourcePath,
+        [Parameter(Mandatory = $true)][string]$OutputPath,
+        [Parameter(Mandatory = $true)][string]$Defines,
+        [Parameter(Mandatory = $true)][string]$CompileArch,
+        [string]$Optimization = '/O2'
+    )
+
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutputPath) | Out-Null
+
+    $needsCompile = -not (Test-Path $OutputPath)
+    if (!$needsCompile) {
+        $sourceTime = (Get-Item $SourcePath).LastWriteTimeUtc
+        $objectTime = (Get-Item $OutputPath).LastWriteTimeUtc
+        $needsCompile = $sourceTime -gt $objectTime
+    }
+
+    if (!$needsCompile) {
+        return
+    }
+
+    $vsRoot = Find-VisualStudio
+    $vcvars = Join-Path $vsRoot 'VC\Auxiliary\Build\vcvarsall.bat'
+    if (!(Test-Path $vcvars)) {
+        throw "vcvarsall.bat was not found at $vcvars"
+    }
+
+    $compilerCmd = '"' + $vcvars + '" x86 && cd /d "' + $Root + '"' +
+        ' && cl /nologo ' + $Optimization + ' /W4 /utf-8 /GS- /Zl ' + $Defines + ' /arch:' + $CompileArch +
+        ' /c /Fo"' + $OutputPath + '" "' + $SourcePath + '"'
+
+    Write-Host ("Building shared x86 object -> $OutputPath")
+    & cmd.exe /d /c $compilerCmd
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to build shared x86 object: $OutputPath"
     }
 }
 
@@ -409,7 +450,10 @@ function Invoke-MuiPackage {
             if ($arch -eq 'x86') {
                 Set-PeVersion -Path $muiPath -Major 4 -Minor 0
             }
-            Copy-LocaleHelpFiles -OutputDir $localeDir -Locale $language.Locale
+            $copiedHelp = Copy-LocaleHelpFiles -OutputDir $localeDir -Locale $language.Locale
+            foreach ($helpFile in $copiedHelp) {
+                $Built.Add($helpFile) | Out-Null
+            }
             Remove-IntermediateFiles -OutputDir $localeDir
 
             # Vista+ uses named locale folders; XP MUI commonly uses hexadecimal LANGID folders.
@@ -419,9 +463,11 @@ function Invoke-MuiPackage {
                 $sourcePath = Join-Path $localeDir $file
                 if (Test-Path $sourcePath) {
                     Copy-Item -LiteralPath $sourcePath -Destination (Join-Path $legacyLocaleDir $file) -Force
+                    $Built.Add((Join-Path $legacyLocaleDir $file)) | Out-Null
                 }
             }
             $Built.Add($muiPath) | Out-Null
+            $Built.Add((Join-Path $legacyLocaleDir 'REVERSI.exe.mui')) | Out-Null
         }
     }
 }
@@ -476,7 +522,10 @@ foreach ($language in $selectedLanguages) {
         Remove-IntermediateFiles -OutputDir $localeOutput
     }
     Remove-ArchHelpFiles -OutputDir $x86Output
-    Copy-LocaleHelpFiles -OutputDir $x86Output -Locale $language.Locale
+    $copiedHelp = Copy-LocaleHelpFiles -OutputDir $x86Output -Locale $language.Locale
+    foreach ($helpFile in $copiedHelp) {
+        $built += $helpFile
+    }
     Remove-IntermediateFiles -OutputDir $x86Output
     $built += Join-Path $x86Output 'REVERSI.exe'
 
@@ -490,7 +539,10 @@ foreach ($language in $selectedLanguages) {
         -Subsystem '6.0' `
         -OsVersion '6.0'
     Remove-ArchHelpFiles -OutputDir $x64Output
-    Copy-LocaleHelpFiles -OutputDir $x64Output -Locale $language.Locale
+    $copiedHelp = Copy-LocaleHelpFiles -OutputDir $x64Output -Locale $language.Locale
+    foreach ($helpFile in $copiedHelp) {
+        $built += $helpFile
+    }
     Remove-IntermediateFiles -OutputDir $x64Output
     $built += Join-Path $x64Output 'REVERSI.exe'
 }
