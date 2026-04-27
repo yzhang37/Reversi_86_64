@@ -65,6 +65,17 @@ Examples:
 - Dark mode is optional and must not break Windows 95/2000/XP.
 - Visual styles are enabled only where supported.
 
+## RTL Layout
+
+- Arabic and Hebrew use native Windows RTL layout for system-managed UI.
+- If an application-local MUI satellite is loaded, LTR/RTL follows the
+  satellite locale instead of the fallback EXE's compile-time locale.
+- The board is painted in LTR HDC coordinates so the visible grid and opening
+  layout stay stable. In a `WS_EX_LAYOUTRTL` window, Windows mirrors client
+  mouse coordinates, `ClientToScreen`, and invalidation rectangles; convert X
+  only at that API boundary.
+- Do not reverse the board array or swap visible opening pieces for RTL.
+
 ## x86 Modern Dispatch
 
 The x86 EXE must remain loadable on old systems.

@@ -150,6 +150,13 @@ powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1
   `REVERSI.exe.mui` satellites under `build/MUI/<arch>/<locale>/`, with
   XP-style `MUI/<hex-langid>` mirrors. Runtime MUI loading must stay dynamic:
   never statically import Vista MUI APIs or make Win95/XP depend on them.
+- If a MUI satellite is loaded, LTR/RTL layout follows the satellite locale,
+  not the fallback EXE's compile-time locale. This prevents Arabic/Hebrew
+  fallback EXEs from forcing RTL onto zh-CN, en-US, or other LTR satellites.
+- RTL board input has a deliberate coordinate boundary. Board painting is
+  forced to LTR HDC coordinates for faithful drawing, while `WS_EX_LAYOUTRTL`
+  mirrors client mouse coordinates, `ClientToScreen`, and invalidation rects.
+  Convert X only at that boundary; do not reverse board data or opening pieces.
 - Normal builds remove compiler/resource intermediates from output folders by
   default. Use `-KeepIntermediate` when `.obj`, `.res`, `obj/`, or copied
   `.rcinc` files are needed for debugging or resource inspection.

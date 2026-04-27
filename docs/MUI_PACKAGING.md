@@ -52,6 +52,11 @@ At runtime the program:
 5. Falls back to primary-language resources, then to English resources in the
    main EXE.
 
+When a satellite loads successfully, that satellite's locale controls whether
+the UI is LTR or RTL. The fallback EXE's compiled language is used only when no
+satellite is active, so an Arabic fallback EXE plus `zh-CN/REVERSI.exe.mui`
+still produces a Chinese LTR UI.
+
 Help lookup follows the loaded satellite directory first, then checks the same
 locale/hex layouts for `reversi.hlp`, `reversi.cnt`, or `reversi.chm`. It also
 checks Windows-style help paths such as `%WINDIR%/Help/MUI/0804`.

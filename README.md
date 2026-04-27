@@ -127,6 +127,9 @@ build\MUI\x64\<locale>\REVERSI.exe.mui
 At startup, the program looks first for Vista-style local locale folders such
 as `zh-CN\REVERSI.exe.mui`, then for XP-style `MUI\0804` folders. If nothing
 matches, it falls back to the resources built into the main EXE.
+When a satellite is loaded, its locale controls LTR/RTL layout. A Chinese
+satellite therefore stays LTR even when the fallback EXE was built from Arabic
+or Hebrew resources.
 
 Reference reverse-engineering snapshots (for example `REVERSI.asm`) are kept under
 `decompiled/` in local working trees and are excluded from release artifacts and
@@ -178,3 +181,6 @@ See `docs\MUI_PACKAGING.md` for the optional MUI-style package layout.
 The x86 build is designed for the widest range of Windows versions, including legacy systems. The x64 build targets modern 64-bit Windows and omits compatibility paths that are only useful to old 32-bit systems.
 
 The program keeps a classical Windows look on purpose. Newer APIs are loaded dynamically and used only when they are available, so the same project can preserve an old Windows feel while still behaving well on high-resolution modern desktops.
+Arabic and Hebrew builds use native Windows RTL layout for system UI. The
+board keeps the same visible opening layout, and mouse/keyboard input maps to
+the square the user sees.

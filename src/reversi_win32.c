@@ -847,6 +847,40 @@ static int LogicalColForVisual(int col)
     return col;
 }
 
+static int MirrorClientXForRtlWindow(HWND hwnd, int x)
+{
+    RECT rc;
+
+    if (!g_rtlLayout || !g_useWideCommands || !GetClientRect(hwnd, &rc)) {
+        return x;
+    }
+
+    /* Board painting is LTR; WS_EX_LAYOUTRTL client coordinates are mirrored. */
+    return (rc.right - rc.left) - 1 - x;
+}
+
+static void BoardClientPointToScreen(HWND hwnd, POINT *pt)
+{
+    pt->x = MirrorClientXForRtlWindow(hwnd, pt->x);
+    ClientToScreen(hwnd, pt);
+}
+
+static void MirrorClientRectForRtlWindow(HWND hwnd, RECT *rect)
+{
+    RECT rc;
+    int left;
+    int width;
+
+    if (!g_rtlLayout || !g_useWideCommands || !rect || !GetClientRect(hwnd, &rc)) {
+        return;
+    }
+
+    width = rc.right - rc.left;
+    left = width - rect->right;
+    rect->right = width - rect->left;
+    rect->left = left;
+}
+
 static RECT CellRect(const Layout *layout, int row, int col)
 {
     RECT rc;
@@ -863,6 +897,7 @@ static void InvalidateCell(HWND hwnd, int row, int col)
     CalculateLayout(hwnd, &layout);
     RECT rc = CellRect(&layout, row, col);
     InflateRect(&rc, 2, 2);
+    MirrorClientRectForRtlWindow(hwnd, &rc);
     InvalidateRect(hwnd, &rc, FALSE);
 }
 
@@ -1287,6 +1322,7 @@ static int PointToCell(HWND hwnd, int x, int y, int *row, int *col)
 {
     Layout layout;
     CalculateLayout(hwnd, &layout);
+    x = MirrorClientXForRtlWindow(hwnd, x);
     if (x < layout.board.left || x >= layout.board.right ||
         y < layout.board.top || y >= layout.board.bottom) {
         return 0;
@@ -1365,6 +1401,7 @@ static int IsBlankClientPoint(HWND hwnd, int x, int y)
     RECT occupied;
 
     CalculateLayout(hwnd, &layout);
+    x = MirrorClientXForRtlWindow(hwnd, x);
     if (IsPointInRectInclusive(&layout.message, x, y)) {
         return 0;
     }
@@ -1465,7 +1502,7 @@ static void ShowHint(HWND hwnd)
     POINT pt;
     pt.x = rc.left + layout.cell_w / 2;
     pt.y = rc.top + layout.cell_h / 2;
-    ClientToScreen(hwnd, &pt);
+    BoardClientPointToScreen(hwnd, &pt);
     SetCursorPos(pt.x, pt.y);
     FlashHintCell(hwnd, move.row, move.col);
     EndInputLock(hwnd);
@@ -1550,7 +1587,7 @@ static void MoveCursorToCell(HWND hwnd, int row, int col)
     rc = CellRect(&layout, row, col);
     pt.x = rc.left + layout.cell_w / 2;
     pt.y = rc.top + layout.cell_h / 2;
-    ClientToScreen(hwnd, &pt);
+    BoardClientPointToScreen(hwnd, &pt);
     SetCursorPos(pt.x, pt.y);
 }
 

@@ -203,16 +203,18 @@ static DWORD AppMainWindowExStyle(void)
     return WS_EX_RIGHT | WS_EX_RTLREADING | WS_EX_LAYOUTRTL | WS_EX_NOINHERITLAYOUT;
 }
 
-static void InitLocaleLayout(void)
+static int BuiltinRtlLayout(void)
 {
 #if defined(REVERSI_LANG_AR_SA) || defined(REVERSI_LANG_HE_IL)
-    g_rtlLayout = 1;
+    return 1;
 #else
-    g_rtlLayout = 0;
+    return 0;
 #endif
-    if (g_muiRtlLayout) {
-        g_rtlLayout = 1;
-    }
+}
+
+static void InitLocaleLayout(void)
+{
+    g_rtlLayout = g_muiModule ? g_muiRtlLayout : BuiltinRtlLayout();
 
     if (g_rtlLayout && g_useWideCommands) {
         SetProcessDefaultLayoutProc set_layout =
