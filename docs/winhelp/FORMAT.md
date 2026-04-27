@@ -35,15 +35,15 @@ COMPRESS=0
 
 - `CONTENTS=JP.RLA` 指向一个 fallback topic。没有 `.CNT` 时，WinHelp 可以显示“单击‘帮助主题’返回到主题列表。”，而不是报 1032。
 - `CNT=REVERSI.cnt` 让 `HELP_FINDER` 能打开目录和索引界面。
-- `LCID=0x804` 表示简体中文。
-- `DEFFONT=宋体,9,134` 是中文版默认显示字体。英文版才考虑保留 MS Sans Serif。
+- `LCID` 必须随 locale 变化，例如简体中文是 `0x804`，英文美国是 `0x409`。
+- `DEFFONT` 必须和该语言的 WinHelp ANSI 代码页、字体 charset 对齐。
 - `COMPRESS=0` 方便反编译和二进制检查。
 
 不要盲目相信 HelpDeco 反编译出的 HPJ。它能还原大量结构，但 WinHelp 4.0 的部分 SYSTEM record 不一定能完整还原。
 
 ## RTF 头部
 
-中文 RTF 使用 GBK 代码页和宋体：
+WinHelp RTF 使用 ANSI 代码页，不使用 UTF-8。简体中文示例：
 
 ```rtf
 {\rtf1\ansi\ansicpg936\deff0
@@ -54,11 +54,24 @@ COMPRESS=0
 
 规则：
 
-- `\ansicpg936` 用于简体中文文本。
-- `\fcharset134` 用于 GBK/简体中文字体。
+- `\ansicpg` 使用该 locale 的传统 Windows 代码页。
+- `\fcharset` 使用对应的 GDI 字符集。
 - `\fs18` 是 9 号字。
 - 标题、小节标题可以加粗，但每段结束后必须用 `\plain\f1\fs18` 恢复正文样式。
 - 如果正文整篇看起来都加粗，通常是前一个 `\b` 没有被 `\plain` 或 `\b0` 正确清掉。
+
+当前生成器使用的主要组合：
+
+```text
+en/fr/de/es/sv/fi/pt/it: ansicpg1252, charset 0
+zh-CN: ansicpg936, charset 134
+zh-TW: ansicpg950, charset 136
+ja-JP: ansicpg932, charset 128
+ko-KR: ansicpg949, charset 129
+ru-RU/uk-UA: ansicpg1251, charset 204
+ar-SA: ansicpg1256, charset 178
+he-IL: ansicpg1255, charset 177
+```
 
 ## Topic Footnotes
 

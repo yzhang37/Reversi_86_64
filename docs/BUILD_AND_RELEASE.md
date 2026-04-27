@@ -6,7 +6,11 @@ This file records the current build contract for the native Reversi port.
 
 ```text
 build/<locale>/x86/REVERSI.exe
+build/<locale>/x86/REVERSI.HLP
+build/<locale>/x86/REVERSI.CNT
 build/<locale>/x64/REVERSI.exe
+build/<locale>/x64/REVERSI.HLP
+build/<locale>/x64/REVERSI.CNT
 ```
 
 Each executable contains only one locale's resources. Supported locale folders:
@@ -16,8 +20,32 @@ en-US zh-CN zh-TW ja-JP ko-KR fr-FR de-DE es-ES
 sv-SE fi-FI pt-PT it-IT ru-RU uk-UA ar-SA he-IL
 ```
 
-Help files are copied into build outputs when matching files exist under
-`help/<locale>/` as `REVERSI.HLP`, `REVERSI.CNT`, or `REVERSI.CHM`.
+Help files live beside the architecture-specific EXE so a user can copy one
+folder directly. Build intermediates are removed by default; `-KeepIntermediate`
+keeps `obj/`, `.obj`, `.res`, and copied `.rcinc` files for debugging.
+
+The build script generates WinHelp sources from `help/make_hlp_sources.py` and
+compiles `REVERSI.HLP` when Help Workshop is available locally.
+
+Optional MUI-style output is separate from the per-locale release tree:
+
+```text
+build/MUI/x86/REVERSI.exe
+build/MUI/x86/<locale>/REVERSI.exe.mui
+build/MUI/x86/<locale>/REVERSI.HLP
+build/MUI/x86/<locale>/REVERSI.CNT
+build/MUI/x86/MUI/<hex-langid>/REVERSI.exe.mui
+build/MUI/x64/REVERSI.exe
+build/MUI/x64/<locale>/REVERSI.exe.mui
+build/MUI/x64/<locale>/REVERSI.HLP
+build/MUI/x64/<locale>/REVERSI.CNT
+build/MUI/x64/MUI/<hex-langid>/REVERSI.exe.mui
+```
+
+The main EXE is an English fallback. Each `.mui` file is a resource-only PE
+module named after the language-neutral file (`REVERSI.exe.mui`) and stored
+under a Vista-style application-local `<locale>` folder. The build also mirrors
+the files to XP-style `MUI/<hex-langid>` folders, such as `MUI/0804`.
 
 ## Standard Build
 
@@ -36,11 +64,36 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale en-US,zh-CN,ja-JP
 ```
 
 The build uses MSVC directly through `vcvarsall.bat`, not a project file.
+By default, build intermediates (`obj/`, `.obj`, `.res`, copied `.rcinc`) are
+removed from output folders. Use `-KeepIntermediate` when you need them for
+resource inspection or debugging.
+
+## MUI-Style Build
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Mui -Locale all
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Mui -Locale zh-CN,ja-JP
+```
+
+This does not replace the standard per-locale release build. It creates one
+x86 and one x64 executable under `build/MUI/`, then builds selected locale
+satellites and help files under each architecture's local locale directories,
+with XP-style `MUI/<hex-langid>` mirrors. At runtime the program picks resources
+from the user's UI language, then falls back by primary language and finally to
+the English resources in the main EXE.
+
+The implementation intentionally does not statically import Vista MUI APIs.
+Windows Vista and later can load PE resource modules with
+`LoadLibraryEx(..., LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE)`.
+Older systems use the safe downlevel subset, `LOAD_LIBRARY_AS_DATAFILE`, and
+continue to work without any MUI APIs being present.
+
+See `docs/MUI_PACKAGING.md` for the runtime search order and fallback rules.
 
 ## Optional Tool Bootstrap
 
 Third-party tools are not tracked in Git. Download or prepare local WinHelp
-tools with:
+tools, including Microsoft Help Workshop, with:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1

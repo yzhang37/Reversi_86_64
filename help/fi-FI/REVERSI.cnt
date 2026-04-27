@@ -1,0 +1,17 @@
+:Base REVERSI.HLP>proc4
+:Title Reversin ohje
+1 Reversi
+2 Reversin yleiskatsaus=TOPIC_OVERVIEW
+2 Reversin pelaaminen
+3 Reversin pelaaminen=TOPIC_PLAY
+3 Vaikeustason valitseminen=TOPIC_DIFFICULTY
+3 Uuden pelin aloittaminen=TOPIC_NEW_GAME
+3 Pelivuorot=TOPIC_TURN
+3 Näppäimistön käyttäminen=TOPIC_KEYBOARD
+2 Säännöt
+3 Säännöt=TOPIC_RULES
+3 Lauta ja nappulat=TOPIC_BOARD
+3 Sallitut siirrot=TOPIC_LEGAL
+3 Nappuloiden kääntäminen=TOPIC_FLIP
+3 Pelin loppu ja pisteet=TOPIC_END
+2 Vihjeen saaminen=TOPIC_HINT

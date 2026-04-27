@@ -26,6 +26,8 @@ resources, and era feel as much as possible.
 powershell -ExecutionPolicy Bypass -File .\build.ps1
 powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale zh-CN
 powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale all
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Mui -Locale all
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -KeepIntermediate
 ```
 
 - Smoke tests:
@@ -36,13 +38,15 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1 -Locale all
 ```
 
 - Build and release details are in `docs/BUILD_AND_RELEASE.md`.
+- MUI-style packaging details are in `docs/MUI_PACKAGING.md`.
 - UI and localization terminology is in `docs/TERMINOLOGY.md`.
 - Source layout and Maintainable Code Golf rules are in
   `docs/CODE_STRUCTURE.md`.
 - Porting and behavior rules are in `docs/PORTING_NOTES.md`.
 - Implementation points that may need later cleanup are tracked in
   `docs/maintenance/IMPLEMENTATION_RISK_REVIEW.md`.
-- WinHelp-specific rules are in `docs/winhelp/`.
+- WinHelp-specific rules are in `docs/winhelp/`. Per-locale WinHelp terms and
+  index candidates are generated into `docs/winhelp/HELP_TERMS.md`.
 - Optional third-party tools are restored with:
 
 ```powershell
@@ -122,13 +126,20 @@ powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1
   for the canonical project terms. If a term looks suspicious, inconsistent,
   or absent from the glossary, pause and reconcile the terminology instead of
   guessing locally.
-- This project currently uses per-locale builtin RC resources, not MUI
-  satellite files. Each release EXE should contain only its selected locale.
-  Windows 95-era resource loading cannot be trusted to fall back to en-US when
-  a localized `STRINGTABLE` block exists but omits a string id. Keep invariant
-  resource names, file names, registry paths, and registry value names
-  duplicated in each language rcinc unless the project later moves to a MUI
-  packaging model.
+- The standard release build uses per-locale builtin RC resources. Each normal
+  release EXE should contain only its selected locale. Windows 95-era resource
+  loading cannot be trusted to fall back to en-US when a localized
+  `STRINGTABLE` block exists but omits a string id. Keep invariant resource
+  names, file names, registry paths, and registry value names duplicated in
+  each language rcinc.
+- `build.ps1 -Mui` is a separate application-local MUI-style package. It builds
+  one English fallback EXE per architecture plus resource-only
+  `REVERSI.exe.mui` satellites under `build/MUI/<arch>/<locale>/`, with
+  XP-style `MUI/<hex-langid>` mirrors. Runtime MUI loading must stay dynamic:
+  never statically import Vista MUI APIs or make Win95/XP depend on them.
+- Normal builds remove compiler/resource intermediates from output folders by
+  default. Use `-KeepIntermediate` when `.obj`, `.res`, `obj/`, or copied
+  `.rcinc` files are needed for debugging or resource inspection.
 - Hidden debug context menu exception: the debug menu labels are hardcoded in
   English in C and are not localized.
 
@@ -183,14 +194,21 @@ HKEY_CURRENT_USER\Software\Microsoft\reversi
   - `TOOL.md` for commands and source files.
   - `FORMAT.md` for RTF/HPJ/CNT syntax.
   - `INDEXING.md` for K indexes, ALinks, and related topics.
+  - `HELP_TERMS.md` for generated per-locale topic/index terms.
   - `TROUBLESHOOTING.md` for Win95/WinHelp errors and cache issues.
   - `WORKFLOW.md` for build/test flow.
 - Decompile the original `REVERSI.HLP` into a reviewable output folder and keep
   generated output available under the x86 build/reference area as requested.
 - Export every RTF topic/source into Markdown, including original WinHelp
   markup information, so the text and formatting can be reviewed manually.
-- Rebuild `REVERSI.HLP` as final WinHelp 4.0 format, starting with Simplified
-  Chinese.
+- Rebuild `REVERSI.HLP` as final WinHelp 4.0 format for every supported
+  locale. Use `help/make_hlp_sources.py --locale all`; the old
+  `help/zh-CN/make_hlp_sources.py` file is only a compatibility wrapper.
+- Build outputs keep shared locale assets at `build/<locale>/reversi.hlp`,
+  `build/<locale>/reversi.cnt`, and `build/<locale>/reversi.res`; do not copy
+  duplicate HLP/CNT files into both `x86` and `x64`.
+- WinHelp is ANSI per locale. Keep code page, HPJ LCID, RTF `\ansicpg`, and
+  font charset aligned with the target language.
 - Compare against official Microsoft game help (`WINMINE.HLP`, `FREECELL.HLP`,
   `SOL.HLP`) instead of guessing.
 - Help lookup should not be hard-coded only to the current directory. Prefer

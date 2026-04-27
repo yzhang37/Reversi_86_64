@@ -208,6 +208,9 @@ string table after build.
 - Legacy systems use WinHelp/HLP.
 - Help discovery should include app-local files, system help directories, and
   MUI/language-specific locations where supported.
+- In MUI-style builds, local `<locale>/reversi.hlp`, `MUI/<hex-langid>`, and
+  Windows-style `Help/MUI/<hex-langid>` locations are checked before the EXE
+  directory and parent locale directory.
 - If no help file can be opened, show a short built-in native MessageBox
   fallback.
 - Help Search and Help-on-Help fallback failures use an exclamation/warning

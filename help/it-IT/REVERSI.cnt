@@ -1,0 +1,17 @@
+:Base REVERSI.HLP>proc4
+:Title Guida di Reversi
+1 Reversi
+2 Panoramica di Reversi=TOPIC_OVERVIEW
+2 Giocare a Reversi
+3 Giocare a Reversi=TOPIC_PLAY
+3 Scegliere il livello=TOPIC_DIFFICULTY
+3 Iniziare una nuova partita=TOPIC_NEW_GAME
+3 Turni di gioco=TOPIC_TURN
+3 Usare la tastiera=TOPIC_KEYBOARD
+2 Regole
+3 Regole=TOPIC_RULES
+3 Scacchiera e pedine=TOPIC_BOARD
+3 Mosse valide=TOPIC_LEGAL
+3 Girare le pedine=TOPIC_FLIP
+3 Fine partita e punteggio=TOPIC_END
+2 Ottenere un suggerimento=TOPIC_HINT

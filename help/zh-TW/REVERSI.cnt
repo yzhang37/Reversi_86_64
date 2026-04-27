@@ -1,0 +1,17 @@
+:Base REVERSI.HLP>proc4
+:Title 「翻轉棋」說明
+1 翻轉棋
+2 「翻轉棋」概述=TOPIC_OVERVIEW
+2 玩翻轉棋
+3 玩翻轉棋=TOPIC_PLAY
+3 選擇難度=TOPIC_DIFFICULTY
+3 開始新遊戲=TOPIC_NEW_GAME
+3 遊戲回合=TOPIC_TURN
+3 使用鍵盤下棋=TOPIC_KEYBOARD
+2 遊戲規則
+3 遊戲規則=TOPIC_RULES
+3 棋盤和棋子=TOPIC_BOARD
+3 合法走法=TOPIC_LEGAL
+3 翻轉棋子=TOPIC_FLIP
+3 遊戲結束和勝負=TOPIC_END
+2 取得提示=TOPIC_HINT

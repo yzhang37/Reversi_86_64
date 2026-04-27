@@ -1,0 +1,17 @@
+:Base REVERSI.HLP>proc4
+:Title Hjälp för Reversi
+1 Reversi
+2 Översikt över Reversi=TOPIC_OVERVIEW
+2 Spela Reversi
+3 Spela Reversi=TOPIC_PLAY
+3 Välja nivå=TOPIC_DIFFICULTY
+3 Starta ett nytt spel=TOPIC_NEW_GAME
+3 Spelturer=TOPIC_TURN
+3 Använda tangentbordet=TOPIC_KEYBOARD
+2 Regler
+3 Regler=TOPIC_RULES
+3 Bräde och brickor=TOPIC_BOARD
+3 Tillåtna drag=TOPIC_LEGAL
+3 Vända brickor=TOPIC_FLIP
+3 Spelslut och poäng=TOPIC_END
+2 Få ett tips=TOPIC_HINT

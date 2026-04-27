@@ -26,7 +26,7 @@ MSVC/Win32 assumptions simple while making the source easier to navigate.
 
 ```text
 src/reversi_win32.c        Entry point, WndProc, input flow, turn flow.
-src/reversi_platform.inc   ANSI/Wide wrappers, OS probes, DPI, GDI+, colors.
+src/reversi_platform.inc   ANSI/Wide wrappers, OS probes, MUI loading, DPI, GDI+, colors.
 src/reversi_help.inc       String/path helpers and WinHelp/CHM dispatch.
 src/reversi_settings.inc   Registry settings, dark mode, saved window rects.
 src/reversi_rules.inc      Board rules, legal moves, scoring, AI search.
@@ -56,12 +56,15 @@ src/lang/reversi_*.rcinc       Other localized resources.
 Normal user-facing strings belong in RC resources. Debug-only text may stay in
 C when the feature is intentionally hidden and not localized.
 
-This is a per-locale builtin RC build, not a MUI satellite-resource build.
-`build.ps1` defines one `REVERSI_LANG_*` symbol per output folder, so each
-release executable carries only its selected language. Keep file names,
-registry value names, internal profile keys, and resource lookup names
-duplicated in each language rcinc for compatibility. If the project later moves
-to MUI files, the resource packaging rules can be revisited.
+The standard release build is a per-locale builtin RC build. `build.ps1`
+defines one `REVERSI_LANG_*` symbol per output folder, so each normal release
+executable carries only its selected language.
+
+`build.ps1 -Mui` is a separate packaging mode. It builds one English fallback
+EXE per architecture and resource-only `REVERSI.exe.mui` satellites under
+`build/MUI/<arch>/<locale>/`, with XP-style `MUI/<hex-langid>` mirrors. The
+same `src/lang/*.rcinc` files feed both models, so resource IDs, file names,
+registry value names, and terminology must stay consistent.
 
 ## Tooling Layout
 

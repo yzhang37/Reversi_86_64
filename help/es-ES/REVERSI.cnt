@@ -1,0 +1,17 @@
+:Base REVERSI.HLP>proc4
+:Title Ayuda de Reversi
+1 Reversi
+2 Información general de Reversi=TOPIC_OVERVIEW
+2 Jugar a Reversi
+3 Jugar a Reversi=TOPIC_PLAY
+3 Elegir dificultad=TOPIC_DIFFICULTY
+3 Iniciar una partida nueva=TOPIC_NEW_GAME
+3 Turnos de juego=TOPIC_TURN
+3 Usar el teclado=TOPIC_KEYBOARD
+2 Reglas
+3 Reglas=TOPIC_RULES
+3 Tablero y fichas=TOPIC_BOARD
+3 Jugadas válidas=TOPIC_LEGAL
+3 Voltear fichas=TOPIC_FLIP
+3 Final y puntuación=TOPIC_END
+2 Obtener una pista=TOPIC_HINT

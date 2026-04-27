@@ -1,5 +1,7 @@
 param(
     [switch]$Production,
+    [switch]$Mui,
+    [switch]$KeepIntermediate,
     [string[]]$Locale,
     [switch]$ListLocales
 )
@@ -11,24 +13,26 @@ $Source = Join-Path $Root 'src\reversi_win32.c'
 $CpuSource = Join-Path $Root 'src\reversi_cpu_x86.c'
 $ModernSource = Join-Path $Root 'src\reversi_modern_x86.c'
 $Resource = Join-Path $Root 'src\reversi.rc'
+$HelpGenerator = Join-Path $Root 'help\make_hlp_sources.py'
+$HelpCompiler = Join-Path $Root 'tools\vendor\hcw\hcw.exe'
 
 $Languages = @(
-    @{ Locale = 'en-US'; Define = 'REVERSI_LANG_EN_US' },
-    @{ Locale = 'zh-CN'; Define = 'REVERSI_LANG_ZH_CN' },
-    @{ Locale = 'zh-TW'; Define = 'REVERSI_LANG_ZH_TW' },
-    @{ Locale = 'ja-JP'; Define = 'REVERSI_LANG_JA_JP' },
-    @{ Locale = 'ko-KR'; Define = 'REVERSI_LANG_KO_KR' },
-    @{ Locale = 'fr-FR'; Define = 'REVERSI_LANG_FR_FR' },
-    @{ Locale = 'de-DE'; Define = 'REVERSI_LANG_DE_DE' },
-    @{ Locale = 'es-ES'; Define = 'REVERSI_LANG_ES_ES' },
-    @{ Locale = 'sv-SE'; Define = 'REVERSI_LANG_SV_SE' },
-    @{ Locale = 'fi-FI'; Define = 'REVERSI_LANG_FI_FI' },
-    @{ Locale = 'pt-PT'; Define = 'REVERSI_LANG_PT_PT' },
-    @{ Locale = 'it-IT'; Define = 'REVERSI_LANG_IT_IT' },
-    @{ Locale = 'ru-RU'; Define = 'REVERSI_LANG_RU_RU' },
-    @{ Locale = 'uk-UA'; Define = 'REVERSI_LANG_UK_UA' },
-    @{ Locale = 'ar-SA'; Define = 'REVERSI_LANG_AR_SA' },
-    @{ Locale = 'he-IL'; Define = 'REVERSI_LANG_HE_IL' }
+    @{ Locale = 'en-US'; Define = 'REVERSI_LANG_EN_US'; Hex = '0409' },
+    @{ Locale = 'zh-CN'; Define = 'REVERSI_LANG_ZH_CN'; Hex = '0804' },
+    @{ Locale = 'zh-TW'; Define = 'REVERSI_LANG_ZH_TW'; Hex = '0404' },
+    @{ Locale = 'ja-JP'; Define = 'REVERSI_LANG_JA_JP'; Hex = '0411' },
+    @{ Locale = 'ko-KR'; Define = 'REVERSI_LANG_KO_KR'; Hex = '0412' },
+    @{ Locale = 'fr-FR'; Define = 'REVERSI_LANG_FR_FR'; Hex = '040c' },
+    @{ Locale = 'de-DE'; Define = 'REVERSI_LANG_DE_DE'; Hex = '0407' },
+    @{ Locale = 'es-ES'; Define = 'REVERSI_LANG_ES_ES'; Hex = '040a' },
+    @{ Locale = 'sv-SE'; Define = 'REVERSI_LANG_SV_SE'; Hex = '041d' },
+    @{ Locale = 'fi-FI'; Define = 'REVERSI_LANG_FI_FI'; Hex = '040b' },
+    @{ Locale = 'pt-PT'; Define = 'REVERSI_LANG_PT_PT'; Hex = '0816' },
+    @{ Locale = 'it-IT'; Define = 'REVERSI_LANG_IT_IT'; Hex = '0410' },
+    @{ Locale = 'ru-RU'; Define = 'REVERSI_LANG_RU_RU'; Hex = '0419' },
+    @{ Locale = 'uk-UA'; Define = 'REVERSI_LANG_UK_UA'; Hex = '0422' },
+    @{ Locale = 'ar-SA'; Define = 'REVERSI_LANG_AR_SA'; Hex = '0401' },
+    @{ Locale = 'he-IL'; Define = 'REVERSI_LANG_HE_IL'; Hex = '040d' }
 )
 
 function Find-VisualStudio {
@@ -152,19 +156,123 @@ function Invoke-Build {
     }
 }
 
-function Copy-HelpFiles {
+function Invoke-MuiResourceBuild {
+    param(
+        [Parameter(Mandatory = $true)][string]$Arch,
+        [Parameter(Mandatory = $true)][string]$OutputPath,
+        [Parameter(Mandatory = $true)][string]$Defines
+    )
+
+    $vsRoot = Find-VisualStudio
+    $vcvars = Join-Path $vsRoot 'VC\Auxiliary\Build\vcvarsall.bat'
+    if (!(Test-Path $vcvars)) {
+        throw "vcvarsall.bat was not found at $vcvars"
+    }
+
+    $outputDir = Split-Path -Parent $OutputPath
+    $objDir = Join-Path $outputDir 'obj'
+    New-Item -ItemType Directory -Force -Path $objDir | Out-Null
+
+    $res = Join-Path $objDir 'reversi.res'
+    $machine = if ($Arch -eq 'x64') { 'X64' } else { 'X86' }
+    $subsystem = if ($Arch -eq 'x64') { '6.0' } else { '5.01' }
+    $osVersion = if ($Arch -eq 'x64') { '6.0' } else { '5.01' }
+    $cmd = '"' + $vcvars + '" ' + $Arch +
+        ' && cd /d "' + $Root + '"' +
+        ' && rc /nologo ' + $Defines + ' /I "' + (Join-Path $Root 'src') + '" /fo "' + $res + '" "' + $Resource + '"' +
+        ' && link /nologo /NOENTRY /DLL /SUBSYSTEM:WINDOWS,' + $subsystem +
+        ' /OSVERSION:' + $osVersion + ' /MACHINE:' + $machine +
+        ' /OUT:"' + $OutputPath + '" "' + $res + '"'
+
+    Write-Host "Building MUI $Arch -> $OutputPath"
+    & cmd.exe /d /c $cmd
+    if ($LASTEXITCODE -ne 0) {
+        throw "MUI resource build failed for $Arch -> $OutputPath"
+    }
+}
+
+function Invoke-HelpBuild {
+    param(
+        [Parameter(Mandatory = $true)][string]$Locale
+    )
+
+    if (!(Test-Path $HelpGenerator)) {
+        return
+    }
+
+    Write-Host "Generating WinHelp sources -> help\$Locale"
+    & python $HelpGenerator --locale $Locale
+    if ($LASTEXITCODE -ne 0) {
+        throw "WinHelp source generation failed for $Locale"
+    }
+
+    $helpDir = Join-Path $Root ("help\$Locale")
+    $hpj = Join-Path $helpDir 'REVERSI.hpj'
+    if ((Test-Path $HelpCompiler) -and (Test-Path $hpj)) {
+        Write-Host "Compiling WinHelp -> help\$Locale\REVERSI.HLP"
+        & $HelpCompiler /C /E $hpj
+        $hlp = Join-Path $helpDir 'REVERSI.HLP'
+        if ($LASTEXITCODE -ne 0 -and !(Test-Path $hlp)) {
+            throw "WinHelp compile failed for $Locale"
+        }
+    } elseif (Test-Path $hpj) {
+        Write-Warning "Help Workshop not found; generated sources but skipped HLP compile for $Locale."
+    }
+}
+
+function Copy-LocaleHelpFiles {
     param(
         [Parameter(Mandatory = $true)][string]$OutputDir,
         [Parameter(Mandatory = $true)][string]$Locale
     )
 
     $helpDir = Join-Path $Root ("help\$Locale")
+    New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
     foreach ($file in @('REVERSI.HLP', 'REVERSI.CNT', 'REVERSI.CHM')) {
         $sourcePath = Join-Path $helpDir $file
         if (Test-Path $sourcePath) {
-            $destName = $file.ToLowerInvariant()
-            Copy-Item -LiteralPath $sourcePath -Destination (Join-Path $OutputDir $destName) -Force
+            Copy-Item -LiteralPath $sourcePath -Destination (Join-Path $OutputDir $file) -Force
         }
+    }
+}
+
+function Copy-LocaleResourceFiles {
+    param(
+        [Parameter(Mandatory = $true)][string]$OutputDir,
+        [Parameter(Mandatory = $true)][string]$Locale,
+        [Parameter(Mandatory = $true)][string]$ResourcePath
+    )
+
+    New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
+    if (Test-Path $ResourcePath) {
+        Copy-Item -LiteralPath $ResourcePath -Destination (Join-Path $OutputDir 'reversi.res') -Force
+    }
+
+    $localeRc = Join-Path $Root ("src\lang\reversi_$Locale.rcinc")
+    if (Test-Path $localeRc) {
+        Copy-Item -LiteralPath $localeRc -Destination (Join-Path $OutputDir "reversi_$Locale.rcinc") -Force
+    }
+}
+
+function Remove-ArchHelpFiles {
+    param([Parameter(Mandatory = $true)][string]$OutputDir)
+
+    foreach ($file in @('reversi.hlp', 'reversi.cnt', 'reversi.chm', 'REVERSI.HLP', 'REVERSI.CNT', 'REVERSI.CHM')) {
+        Remove-Item -LiteralPath (Join-Path $OutputDir $file) -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Remove-IntermediateFiles {
+    param([Parameter(Mandatory = $true)][string]$OutputDir)
+
+    if ($KeepIntermediate) {
+        return
+    }
+
+    # Release folders should contain runnable files, not compiler/resource scratch state.
+    Remove-Item -LiteralPath (Join-Path $OutputDir 'obj') -Recurse -Force -ErrorAction SilentlyContinue
+    foreach ($file in @('reversi.res', 'reversi_*.rcinc')) {
+        Remove-Item -Path (Join-Path $OutputDir $file) -Force -ErrorAction SilentlyContinue
     }
 }
 
@@ -185,6 +293,105 @@ function Set-PeVersion {
     [IO.File]::WriteAllBytes($Path, $bytes)
 }
 
+function Get-LanguageByLocale {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    $match = $Languages | Where-Object { $_.Locale -ieq $Name } | Select-Object -First 1
+    if (!$match) {
+        throw "Internal build error: locale '$Name' was not found."
+    }
+    return $match
+}
+
+function Clear-MuiOutput {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $buildRoot = [IO.Path]::GetFullPath((Join-Path $Root 'build\MUI'))
+    $target = [IO.Path]::GetFullPath($Path)
+    # This build owns build\MUI completely; never let a bad path turn cleanup into a tree wipe.
+    if (!$target.Equals($buildRoot, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to clean unexpected MUI output path: $target"
+    }
+    if (Test-Path $target) {
+        Remove-Item -LiteralPath $target -Recurse -Force
+    }
+}
+
+function Invoke-MuiPackage {
+    param(
+        [Parameter(Mandatory = $true)]$SelectedLanguages,
+        [Parameter(Mandatory = $true)]$Built
+    )
+
+    $muiRoot = Join-Path $Root 'build\MUI'
+    $baseLanguage = Get-LanguageByLocale -Name 'en-US'
+
+    Clear-MuiOutput -Path $muiRoot
+
+    foreach ($language in $SelectedLanguages) {
+        Invoke-HelpBuild -Locale $language.Locale
+    }
+
+    foreach ($arch in @('x86', 'x64')) {
+        $archOutput = Join-Path $muiRoot $arch
+        if ($arch -eq 'x86') {
+            Invoke-Build `
+                -Arch 'x86' `
+                -OutputDir $archOutput `
+                -Defines ('/DWINVER=0x0400 /D_WIN32_WINNT=0x0400 /D_WIN32_WINDOWS=0x0400' + $productionDefine + ' /DREVERSI_SINGLE_LANGUAGE /D' + $baseLanguage.Define) `
+                -CompilerOptions '/arch:IA32' `
+                -Subsystem '5.01' `
+                -OsVersion '5.01'
+            Set-PeVersion -Path (Join-Path $archOutput 'REVERSI.exe') -Major 4 -Minor 0
+        } else {
+            Invoke-Build `
+                -Arch 'x64' `
+                -OutputDir $archOutput `
+                -Defines ('/DUNICODE /D_UNICODE /DWINVER=0x0600 /D_WIN32_WINNT=0x0600' + $productionDefine + ' /DREVERSI_SINGLE_LANGUAGE /D' + $baseLanguage.Define) `
+                -Optimization '/O1' `
+                -CompilerOptions '/Gy /Gw' `
+                -LinkerOptions '/OPT:REF /OPT:ICF' `
+                -Subsystem '6.0' `
+                -OsVersion '6.0'
+        }
+        Remove-ArchHelpFiles -OutputDir $archOutput
+        Remove-IntermediateFiles -OutputDir $archOutput
+        $Built.Add((Join-Path $archOutput 'REVERSI.exe')) | Out-Null
+
+        foreach ($language in $SelectedLanguages) {
+            $localeDir = Join-Path $archOutput $language.Locale
+            $legacyLocaleDir = Join-Path $archOutput ("MUI\$($language.Hex)")
+            $localeDefine = ' /DREVERSI_SINGLE_LANGUAGE /D' + $language.Define
+            $commonDefines = if ($arch -eq 'x86') {
+                '/DWINVER=0x0400 /D_WIN32_WINNT=0x0400 /D_WIN32_WINDOWS=0x0400'
+            } else {
+                '/DUNICODE /D_UNICODE /DWINVER=0x0600 /D_WIN32_WINNT=0x0600'
+            }
+            $muiPath = Join-Path $localeDir 'REVERSI.exe.mui'
+            Invoke-MuiResourceBuild `
+                -Arch $arch `
+                -OutputPath $muiPath `
+                -Defines ($commonDefines + $productionDefine + $localeDefine)
+            if ($arch -eq 'x86') {
+                Set-PeVersion -Path $muiPath -Major 4 -Minor 0
+            }
+            Copy-LocaleHelpFiles -OutputDir $localeDir -Locale $language.Locale
+            Remove-IntermediateFiles -OutputDir $localeDir
+
+            # Vista+ uses named locale folders; XP MUI commonly uses hexadecimal LANGID folders.
+            New-Item -ItemType Directory -Force -Path $legacyLocaleDir | Out-Null
+            Copy-Item -LiteralPath $muiPath -Destination (Join-Path $legacyLocaleDir 'REVERSI.exe.mui') -Force
+            foreach ($file in @('REVERSI.HLP', 'REVERSI.CNT', 'REVERSI.CHM')) {
+                $sourcePath = Join-Path $localeDir $file
+                if (Test-Path $sourcePath) {
+                    Copy-Item -LiteralPath $sourcePath -Destination (Join-Path $legacyLocaleDir $file) -Force
+                }
+            }
+            $Built.Add($muiPath) | Out-Null
+        }
+    }
+}
+
 $productionDefine = if ($Production) { ' /DREVERSI_PRODUCTION' } else { '' }
 if ($ListLocales) {
     Show-Languages
@@ -194,10 +401,25 @@ if ($ListLocales) {
 $selectedLanguages = Select-Languages
 $built = @()
 
+if ($Mui) {
+    $built = New-Object System.Collections.Generic.List[string]
+    Invoke-MuiPackage -SelectedLanguages $selectedLanguages -Built $built
+    Write-Host ''
+    Write-Host 'Done:'
+    foreach ($path in $built) {
+        Write-Host ('  ' + $path)
+    }
+    exit 0
+}
+
 foreach ($language in $selectedLanguages) {
     $localeDefine = ' /DREVERSI_SINGLE_LANGUAGE /D' + $language.Define
+    $localeOutput = Join-Path $Root ("build\$($language.Locale)")
     $x86Output = Join-Path $Root ("build\$($language.Locale)\x86")
     $x64Output = Join-Path $Root ("build\$($language.Locale)\x64")
+
+    Invoke-HelpBuild -Locale $language.Locale
+    Remove-ArchHelpFiles -OutputDir $localeOutput
 
     Invoke-Build `
         -Arch 'x86' `
@@ -207,7 +429,14 @@ foreach ($language in $selectedLanguages) {
         -Subsystem '5.01' `
         -OsVersion '5.01'
     Set-PeVersion -Path (Join-Path $x86Output 'REVERSI.exe') -Major 4 -Minor 0
-    Copy-HelpFiles -OutputDir $x86Output -Locale $language.Locale
+    if ($KeepIntermediate) {
+        Copy-LocaleResourceFiles -OutputDir $localeOutput -Locale $language.Locale -ResourcePath (Join-Path $x86Output 'obj\reversi.res')
+    } else {
+        Remove-IntermediateFiles -OutputDir $localeOutput
+    }
+    Remove-ArchHelpFiles -OutputDir $x86Output
+    Copy-LocaleHelpFiles -OutputDir $x86Output -Locale $language.Locale
+    Remove-IntermediateFiles -OutputDir $x86Output
     $built += Join-Path $x86Output 'REVERSI.exe'
 
     Invoke-Build `
@@ -219,7 +448,9 @@ foreach ($language in $selectedLanguages) {
         -LinkerOptions '/OPT:REF /OPT:ICF' `
         -Subsystem '6.0' `
         -OsVersion '6.0'
-    Copy-HelpFiles -OutputDir $x64Output -Locale $language.Locale
+    Remove-ArchHelpFiles -OutputDir $x64Output
+    Copy-LocaleHelpFiles -OutputDir $x64Output -Locale $language.Locale
+    Remove-IntermediateFiles -OutputDir $x64Output
     $built += Join-Path $x64Output 'REVERSI.exe'
 }
 

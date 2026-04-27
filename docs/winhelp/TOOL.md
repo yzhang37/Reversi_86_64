@@ -4,12 +4,14 @@
 
 ## 文件地图
 
-- `help/zh-CN/make_hlp_sources.py`：中文帮助源生成器。页面内容、目录树、popup topic、RTF 样式都从这里生成。
-- `help/zh-CN/REVERSI.rtf`：生成后的 RTF topic 源。
-- `help/zh-CN/REVERSI.hpj`：Help Workshop 工程文件。
-- `help/zh-CN/REVERSI.cnt`：WinHelp 目录文件。
-- `help/zh-CN/REVERSI.HLP`：Help Workshop 编译结果。
-- `build.ps1`：构建程序时复制 `.HLP` 和 `.CNT` 到输出目录。
+- `help/make_hlp_sources.py`：多语言帮助源生成器。页面内容、目录树、popup topic、RTF 样式、代码页和索引词都从这里生成。
+- `help/zh-CN/make_hlp_sources.py`：兼容旧命令的 zh-CN 包装入口。
+- `help/<locale>/REVERSI.rtf`：生成后的 RTF topic 源。
+- `help/<locale>/REVERSI.hpj`：Help Workshop 工程文件。
+- `help/<locale>/REVERSI.cnt`：WinHelp 目录文件。
+- `help/<locale>/REVERSI.HLP`：Help Workshop 编译结果，本地生成但默认不提交。
+- `docs/winhelp/HELP_TERMS.md`：从生成器导出的多语言 topic/index 术语表。
+- `build.ps1`：构建程序时生成/编译帮助，并复制到 `build/<locale>`。
 - `docs/winhelp/FORMAT.md`：WinHelp 4.0 格式细节。
 - `docs/winhelp/INDEXING.md`：索引和相关主题按钮。
 - `docs/winhelp/TROUBLESHOOTING.md`：常见错误和 Win95 实机坑。
@@ -20,7 +22,9 @@
 生成 RTF、HPJ、CNT：
 
 ```powershell
-python help\zh-CN\make_hlp_sources.py
+python help\make_hlp_sources.py --locale zh-CN
+python help\make_hlp_sources.py --locale all
+python help\make_hlp_sources.py --locale all --terms-report docs\winhelp\HELP_TERMS.md
 ```
 
 编译 WinHelp：
@@ -29,16 +33,8 @@ python help\zh-CN\make_hlp_sources.py
 .\tools\vendor\hcw\hcw.exe /C /E help\zh-CN\REVERSI.hpj
 ```
 
-把帮助文件复制到程序旁边：
-
-```powershell
-Copy-Item help\zh-CN\REVERSI.HLP REVERSI.HLP -Force
-Copy-Item help\zh-CN\REVERSI.cnt REVERSI.CNT -Force
-Copy-Item help\zh-CN\REVERSI.HLP build\x86\REVERSI.HLP -Force
-Copy-Item help\zh-CN\REVERSI.cnt build\x86\REVERSI.CNT -Force
-Copy-Item help\zh-CN\REVERSI.HLP build\x64\REVERSI.HLP -Force
-Copy-Item help\zh-CN\REVERSI.cnt build\x64\REVERSI.CNT -Force
-```
+`build.ps1` 会把帮助文件复制到 `build/<locale>/reversi.hlp` 和
+`build/<locale>/reversi.cnt`，不再复制到 `x86` 和 `x64` 两个目录里。
 
 反编译检查：
 
@@ -50,9 +46,10 @@ Copy-Item help\zh-CN\REVERSI.cnt build\x64\REVERSI.CNT -Force
 
 ```powershell
 Remove-Item .\REVERSI.GID -Force -ErrorAction SilentlyContinue
-Remove-Item .\help\zh-CN\REVERSI.GID -Force -ErrorAction SilentlyContinue
-Remove-Item .\build\x86\REVERSI.GID -Force -ErrorAction SilentlyContinue
-Remove-Item .\build\x64\REVERSI.GID -Force -ErrorAction SilentlyContinue
+Remove-Item .\help\*\REVERSI.GID -Force -ErrorAction SilentlyContinue
+Remove-Item .\build\*\REVERSI.GID -Force -ErrorAction SilentlyContinue
+Remove-Item .\build\*\x86\REVERSI.GID -Force -ErrorAction SilentlyContinue
+Remove-Item .\build\*\x64\REVERSI.GID -Force -ErrorAction SilentlyContinue
 ```
 
 提交前检查：

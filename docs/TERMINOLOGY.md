@@ -146,3 +146,20 @@ These names are intentionally not localized in code or documentation prose:
 - `Animation`
 - `Skill`
 - `WindowX`, `WindowY`, `WindowWidth`, `WindowHeight`, `WindowDpi`
+
+## WinHelp Terms
+
+Localized WinHelp topic titles and K-footnote index candidates are generated
+from `help/make_hlp_sources.py` and recorded in
+`docs/winhelp/HELP_TERMS.md`. Review that file before changing help prose,
+topic titles, popup terms, or index keywords.
+
+Term source priorities:
+
+- Match existing Reversi UI resources in `src/lang/*.rcinc`.
+- Use Microsoft Language Resources / Microsoft Terminology for Windows help
+  and UI wording where the term exists.
+- Use World Othello Federation rules vocabulary for gameplay concepts such as
+  board, square, disc/piece, move, outflank, flip, pass, and game end.
+- Keep Simplified Chinese's intentional `Novice -> 中级` exception limited to
+  zh-CN UI/help resources.

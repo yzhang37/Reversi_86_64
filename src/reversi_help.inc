@@ -100,6 +100,144 @@ static int AppBuildModuleFilePath(APP_CHAR *out, int cch, const APP_CHAR *file_n
     return 1;
 }
 
+static int AppBuildModuleParentFilePath(APP_CHAR *out, int cch, const APP_CHAR *file_name)
+{
+    if (!APP_GET_MODULE_FILENAME(g_hinst, out, (DWORD)cch)) {
+        return 0;
+    }
+
+    int slash = -1;
+    int previous = -1;
+    for (int i = 0; out[i]; ++i) {
+        if (out[i] == APP_TEXT('\\') || out[i] == APP_TEXT('/')) {
+            previous = slash;
+            slash = i;
+        }
+    }
+    if (previous >= 0) {
+        out[previous + 1] = 0;
+    } else if (slash >= 0) {
+        out[slash + 1] = 0;
+    } else {
+        out[0] = 0;
+    }
+    AppStrAppend(out, cch, file_name);
+    return 1;
+}
+
+static int AppBuildMuiFilePath(APP_CHAR *out, int cch, const APP_CHAR *file_name)
+{
+    if (!g_muiDirectory[0]) {
+        return 0;
+    }
+    AppStrCopy(out, cch, g_muiDirectory);
+    AppStrAppend(out, cch, file_name);
+    return 1;
+}
+
+#define HELP_PATH_LOCALE_NAME 0
+#define HELP_PATH_MUI_HEX 1
+#define HELP_PATH_HELP_MUI_HEX 2
+#define HELP_PATH_MUI_LOCALE_NAME 3
+#define HELP_PATH_HEX 4
+#define HELP_PATH_DECIMAL 5
+#define HELP_PATH_COUNT 6
+
+static int AppAppendPathPart(APP_CHAR *path, int cch, const APP_CHAR *part)
+{
+    if (!part || !part[0]) {
+        return 0;
+    }
+    AppEnsureTrailingSlash(path, cch);
+    AppStrAppend(path, cch, part);
+    AppEnsureTrailingSlash(path, cch);
+    return 1;
+}
+
+static int AppBuildLocaleHelpPath(
+    APP_CHAR *out, int cch, const APP_CHAR *base, const APP_CHAR *file_name, int layout)
+{
+    AppStrCopy(out, cch, base);
+    AppEnsureTrailingSlash(out, cch);
+
+    switch (layout) {
+    case HELP_PATH_LOCALE_NAME:
+        if (!AppAppendPathPart(out, cch, g_uiLocaleName)) {
+            return 0;
+        }
+        break;
+    case HELP_PATH_MUI_HEX:
+        if (!AppAppendPathPart(out, cch, APP_TEXT("MUI")) ||
+            !AppAppendPathPart(out, cch, g_uiLocaleHex)) {
+            return 0;
+        }
+        break;
+    case HELP_PATH_HELP_MUI_HEX:
+        if (!AppAppendPathPart(out, cch, APP_TEXT("Help")) ||
+            !AppAppendPathPart(out, cch, APP_TEXT("MUI")) ||
+            !AppAppendPathPart(out, cch, g_uiLocaleHex)) {
+            return 0;
+        }
+        break;
+    case HELP_PATH_MUI_LOCALE_NAME:
+        if (!AppAppendPathPart(out, cch, APP_TEXT("MUI")) ||
+            !AppAppendPathPart(out, cch, g_uiLocaleName)) {
+            return 0;
+        }
+        break;
+    case HELP_PATH_HEX:
+        if (!AppAppendPathPart(out, cch, g_uiLocaleHex)) {
+            return 0;
+        }
+        break;
+    case HELP_PATH_DECIMAL:
+        if (!AppAppendPathPart(out, cch, g_uiLocaleDecimal)) {
+            return 0;
+        }
+        break;
+    default:
+        return 0;
+    }
+
+    AppStrAppend(out, cch, file_name);
+    return 1;
+}
+
+static int AppTryLocaleHelpBase(const APP_CHAR *base, const APP_CHAR *file_name, APP_CHAR *out, int cch)
+{
+    for (int layout = 0; layout < HELP_PATH_COUNT; ++layout) {
+        if (AppBuildLocaleHelpPath(out, cch, base, file_name, layout) && AppFileExists(out)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int AppResolveMuiHelpFile(const APP_CHAR *file_name, APP_CHAR *out, int cch)
+{
+    APP_CHAR base[MAX_PATH];
+    if (AppBuildMuiFilePath(out, cch, file_name) && AppFileExists(out)) {
+        return 1;
+    }
+    if (!g_uiLocaleName[0]) {
+        return 0;
+    }
+
+    /* Match app-local Vista folders, XP MUI hex folders, and Windows Help\MUI hex folders. */
+    if (AppBuildModuleFilePath(base, MAX_PATH, APP_TEXT("")) &&
+        AppTryLocaleHelpBase(base, file_name, out, cch)) {
+        return 1;
+    }
+    if (AppBuildModuleParentFilePath(base, MAX_PATH, APP_TEXT("")) &&
+        AppTryLocaleHelpBase(base, file_name, out, cch)) {
+        return 1;
+    }
+    if (APP_GET_WINDOWS_DIRECTORY(base, MAX_PATH)) {
+        return AppTryLocaleHelpBase(base, file_name, out, cch);
+    }
+    return 0;
+}
+
 static int AppResolveLocalHelpFile(UINT string_id, APP_CHAR *out, int cch)
 {
     APP_CHAR file_name[MAX_PATH];
@@ -107,7 +245,13 @@ static int AppResolveLocalHelpFile(UINT string_id, APP_CHAR *out, int cch)
     if (!file_name[0]) {
         return 0;
     }
+    if (AppResolveMuiHelpFile(file_name, out, cch)) {
+        return 1;
+    }
     if (AppBuildModuleFilePath(out, cch, file_name) && AppFileExists(out)) {
+        return 1;
+    }
+    if (AppBuildModuleParentFilePath(out, cch, file_name) && AppFileExists(out)) {
         return 1;
     }
     if (AppFileExists(file_name)) {
@@ -124,7 +268,13 @@ static int AppResolveWinHelpFile(UINT string_id, APP_CHAR *out, int cch)
     if (!file_name[0]) {
         return 0;
     }
+    if (AppResolveMuiHelpFile(file_name, out, cch)) {
+        return 1;
+    }
     if (AppBuildModuleFilePath(out, cch, file_name) && AppFileExists(out)) {
+        return 1;
+    }
+    if (AppBuildModuleParentFilePath(out, cch, file_name) && AppFileExists(out)) {
         return 1;
     }
     AppStrCopy(out, cch, file_name);

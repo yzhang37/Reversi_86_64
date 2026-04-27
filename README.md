@@ -62,16 +62,53 @@ Build production binaries with the hidden development menu disabled by default:
 powershell -ExecutionPolicy Bypass -File .\build.ps1 -Production
 ```
 
+Keep compiler/resource intermediates for debugging:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -KeepIntermediate
+```
+
+Build an application-local MUI-style package:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Mui -Locale all
+powershell -ExecutionPolicy Bypass -File .\build.ps1 -Mui -Locale zh-CN,ja-JP
+```
+
 Outputs:
 
 ```text
 build\<locale>\x86\REVERSI.exe
+build\<locale>\x86\REVERSI.HLP
+build\<locale>\x86\REVERSI.CNT
 build\<locale>\x64\REVERSI.exe
+build\<locale>\x64\REVERSI.HLP
+build\<locale>\x64\REVERSI.CNT
 ```
 
 Each executable contains only its selected locale resources. For example,
 `build\zh-CN\x86\REVERSI.exe` contains Simplified Chinese resources, while
 `build\en-US\x64\REVERSI.exe` contains English resources.
+The matching help files live beside each EXE so a user can copy one
+architecture folder directly. Use `-KeepIntermediate` if you also want copied
+`.res` and `.rcinc` inspection files.
+
+MUI-style output uses one English fallback executable per architecture plus
+application-local satellite resource files:
+
+```text
+build\MUI\x86\REVERSI.exe
+build\MUI\x86\<locale>\REVERSI.exe.mui
+build\MUI\x86\<locale>\REVERSI.HLP
+build\MUI\x86\<locale>\REVERSI.CNT
+build\MUI\x86\MUI\<hex-langid>\REVERSI.exe.mui
+build\MUI\x64\REVERSI.exe
+build\MUI\x64\<locale>\REVERSI.exe.mui
+```
+
+At startup, the program looks first for Vista-style local locale folders such
+as `zh-CN\REVERSI.exe.mui`, then for XP-style `MUI\0804` folders. If nothing
+matches, it falls back to the resources built into the main EXE.
 
 Reference reverse-engineering snapshots (for example `REVERSI.asm`) are kept under
 `decompiled/` in local working trees and are excluded from release artifacts and
@@ -87,13 +124,14 @@ Optional self-test:
 
 ## Build WinHelp
 
-Generate the Simplified Chinese WinHelp source files:
+Generate WinHelp source files for one locale or all locales:
 
 ```powershell
-python help\zh-CN\make_hlp_sources.py
+python help\make_hlp_sources.py --locale zh-CN
+python help\make_hlp_sources.py --locale all
 ```
 
-Compile the WinHelp file with Microsoft Help Workshop:
+Compile a WinHelp file with Microsoft Help Workshop:
 
 ```powershell
 .\tools\vendor\hcw\hcw.exe /C /E help\zh-CN\REVERSI.hpj
@@ -102,17 +140,17 @@ Compile the WinHelp file with Microsoft Help Workshop:
 Generated files:
 
 ```text
-help\zh-CN\REVERSI.rtf
-help\zh-CN\REVERSI.hpj
-help\zh-CN\REVERSI.cnt
-help\zh-CN\REVERSI.HLP
+help\<locale>\REVERSI.rtf
+help\<locale>\REVERSI.hpj
+help\<locale>\REVERSI.cnt
+help\<locale>\REVERSI.HLP
 ```
 
-The build script copies matching locale help files automatically. Currently
-`help\zh-CN\REVERSI.HLP` and `help\zh-CN\REVERSI.cnt` are copied into the
-Simplified Chinese output folders as `reversi.hlp` and `reversi.cnt`.
+The build script generates and compiles matching locale help automatically
+when Help Workshop is available, then copies it to `build\<locale>`.
 
 See `docs\winhelp\WORKFLOW.md` for the full help-authoring notes.
+See `docs\MUI_PACKAGING.md` for the optional MUI-style package layout.
 
 ## Compatibility
 

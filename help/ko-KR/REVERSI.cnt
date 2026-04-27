@@ -1,0 +1,17 @@
+:Base REVERSI.HLP>proc4
+:Title 리버시 도움말
+1 리버시
+2 리버시 개요=TOPIC_OVERVIEW
+2 리버시 플레이
+3 리버시 플레이=TOPIC_PLAY
+3 난이도 선택=TOPIC_DIFFICULTY
+3 새 게임 시작=TOPIC_NEW_GAME
+3 게임 차례=TOPIC_TURN
+3 키보드 사용=TOPIC_KEYBOARD
+2 규칙
+3 규칙=TOPIC_RULES
+3 판과 돌=TOPIC_BOARD
+3 둘 수 있는 수=TOPIC_LEGAL
+3 돌 뒤집기=TOPIC_FLIP
+3 게임 종료와 점수=TOPIC_END
+2 힌트 얻기=TOPIC_HINT

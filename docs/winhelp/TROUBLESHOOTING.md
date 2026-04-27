@@ -88,6 +88,19 @@ fallback topic 内容：
 - 最终发现 `C:\WINDOWS` 或 `C:\WINDOWS\HELP` 中有另一个同名 `REVERSI.HLP`。
 - WinHelp 查找 A-keyword 时受同名 help family 影响，解析到了错误文件。
 
+## Help Workshop Exit Code
+
+`hcw.exe /C /E` 有时会创建有效的 `REVERSI.HLP`，但仍返回非零 exit code。
+如果没有 `.err`，且目标 HLP 已经生成，可以按成功处理。`build.ps1` 使用这个规则：
+
+```text
+nonzero exit code + no REVERSI.HLP => fail
+nonzero exit code + REVERSI.HLP exists => accept, then continue
+```
+
+如果出现真实编译错误，优先检查同目录 `.err`、RTF footnote、HPJ `[FILES]` 路径、
+以及当前 locale 的 ANSI 代码页是否能表示所有字符。
+
 排查顺序：
 
 1. 删除同目录 `.GID`。

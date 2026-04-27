@@ -1,0 +1,17 @@
+:Base REVERSI.HLP>proc4
+:Title עזרה של רברסי
+1 רברסי
+2 מבט כללי על רברסי=TOPIC_OVERVIEW
+2 משחק ברברסי
+3 משחק ברברסי=TOPIC_PLAY
+3 בחירת רמה=TOPIC_DIFFICULTY
+3 התחלת משחק חדש=TOPIC_NEW_GAME
+3 תורות משחק=TOPIC_TURN
+3 שימוש במקלדת=TOPIC_KEYBOARD
+2 כללים
+3 כללים=TOPIC_RULES
+3 לוח וכלים=TOPIC_BOARD
+3 מהלכים חוקיים=TOPIC_LEGAL
+3 הפיכת כלים=TOPIC_FLIP
+3 סיום המשחק וניקוד=TOPIC_END
+2 קבלת רמז=TOPIC_HINT

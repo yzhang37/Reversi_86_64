@@ -7,10 +7,11 @@
 优先编辑：
 
 ```text
-help/zh-CN/make_hlp_sources.py
+help/make_hlp_sources.py
 ```
 
-不要直接手改生成的 `REVERSI.rtf`，否则下一次运行生成器会覆盖。
+`help/zh-CN/make_hlp_sources.py` 只是兼容旧命令的包装入口。不要直接手改生成的
+`REVERSI.rtf`，否则下一次运行生成器会覆盖。
 
 生成器负责：
 
@@ -24,15 +25,17 @@ help/zh-CN/make_hlp_sources.py
 ## 2. 生成源文件
 
 ```powershell
-python help\zh-CN\make_hlp_sources.py
+python help\make_hlp_sources.py --locale zh-CN
+python help\make_hlp_sources.py --locale all
+python help\make_hlp_sources.py --locale all --terms-report docs\winhelp\HELP_TERMS.md
 ```
 
 输出：
 
 ```text
-help/zh-CN/REVERSI.rtf
-help/zh-CN/REVERSI.hpj
-help/zh-CN/REVERSI.cnt
+help/<locale>/REVERSI.rtf
+help/<locale>/REVERSI.hpj
+help/<locale>/REVERSI.cnt
 ```
 
 ## 3. 编译 HLP
@@ -44,32 +47,29 @@ help/zh-CN/REVERSI.cnt
 输出：
 
 ```text
-help/zh-CN/REVERSI.HLP
+help/<locale>/REVERSI.HLP
 ```
 
 ## 4. 同步到运行目录
 
-```powershell
-Copy-Item help\zh-CN\REVERSI.HLP REVERSI.HLP -Force
-Copy-Item help\zh-CN\REVERSI.cnt REVERSI.cnt -Force
-Copy-Item help\zh-CN\REVERSI.HLP build\x86\REVERSI.HLP -Force
-Copy-Item help\zh-CN\REVERSI.cnt build\x86\REVERSI.CNT -Force
-Copy-Item help\zh-CN\REVERSI.HLP build\x64\REVERSI.HLP -Force
-Copy-Item help\zh-CN\REVERSI.cnt build\x64\REVERSI.CNT -Force
+`build.ps1` 会自动生成/编译帮助文件，并复制到：
+
+```text
+build/<locale>/reversi.hlp
+build/<locale>/reversi.cnt
 ```
 
-注意大小写：
-
-- Windows 不区分大小写。
-- 但为了跟旧工具和仓库习惯一致，根目录使用 `REVERSI.cnt`，build 输出使用 `REVERSI.CNT` 也可以。
+x86/x64 目录不再各自复制一份 HLP/CNT。程序运行时会先检查 EXE 同目录，再检查上一层
+`build/<locale>` 目录。
 
 ## 5. 测试前清缓存
 
 ```powershell
 Remove-Item .\REVERSI.GID -Force -ErrorAction SilentlyContinue
-Remove-Item .\help\zh-CN\REVERSI.GID -Force -ErrorAction SilentlyContinue
-Remove-Item .\build\x86\REVERSI.GID -Force -ErrorAction SilentlyContinue
-Remove-Item .\build\x64\REVERSI.GID -Force -ErrorAction SilentlyContinue
+Remove-Item .\help\*\REVERSI.GID -Force -ErrorAction SilentlyContinue
+Remove-Item .\build\*\REVERSI.GID -Force -ErrorAction SilentlyContinue
+Remove-Item .\build\*\x86\REVERSI.GID -Force -ErrorAction SilentlyContinue
+Remove-Item .\build\*\x64\REVERSI.GID -Force -ErrorAction SilentlyContinue
 ```
 
 ## 6. 测试重点
@@ -91,17 +91,11 @@ Remove-Item .\build\x64\REVERSI.GID -Force -ErrorAction SilentlyContinue
 WinHelp 内容提交通常包括：
 
 ```text
-help/zh-CN/make_hlp_sources.py
-help/zh-CN/REVERSI.rtf
-help/zh-CN/REVERSI.hpj
-help/zh-CN/REVERSI.cnt
-help/zh-CN/REVERSI.HLP
-REVERSI.HLP
-REVERSI.cnt
-build/x86/REVERSI.HLP
-build/x86/REVERSI.CNT
-build/x64/REVERSI.HLP
-build/x64/REVERSI.CNT
+help/make_hlp_sources.py
+help/<locale>/REVERSI.rtf
+help/<locale>/REVERSI.hpj
+help/<locale>/REVERSI.cnt
+docs/winhelp/HELP_TERMS.md
 docs/winhelp/*.md
 ```
 

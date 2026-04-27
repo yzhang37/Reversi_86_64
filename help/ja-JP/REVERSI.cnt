@@ -1,0 +1,17 @@
+:Base REVERSI.HLP>proc4
+:Title リバーシ ヘルプ
+1 リバーシ
+2 リバーシの概要=TOPIC_OVERVIEW
+2 リバーシで遊ぶ
+3 リバーシで遊ぶ=TOPIC_PLAY
+3 難易度を選ぶ=TOPIC_DIFFICULTY
+3 新しいゲームを始める=TOPIC_NEW_GAME
+3 ゲームの手番=TOPIC_TURN
+3 キーボードを使う=TOPIC_KEYBOARD
+2 ルール
+3 ルール=TOPIC_RULES
+3 盤面と石=TOPIC_BOARD
+3 合法手=TOPIC_LEGAL
+3 石を返す=TOPIC_FLIP
+3 ゲームの終了と得点=TOPIC_END
+2 ヒントを表示する=TOPIC_HINT

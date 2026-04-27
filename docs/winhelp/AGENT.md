@@ -12,6 +12,7 @@ games while preserving clean, editable source material.
 - `TOOL.md`: tool commands and source file map.
 - `FORMAT.md`: RTF, HPJ, CNT, topic footnotes, popup links, and macro buttons.
 - `INDEXING.md`: K indexes, ALinks, and related-topic strategy.
+- `HELP_TERMS.md`: generated per-locale WinHelp topic/index terms.
 - `TROUBLESHOOTING.md`: Win95/WinHelp errors, `.GID` cache behavior, and font
   issues.
 - Repository-level source layout and Maintainable Code Golf rules live in
@@ -23,9 +24,9 @@ games while preserving clean, editable source material.
 
 ## Primary Goals
 
-- Produce `REVERSI.HLP` and matching `REVERSI.CNT`.
-- Start with Simplified Chinese, then keep the structure ready for other
-  languages.
+- Produce `REVERSI.HLP` and matching `REVERSI.CNT` for every supported locale.
+- Keep one shared source generator at `help/make_hlp_sources.py`; per-locale
+  output lives under `help/<locale>/`.
 - Match official Microsoft game help style where possible.
 - Compare against `WINMINE.HLP`, `FREECELL.HLP`, and `SOL.HLP` when available.
 - Avoid a modern web-help tone. Keep pages short, practical, and system-like.
@@ -63,6 +64,8 @@ page under the book.
 - Prefer friendly system-help wording over tutorial prose.
 - Chinese help text should use polite, system-like wording. Prefer terms
   equivalent to "you", "the computer", "opponent", and "both sides".
+- Localized terms must stay aligned with `docs/TERMINOLOGY.md`,
+  `docs/winhelp/HELP_TERMS.md`, and `src/lang/*.rcinc`.
 - Match actual menu commands. For example, if the program menu uses the Chinese
   term for Pass, do not replace it with a different synonym such as Skip.
 - Do not make entire pages bold. Bold headings and important labels only.
@@ -119,12 +122,17 @@ why a square is legal
 - `.HLP` and `.CNT` should be kept together.
 - Delete `.GID` before testing changes.
 - Use `HELP_FINDER` for Help -> Contents behavior.
-- Simplified Chinese RTF uses:
+- WinHelp is ANSI, not UTF-8. Each locale must use a matching legacy code page,
+  HPJ `LCID`, RTF `\ansicpg`, and font charset. Examples:
 
 ```rtf
-\ansicpg936
-\fcharset134
-\fs18
+zh-CN: \ansicpg936,  \fcharset134
+zh-TW: \ansicpg950,  \fcharset136
+ja-JP: \ansicpg932,  \fcharset128
+ko-KR: \ansicpg949,  \fcharset129
+ru/uk: \ansicpg1251, \fcharset204
+ar-SA: \ansicpg1256, \fcharset178
+he-IL: \ansicpg1255, \fcharset177
 ```
 
 - Use Songti/SimSun-style 9 point body text for Simplified Chinese.
@@ -146,16 +154,17 @@ why a square is legal
 WinHelp changes usually include:
 
 ```text
-help/zh-CN/make_hlp_sources.py
-help/zh-CN/REVERSI.rtf
-help/zh-CN/REVERSI.hpj
-help/zh-CN/REVERSI.cnt
-help/zh-CN/REVERSI.HLP
+help/make_hlp_sources.py
+help/<locale>/REVERSI.rtf
+help/<locale>/REVERSI.hpj
+help/<locale>/REVERSI.cnt
+docs/winhelp/HELP_TERMS.md
 docs/winhelp/*.md
 ```
 
-Generated `.GID` caches, build outputs, decompiled output, and third-party
-tools should not be committed.
+Generated `.HLP`, `.GID` caches, build outputs, decompiled output, and
+third-party tools should not be committed unless the user explicitly changes
+repository policy.
 
 Official Microsoft game HLP/CHM/EXE files, Help Workshop files, and decompiled
 outputs may be present locally as reference material, but generated/decompiled

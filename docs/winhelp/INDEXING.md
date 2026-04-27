@@ -35,6 +35,10 @@ WinHelp 支持类似 Notepad 的组合索引：
 
 ## 本项目索引策略
 
+当前多语言索引候选词由 `help/make_hlp_sources.py` 生成，并输出到
+`docs/winhelp/HELP_TERMS.md`。修改 topic 标题、正文术语或 K 词之前，先检查
+这个文件，避免 UI、帮助正文和索引互相打架。
+
 每个 topic 至少覆盖这些入口类型：
 
 - 页面标题：例如 `游戏回合`。

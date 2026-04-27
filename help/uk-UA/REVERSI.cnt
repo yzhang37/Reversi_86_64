@@ -1,0 +1,17 @@
+:Base REVERSI.HLP>proc4
+:Title Довідка Реверсі
+1 Реверсі
+2 Огляд Реверсі=TOPIC_OVERVIEW
+2 Гра в Реверсі
+3 Гра в Реверсі=TOPIC_PLAY
+3 Вибір рівня=TOPIC_DIFFICULTY
+3 Початок нової гри=TOPIC_NEW_GAME
+3 Ходи гри=TOPIC_TURN
+3 Використання клавіатури=TOPIC_KEYBOARD
+2 Правила
+3 Правила=TOPIC_RULES
+3 Дошка і фішки=TOPIC_BOARD
+3 Припустимі ходи=TOPIC_LEGAL
+3 Перевертання фішок=TOPIC_FLIP
+3 Кінець гри й рахунок=TOPIC_END
+2 Отримання підказки=TOPIC_HINT

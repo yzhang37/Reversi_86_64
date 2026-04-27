@@ -58,6 +58,12 @@
 #ifndef TPM_RIGHTALIGN
 #define TPM_RIGHTALIGN 0x0008L
 #endif
+#ifndef LOAD_LIBRARY_AS_DATAFILE
+#define LOAD_LIBRARY_AS_DATAFILE 0x00000002
+#endif
+#ifndef LOAD_LIBRARY_AS_IMAGE_RESOURCE
+#define LOAD_LIBRARY_AS_IMAGE_RESOURCE 0x00000020
+#endif
 
 #ifndef DPI_AWARENESS_CONTEXT_SYSTEM_AWARE
 #define DPI_AWARENESS_CONTEXT_SYSTEM_AWARE ((HANDLE)(LONG_PTR)-2)
@@ -105,6 +111,7 @@ DECLARE_HANDLE(HMONITOR);
 #else
 #define APP_NOINLINE
 #endif
+#define APP_COUNTOF(value) ((int)(sizeof(value) / sizeof((value)[0])))
 
 #ifdef UNICODE
 typedef WCHAR APP_CHAR;
@@ -309,6 +316,12 @@ static AnimCell g_anim;
 static PlaceFlash g_placeFlash;
 static CellCache g_cellCache;
 static HINSTANCE g_hinst;
+static HINSTANCE g_resinst;
+static HMODULE g_muiModule;
+static APP_CHAR g_muiDirectory[MAX_PATH];
+static APP_CHAR g_uiLocaleName[16];
+static APP_CHAR g_uiLocaleHex[8];
+static APP_CHAR g_uiLocaleDecimal[8];
 static COLORREF g_windowGray;
 static COLORREF g_cellGray;
 static COLORREF g_darkGray;
@@ -326,6 +339,7 @@ static int g_enableSystemScaling = 0;
 static int g_perMonitorDpiAware = 0;
 static int g_useWideCommands = 0;
 static int g_rtlLayout = 0;
+static int g_muiRtlLayout = 0;
 static int g_darkModeSupported = 0;
 static int g_darkModeEnabled = 0;
 static int g_inputLock = 0;
@@ -382,6 +396,9 @@ typedef int (WINAPI *GetSystemMetricsForDpiProc)(int, UINT);
 typedef BOOL (WINAPI *SystemParametersInfoForDpiProc)(UINT, UINT, PVOID, UINT, UINT);
 typedef HRESULT (WINAPI *GetDpiForMonitorProc)(HMONITOR, int, UINT *, UINT *);
 typedef HMONITOR (WINAPI *MonitorFromWindowProc)(HWND, DWORD);
+typedef LANGID (WINAPI *GetUserDefaultUILanguageProc)(void);
+typedef HMODULE (WINAPI *LoadLibraryExAProc)(LPCSTR, HANDLE, DWORD);
+typedef HMODULE (WINAPI *LoadLibraryExWProc)(LPCWSTR, HANDLE, DWORD);
 typedef HANDLE (WINAPI *LoadImageAProc)(HINSTANCE, LPCSTR, UINT, int, int, UINT);
 typedef HANDLE (WINAPI *LoadImageWProc)(HINSTANCE, LPCWSTR, UINT, int, int, UINT);
 typedef HANDLE (WINAPI *CreateActCtxProc)(const APP_ACTCTX *);
@@ -716,10 +733,10 @@ static void UpdateWindowIcons(HWND hwnd)
     int small_h = AppSystemMetricForDpi(SM_CYSMICON, dpi);
     int big_w = AppSystemMetricForDpi(SM_CXICON, dpi);
     int big_h = AppSystemMetricForDpi(SM_CYICON, dpi);
-    HICON small_icon = AppLoadIconSized(
-        g_hinst, MAKEINTRESOURCE(IDI_REVERSI), small_w, small_h);
-    HICON big_icon = AppLoadIconSized(
-        g_hinst, MAKEINTRESOURCE(IDI_REVERSI), big_w, big_h);
+    HICON small_icon = AppLoadResourceIconSized(
+        MAKEINTRESOURCE(IDI_REVERSI), small_w, small_h);
+    HICON big_icon = AppLoadResourceIconSized(
+        MAKEINTRESOURCE(IDI_REVERSI), big_w, big_h);
 
     if (small_icon) {
         SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon);
@@ -977,7 +994,7 @@ static void ReloadMainMenu(HWND hwnd, int update_checks)
         return;
     }
 
-    new_menu = APP_LOAD_MENU(g_hinst, MAKEINTRESOURCE(IDR_MAINMENU));
+    new_menu = AppLoadResourceMenu(MAKEINTRESOURCE(IDR_MAINMENU));
     if (!new_menu) {
         return;
     }
@@ -1704,7 +1721,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case IDM_ABOUT:
         {
             APP_CHAR title[64];
-            HICON icon = APP_LOAD_ICON(g_hinst, MAKEINTRESOURCE(IDI_REVERSI));
+            HICON icon = AppLoadResourceIcon(MAKEINTRESOURCE(IDI_REVERSI));
             LoadText(IDS_APP_TITLE, title, 64);
             APP_SHELL_ABOUT(hwnd, title, NULL, icon);
             return 0;
@@ -2002,6 +2019,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
 {
     g_hinst = hinst;
     InitWideCommandMode();
+    InitMuiResources();
     InitLocaleLayout();
     InitModernDispatch();
     InitSystemDpiAwareness();
@@ -2011,7 +2029,9 @@ static int ReversiMain(HINSTANCE hinst, int show)
     LoadGameSettings();
 
     if (AppCommandHasSelfTest()) {
-        return RunSelfTest();
+        int self_test_result = RunSelfTest();
+        ShutdownMuiResources();
+        return self_test_result;
     }
 
     InitGdiPlus();
@@ -2025,8 +2045,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
     wc.lpfnWndProc = WndProc;
     wc.hInstance = hinst;
     wc.hCursor = APP_LOAD_CURSOR(NULL, IDC_ARROW);
-    wc.hIcon = AppLoadIconSized(
-        hinst,
+    wc.hIcon = AppLoadResourceIconSized(
         MAKEINTRESOURCE(IDI_REVERSI),
         AppSystemMetricForDpi(SM_CXICON, CurrentWindowDpi()),
         AppSystemMetricForDpi(SM_CYICON, CurrentWindowDpi()));
@@ -2041,6 +2060,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
         APP_MESSAGE_BOX(NULL, message, title, MB_OK | MB_ICONERROR);
         ShutdownGdiPlus();
         ShutdownClassicVisualStyles();
+        ShutdownMuiResources();
         return 1;
     }
 
@@ -2075,6 +2095,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
         APP_MESSAGE_BOX(NULL, message, title, MB_OK | MB_ICONERROR);
         ShutdownGdiPlus();
         ShutdownClassicVisualStyles();
+        ShutdownMuiResources();
         return 1;
     }
 
@@ -2085,7 +2106,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
         g_configRepairSettings = 0;
     }
 
-    HACCEL accel = APP_LOAD_ACCELERATORS(hinst, MAKEINTRESOURCE(IDR_MAINACCEL));
+    HACCEL accel = AppLoadResourceAccelerators(MAKEINTRESOURCE(IDR_MAINACCEL));
     MSG msg;
     while (APP_GET_MESSAGE(&msg, NULL, 0, 0) > 0) {
         if (!accel || !APP_TRANSLATE_ACCELERATOR(hwnd, accel, &msg)) {
@@ -2097,6 +2118,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
     int exit_code = (int)msg.wParam;
     ShutdownGdiPlus();
     ShutdownClassicVisualStyles();
+    ShutdownMuiResources();
     return exit_code;
 }
 

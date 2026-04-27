@@ -1,0 +1,17 @@
+:Base REVERSI.HLP>proc4
+:Title Reversi Help
+1 Reversi
+2 Reversi overview=TOPIC_OVERVIEW
+2 Playing Reversi
+3 Playing Reversi=TOPIC_PLAY
+3 Choosing skill=TOPIC_DIFFICULTY
+3 Starting a new game=TOPIC_NEW_GAME
+3 Game turns=TOPIC_TURN
+3 Using the keyboard=TOPIC_KEYBOARD
+2 Rules
+3 Rules=TOPIC_RULES
+3 Board and pieces=TOPIC_BOARD
+3 Legal moves=TOPIC_LEGAL
+3 Flipping pieces=TOPIC_FLIP
+3 Game end and scoring=TOPIC_END
+2 Getting a hint=TOPIC_HINT

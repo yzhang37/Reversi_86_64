@@ -210,6 +210,9 @@ static void InitLocaleLayout(void)
 #else
     g_rtlLayout = 0;
 #endif
+    if (g_muiRtlLayout) {
+        g_rtlLayout = 1;
+    }
 
     if (g_rtlLayout && g_useWideCommands) {
         SetProcessDefaultLayoutProc set_layout =
@@ -500,7 +503,7 @@ static int AppLoadString(HINSTANCE instance, UINT id, char *buffer, int cch)
             (LoadStringWProc)AppGetProc("user32.dll", "LoadStringW");
         if (load_string) {
             WCHAR wide[512];
-            int got = load_string(instance, id, wide, (int)(sizeof(wide) / sizeof(wide[0])));
+            int got = load_string(instance, id, wide, APP_COUNTOF(wide));
             if (got) {
                 AppFromWide(wide, buffer, cch);
                 return APP_LSTRLEN(buffer);
@@ -856,6 +859,397 @@ static int IsWindowsBuildAtLeast(const OSVERSIONINFOW *version, DWORD major, DWO
         return 1;
     }
     return version->dwBuildNumber >= build;
+}
+
+typedef struct MuiLocale {
+    LANGID langid;
+    WORD primary;
+    const APP_CHAR *name;
+    const APP_CHAR *hex;
+    const APP_CHAR *decimal;
+    int rtl;
+} MuiLocale;
+
+/* Keep all folder forms we must recognize: Vista+ names, XP hex LANGIDs, and decimal LCIDs. */
+static const MuiLocale k_muiLocales[] = {
+    {0x0409, LANG_ENGLISH, APP_TEXT("en-US"), APP_TEXT("0409"), APP_TEXT("1033"), 0},
+    {0x0804, LANG_CHINESE, APP_TEXT("zh-CN"), APP_TEXT("0804"), APP_TEXT("2052"), 0},
+    {0x0404, LANG_CHINESE, APP_TEXT("zh-TW"), APP_TEXT("0404"), APP_TEXT("1028"), 0},
+    {0x0411, LANG_JAPANESE, APP_TEXT("ja-JP"), APP_TEXT("0411"), APP_TEXT("1041"), 0},
+    {0x0412, LANG_KOREAN, APP_TEXT("ko-KR"), APP_TEXT("0412"), APP_TEXT("1042"), 0},
+    {0x040c, LANG_FRENCH, APP_TEXT("fr-FR"), APP_TEXT("040c"), APP_TEXT("1036"), 0},
+    {0x0407, LANG_GERMAN, APP_TEXT("de-DE"), APP_TEXT("0407"), APP_TEXT("1031"), 0},
+    {0x040a, LANG_SPANISH, APP_TEXT("es-ES"), APP_TEXT("040a"), APP_TEXT("1034"), 0},
+    {0x041d, LANG_SWEDISH, APP_TEXT("sv-SE"), APP_TEXT("041d"), APP_TEXT("1053"), 0},
+    {0x040b, LANG_FINNISH, APP_TEXT("fi-FI"), APP_TEXT("040b"), APP_TEXT("1035"), 0},
+    {0x0816, LANG_PORTUGUESE, APP_TEXT("pt-PT"), APP_TEXT("0816"), APP_TEXT("2070"), 0},
+    {0x0410, LANG_ITALIAN, APP_TEXT("it-IT"), APP_TEXT("0410"), APP_TEXT("1040"), 0},
+    {0x0419, LANG_RUSSIAN, APP_TEXT("ru-RU"), APP_TEXT("0419"), APP_TEXT("1049"), 0},
+    {0x0422, LANG_UKRAINIAN, APP_TEXT("uk-UA"), APP_TEXT("0422"), APP_TEXT("1058"), 0},
+    {0x0401, LANG_ARABIC, APP_TEXT("ar-SA"), APP_TEXT("0401"), APP_TEXT("1025"), 1},
+    {0x040d, LANG_HEBREW, APP_TEXT("he-IL"), APP_TEXT("040d"), APP_TEXT("1037"), 1}
+};
+
+static int MuiTextLen(const APP_CHAR *text)
+{
+    int len = 0;
+    while (text && text[len]) {
+        ++len;
+    }
+    return len;
+}
+
+static int MuiTextCopy(APP_CHAR *dst, int cch, const APP_CHAR *src)
+{
+    int i = 0;
+    if (!dst || cch <= 0) {
+        return 0;
+    }
+    if (src) {
+        for (; i < cch - 1 && src[i]; ++i) {
+            dst[i] = src[i];
+        }
+    }
+    dst[i] = 0;
+    return !src || !src[i];
+}
+
+static int MuiTextAppend(APP_CHAR *dst, int cch, const APP_CHAR *src)
+{
+    int len = MuiTextLen(dst);
+    return len < cch && MuiTextCopy(dst + len, cch - len, src);
+}
+
+static int MuiEnsureSlash(APP_CHAR *path, int cch)
+{
+    int len = MuiTextLen(path);
+    if (len <= 0) {
+        return 0;
+    }
+    if (path[len - 1] == APP_TEXT('\\') || path[len - 1] == APP_TEXT('/')) {
+        return 1;
+    }
+    if (len >= cch - 1) {
+        return 0;
+    }
+    path[len] = APP_TEXT('\\');
+    path[len + 1] = 0;
+    return 1;
+}
+
+static int MuiModuleDir(APP_CHAR *out, int cch)
+{
+    int slash = -1;
+    if (!APP_GET_MODULE_FILENAME(g_hinst, out, (DWORD)cch)) {
+        return 0;
+    }
+    for (int i = 0; out[i]; ++i) {
+        if (out[i] == APP_TEXT('\\') || out[i] == APP_TEXT('/')) {
+            slash = i;
+        }
+    }
+    if (slash < 0) {
+        out[0] = 0;
+        return 0;
+    }
+    out[slash + 1] = 0;
+    return 1;
+}
+
+static int MuiParentDir(APP_CHAR *path)
+{
+    int len = MuiTextLen(path);
+    int slash = -1;
+    if (len > 0 && (path[len - 1] == APP_TEXT('\\') || path[len - 1] == APP_TEXT('/'))) {
+        path[--len] = 0;
+    }
+    for (int i = 0; i < len; ++i) {
+        if (path[i] == APP_TEXT('\\') || path[i] == APP_TEXT('/')) {
+            slash = i;
+        }
+    }
+    if (slash < 0) {
+        return 0;
+    }
+    path[slash + 1] = 0;
+    return 1;
+}
+
+static int MuiBuildLocaleDir(
+    APP_CHAR *out, int cch, const APP_CHAR *base, const APP_CHAR *locale)
+{
+    if (!MuiTextCopy(out, cch, base) || !MuiEnsureSlash(out, cch)) {
+        return 0;
+    }
+    return MuiTextAppend(out, cch, locale) && MuiEnsureSlash(out, cch);
+}
+
+static int MuiBuildNestedLocaleDir(
+    APP_CHAR *out, int cch, const APP_CHAR *base, const APP_CHAR *first, const APP_CHAR *locale)
+{
+    if (!MuiBuildLocaleDir(out, cch, base, first)) {
+        return 0;
+    }
+    return MuiTextAppend(out, cch, locale) && MuiEnsureSlash(out, cch);
+}
+
+static int MuiBuildSatellitePath(APP_CHAR *out, int cch, const APP_CHAR *dir)
+{
+    return MuiTextCopy(out, cch, dir) &&
+        MuiTextAppend(out, cch, APP_TEXT("REVERSI.exe.mui"));
+}
+
+static HMODULE MuiLoadResourceModule(const APP_CHAR *path)
+{
+    DWORD flags = LOAD_LIBRARY_AS_DATAFILE;
+    OSVERSIONINFOW version;
+    /* IMAGE_RESOURCE is Vista-era; DATAFILE alone keeps the same satellite usable on old Windows. */
+    if (QueryWindowsVersion(&version) &&
+        version.dwPlatformId == VER_PLATFORM_WIN32_NT &&
+        IsWindowsVersionAtLeast(&version, 6, 0)) {
+        flags |= LOAD_LIBRARY_AS_IMAGE_RESOURCE;
+    }
+
+#ifdef UNICODE
+    LoadLibraryExWProc load_library_ex =
+        (LoadLibraryExWProc)AppGetProc("kernel32.dll", "LoadLibraryExW");
+    return load_library_ex ? load_library_ex(path, NULL, flags) : NULL;
+#else
+    if (g_useWideCommands) {
+        LoadLibraryExWProc load_library_ex =
+            (LoadLibraryExWProc)AppGetProc("kernel32.dll", "LoadLibraryExW");
+        if (load_library_ex) {
+            WCHAR wide_path[MAX_PATH];
+            AppToWide(path, wide_path, MAX_PATH);
+            return load_library_ex(wide_path, NULL, flags);
+        }
+    }
+
+    LoadLibraryExAProc load_library_ex =
+        (LoadLibraryExAProc)AppGetProc("kernel32.dll", "LoadLibraryExA");
+    return load_library_ex ? load_library_ex(path, NULL, flags) : NULL;
+#endif
+}
+
+static const MuiLocale *MuiLocaleByName(const APP_CHAR *name)
+{
+    int count = APP_COUNTOF(k_muiLocales);
+    for (int i = 0; i < count; ++i) {
+        const APP_CHAR *left = k_muiLocales[i].name;
+        const APP_CHAR *right = name;
+        while (*left && *right && *left == *right) {
+            ++left;
+            ++right;
+        }
+        if (!*left && !*right) {
+            return &k_muiLocales[i];
+        }
+    }
+    return NULL;
+}
+
+static const MuiLocale *MuiLocaleForLangId(LANGID langid, int exact)
+{
+    WORD primary = PRIMARYLANGID(langid);
+    WORD sublang = SUBLANGID(langid);
+    int count = APP_COUNTOF(k_muiLocales);
+
+    for (int i = 0; i < count; ++i) {
+        if (k_muiLocales[i].langid == langid) {
+            return &k_muiLocales[i];
+        }
+    }
+    if (exact) {
+        return NULL;
+    }
+    if (primary == LANG_CHINESE) {
+        if (sublang == SUBLANG_CHINESE_TRADITIONAL || sublang == 0x03 || sublang == 0x05) {
+            return MuiLocaleByName(APP_TEXT("zh-TW"));
+        }
+        return MuiLocaleByName(APP_TEXT("zh-CN"));
+    }
+    for (int i = 0; i < count; ++i) {
+        if (k_muiLocales[i].primary == primary) {
+            return &k_muiLocales[i];
+        }
+    }
+    return NULL;
+}
+
+static LANGID MuiUserLanguage(void)
+{
+    GetUserDefaultUILanguageProc get_ui_language =
+        (GetUserDefaultUILanguageProc)AppGetProc("kernel32.dll", "GetUserDefaultUILanguage");
+    return get_ui_language ? get_ui_language() : GetUserDefaultLangID();
+}
+
+static void MuiRememberLocale(const MuiLocale *locale)
+{
+    if (!locale) {
+        return;
+    }
+    MuiTextCopy(g_uiLocaleName, APP_COUNTOF(g_uiLocaleName), locale->name);
+    MuiTextCopy(g_uiLocaleHex, APP_COUNTOF(g_uiLocaleHex), locale->hex);
+    MuiTextCopy(g_uiLocaleDecimal, APP_COUNTOF(g_uiLocaleDecimal), locale->decimal);
+}
+
+static int MuiTryLoadFromDir(const MuiLocale *locale, const APP_CHAR *dir)
+{
+    APP_CHAR path[MAX_PATH];
+    HMODULE module;
+    if (!locale || !MuiBuildSatellitePath(path, MAX_PATH, dir)) {
+        return 0;
+    }
+
+    module = MuiLoadResourceModule(path);
+    if (!module) {
+        return 0;
+    }
+
+    g_muiModule = module;
+    g_resinst = (HINSTANCE)module;
+    g_muiRtlLayout = locale->rtl;
+    MuiRememberLocale(locale);
+    MuiTextCopy(g_muiDirectory, MAX_PATH, dir);
+    return 1;
+}
+
+static int MuiTryLoadFromBase(const MuiLocale *locale, const APP_CHAR *base)
+{
+    APP_CHAR dir[MAX_PATH];
+    /* Prefer Vista+ app-local folders, then accept XP/System32-style hex and decimal folders. */
+    if (MuiBuildLocaleDir(dir, MAX_PATH, base, locale->name) &&
+        MuiTryLoadFromDir(locale, dir)) {
+        return 1;
+    }
+    if (MuiBuildNestedLocaleDir(dir, MAX_PATH, base, APP_TEXT("MUI"), locale->hex) &&
+        MuiTryLoadFromDir(locale, dir)) {
+        return 1;
+    }
+    if (MuiBuildNestedLocaleDir(dir, MAX_PATH, base, APP_TEXT("MUI"), locale->name) &&
+        MuiTryLoadFromDir(locale, dir)) {
+        return 1;
+    }
+    if (MuiBuildLocaleDir(dir, MAX_PATH, base, locale->hex) &&
+        MuiTryLoadFromDir(locale, dir)) {
+        return 1;
+    }
+    return MuiBuildLocaleDir(dir, MAX_PATH, base, locale->decimal) &&
+        MuiTryLoadFromDir(locale, dir);
+}
+
+static int MuiTryLoadLocale(const MuiLocale *locale)
+{
+    APP_CHAR base[MAX_PATH];
+    if (!locale || !MuiModuleDir(base, MAX_PATH)) {
+        return 0;
+    }
+    if (MuiTryLoadFromBase(locale, base)) {
+        return 1;
+    }
+    if (MuiParentDir(base)) {
+        return MuiTryLoadFromBase(locale, base);
+    }
+    return 0;
+}
+
+static void InitMuiResources(void)
+{
+    const MuiLocale *candidates[3];
+    int count = 0;
+    LANGID langid = MuiUserLanguage();
+
+    g_resinst = g_hinst;
+    g_muiModule = NULL;
+    g_muiDirectory[0] = 0;
+    g_uiLocaleName[0] = 0;
+    g_uiLocaleHex[0] = 0;
+    g_uiLocaleDecimal[0] = 0;
+    g_muiRtlLayout = 0;
+
+    candidates[count++] = MuiLocaleForLangId(langid, 1);
+    candidates[count++] = MuiLocaleForLangId(langid, 0);
+    candidates[count++] = MuiLocaleByName(APP_TEXT("en-US"));
+
+    /* Remember the intended UI language even when no satellite is installed, for help probing. */
+    for (int i = 0; i < count; ++i) {
+        if (candidates[i]) {
+            MuiRememberLocale(candidates[i]);
+            break;
+        }
+    }
+
+    for (int i = 0; i < count; ++i) {
+        int duplicate = 0;
+        if (!candidates[i]) {
+            continue;
+        }
+        for (int j = 0; j < i; ++j) {
+            duplicate |= candidates[j] == candidates[i];
+        }
+        if (!duplicate && MuiTryLoadLocale(candidates[i])) {
+            return;
+        }
+    }
+}
+
+static int AppLoadResourceString(UINT id, APP_CHAR *buffer, int cch)
+{
+    int got = 0;
+    if (g_resinst && g_resinst != g_hinst) {
+        got = APP_LOAD_STRING(g_resinst, id, buffer, cch);
+    }
+    return got ? got : APP_LOAD_STRING(g_hinst, id, buffer, cch);
+}
+
+static HMENU AppLoadResourceMenu(const APP_CHAR *name)
+{
+    HMENU menu = NULL;
+    if (g_resinst && g_resinst != g_hinst) {
+        menu = APP_LOAD_MENU(g_resinst, name);
+    }
+    return menu ? menu : APP_LOAD_MENU(g_hinst, name);
+}
+
+static HACCEL AppLoadResourceAccelerators(const APP_CHAR *name)
+{
+    HACCEL accel = NULL;
+    if (g_resinst && g_resinst != g_hinst) {
+        accel = APP_LOAD_ACCELERATORS(g_resinst, name);
+    }
+    return accel ? accel : APP_LOAD_ACCELERATORS(g_hinst, name);
+}
+
+static HICON AppLoadResourceIcon(const APP_CHAR *name)
+{
+    HICON icon = NULL;
+    if (g_resinst && g_resinst != g_hinst) {
+        icon = APP_LOAD_ICON(g_resinst, name);
+    }
+    return icon ? icon : APP_LOAD_ICON(g_hinst, name);
+}
+
+static HICON AppLoadResourceIconSized(const APP_CHAR *name, int cx, int cy)
+{
+    HICON icon = NULL;
+    if (g_resinst && g_resinst != g_hinst) {
+        icon = AppLoadIconSized(g_resinst, name, cx, cy);
+    }
+    return icon ? icon : AppLoadIconSized(g_hinst, name, cx, cy);
+}
+
+static void ShutdownMuiResources(void)
+{
+    if (g_muiModule) {
+        FreeLibrary(g_muiModule);
+    }
+    g_muiModule = NULL;
+    g_resinst = g_hinst;
+    g_muiDirectory[0] = 0;
+    g_uiLocaleName[0] = 0;
+    g_uiLocaleHex[0] = 0;
+    g_uiLocaleDecimal[0] = 0;
+    g_muiRtlLayout = 0;
 }
 
 static void InitWideCommandMode(void)
@@ -1298,7 +1692,7 @@ static void InitClassicColors(void)
 
 static void LoadText(UINT id, APP_CHAR *buffer, int cch)
 {
-    if (!APP_LOAD_STRING(g_hinst, id, buffer, cch)) {
+    if (!AppLoadResourceString(id, buffer, cch)) {
         if (cch > 0) {
             buffer[0] = 0;
         }
