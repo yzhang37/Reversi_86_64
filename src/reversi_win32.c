@@ -230,6 +230,7 @@ typedef struct Move {
 } Move;
 
 typedef int (__cdecl *ModernFindBestMoveProc)(const int *cells, int player, int depth, Move *best);
+static HICON AppIconForSize(int cx, int cy);
 
 #if defined(_M_IX86)
 extern int __cdecl ReversiDetectModernCpu(int *has_avx);
@@ -733,10 +734,8 @@ static void UpdateWindowIcons(HWND hwnd)
     int small_h = AppSystemMetricForDpi(SM_CYSMICON, dpi);
     int big_w = AppSystemMetricForDpi(SM_CXICON, dpi);
     int big_h = AppSystemMetricForDpi(SM_CYICON, dpi);
-    HICON small_icon = AppLoadResourceIconSized(
-        MAKEINTRESOURCE(IDI_REVERSI), small_w, small_h);
-    HICON big_icon = AppLoadResourceIconSized(
-        MAKEINTRESOURCE(IDI_REVERSI), big_w, big_h);
+    HICON small_icon = AppIconForSize(small_w, small_h);
+    HICON big_icon = AppIconForSize(big_w, big_h);
 
     if (small_icon) {
         SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon);
@@ -835,6 +834,11 @@ static void CalculateLayout(HWND hwnd, Layout *layout)
 static int MirrorBoardView(void)
 {
     return g_rtlLayout;
+}
+
+static HICON AppIconForSize(int cx, int cy)
+{
+    return AppLoadResourceIconSized(MAKEINTRESOURCE(IDI_REVERSI), cx, cy);
 }
 
 static int VisualColForLogical(int col)
@@ -2116,8 +2120,7 @@ static int ReversiMain(HINSTANCE hinst, int show)
     wc.lpfnWndProc = WndProc;
     wc.hInstance = hinst;
     wc.hCursor = APP_LOAD_CURSOR(NULL, IDC_ARROW);
-    wc.hIcon = AppLoadResourceIconSized(
-        MAKEINTRESOURCE(IDI_REVERSI),
+    wc.hIcon = AppIconForSize(
         AppSystemMetricForDpi(SM_CXICON, CurrentWindowDpi()),
         AppSystemMetricForDpi(SM_CYICON, CurrentWindowDpi()));
     wc.hbrBackground = g_monoDisplay ?

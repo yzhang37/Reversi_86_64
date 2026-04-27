@@ -23,8 +23,18 @@
 #ifndef SUBLANG_SWEDISH
 #define SUBLANG_SWEDISH 0x01
 #endif
+#ifndef REVERSI_ICON_PATH
+#define REVERSI_ICON_PATH "src\\reversi.ico"
+#endif
+#ifndef REVERSI_ICON_RTL_PATH
+#define REVERSI_ICON_RTL_PATH "src\\reversi_rtl.ico"
+#endif
 
-IDI_REVERSI ICON "src\\reversi.ico"
+#if defined(REVERSI_ICON_USE_RTL)
+IDI_REVERSI ICON REVERSI_ICON_RTL_PATH
+#else
+IDI_REVERSI ICON REVERSI_ICON_PATH
+#endif
 IDR_VISUAL_STYLES_MANIFEST RT_MANIFEST "src\\visualstyles.manifest"
 
 IDR_MAINACCEL ACCELERATORS

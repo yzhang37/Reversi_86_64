@@ -97,6 +97,28 @@ function Show-Languages {
     }
 }
 
+function Get-LocaleIconDefines {
+    param([Parameter(Mandatory = $true)][string]$Locale)
+
+    $isRtlLocale = $Locale -ieq 'ar-SA' -or $Locale -ieq 'he-IL'
+    $defines = ''
+    if ($isRtlLocale) {
+        $defines += ' /DREVERSI_ICON_USE_RTL'
+    }
+    $iconDir = Join-Path $Root ("src\lang\$Locale")
+    $iconLtr = Join-Path $iconDir 'reversi.ico'
+    $iconRtl = Join-Path $iconDir 'reversi_rtl.ico'
+
+    if (Test-Path $iconLtr) {
+        $defines += ' /DREVERSI_ICON_PATH="' + ($iconLtr.Replace('\','/')) + '"'
+    }
+    if ($isRtlLocale -and (Test-Path $iconRtl)) {
+        $defines += ' /DREVERSI_ICON_RTL_PATH="' + ($iconRtl.Replace('\','/')) + '"'
+    }
+
+    return $defines
+}
+
 function Invoke-Build {
     param(
         [Parameter(Mandatory = $true)][string]$Arch,
@@ -105,6 +127,7 @@ function Invoke-Build {
         [string]$Optimization = '/O2',
         [string]$CompilerOptions = '',
         [string]$LinkerOptions = '',
+        [string]$IconDefines = '',
         [Parameter(Mandatory = $true)][string]$Subsystem,
         [Parameter(Mandatory = $true)][string]$OsVersion
     )
@@ -141,8 +164,8 @@ function Invoke-Build {
 
     $cmd = '"' + $vcvars + '" ' + $Arch +
         ' && cd /d "' + $Root + '"' +
-        ' && rc /nologo ' + $Defines + ' /I "' + (Join-Path $Root 'src') + '" /fo "' + $res + '" "' + $Resource + '"' +
-        ' && cl /nologo ' + $Optimization + ' /W4 /utf-8 /GS- /Zl ' + $CompilerOptions + ' ' + $Defines + ' ' +
+        ' && rc /nologo ' + $Defines + $IconDefines + ' /I "' + (Join-Path $Root 'src') + '" /fo "' + $res + '" "' + $Resource + '"' +
+        ' && cl /nologo ' + $Optimization + ' /W4 /utf-8 /GS- /Zl ' + $CompilerOptions + ' ' + $Defines + $IconDefines + ' ' +
         '/c /Fo"' + $mainObj + '" "' + $Source + '"' +
         ' && link /nologo /NODEFAULTLIB /ENTRY:ReversiEntry /SUBSYSTEM:WINDOWS,' + $Subsystem +
         ' ' + $LinkerOptions +
@@ -160,7 +183,8 @@ function Invoke-MuiResourceBuild {
     param(
         [Parameter(Mandatory = $true)][string]$Arch,
         [Parameter(Mandatory = $true)][string]$OutputPath,
-        [Parameter(Mandatory = $true)][string]$Defines
+        [Parameter(Mandatory = $true)][string]$Defines,
+        [string]$IconDefines = ''
     )
 
     $vsRoot = Find-VisualStudio
@@ -179,7 +203,7 @@ function Invoke-MuiResourceBuild {
     $osVersion = if ($Arch -eq 'x64') { '6.0' } else { '5.01' }
     $cmd = '"' + $vcvars + '" ' + $Arch +
         ' && cd /d "' + $Root + '"' +
-        ' && rc /nologo ' + $Defines + ' /I "' + (Join-Path $Root 'src') + '" /fo "' + $res + '" "' + $Resource + '"' +
+        ' && rc /nologo ' + $Defines + $IconDefines + ' /I "' + (Join-Path $Root 'src') + '" /fo "' + $res + '" "' + $Resource + '"' +
         ' && link /nologo /NOENTRY /DLL /SUBSYSTEM:WINDOWS,' + $subsystem +
         ' /OSVERSION:' + $osVersion + ' /MACHINE:' + $machine +
         ' /OUT:"' + $OutputPath + '" "' + $res + '"'
@@ -414,6 +438,7 @@ function Invoke-MuiPackage {
                 -Arch 'x86' `
                 -OutputDir $archOutput `
                 -Defines ('/DWINVER=0x0400 /D_WIN32_WINNT=0x0400 /D_WIN32_WINDOWS=0x0400' + $productionDefine + ' /DREVERSI_SINGLE_LANGUAGE /D' + $baseLanguage.Define) `
+                -IconDefines (Get-LocaleIconDefines -Locale $baseLanguage.Locale) `
                 -CompilerOptions '/arch:IA32' `
                 -Subsystem '5.01' `
                 -OsVersion '5.01'
@@ -423,6 +448,7 @@ function Invoke-MuiPackage {
                 -Arch 'x64' `
                 -OutputDir $archOutput `
                 -Defines ('/DUNICODE /D_UNICODE /DWINVER=0x0600 /D_WIN32_WINNT=0x0600' + $productionDefine + ' /DREVERSI_SINGLE_LANGUAGE /D' + $baseLanguage.Define) `
+                -IconDefines (Get-LocaleIconDefines -Locale $baseLanguage.Locale) `
                 -Optimization '/O1' `
                 -CompilerOptions '/Gy /Gw' `
                 -LinkerOptions '/OPT:REF /OPT:ICF' `
@@ -437,6 +463,7 @@ function Invoke-MuiPackage {
             $localeDir = Join-Path $archOutput $language.Locale
             $legacyLocaleDir = Join-Path $archOutput ("MUI\$($language.Hex)")
             $localeDefine = ' /DREVERSI_SINGLE_LANGUAGE /D' + $language.Define
+            $iconDefines = Get-LocaleIconDefines -Locale $language.Locale
             $commonDefines = if ($arch -eq 'x86') {
                 '/DWINVER=0x0400 /D_WIN32_WINNT=0x0400 /D_WIN32_WINDOWS=0x0400'
             } else {
@@ -446,7 +473,8 @@ function Invoke-MuiPackage {
             Invoke-MuiResourceBuild `
                 -Arch $arch `
                 -OutputPath $muiPath `
-                -Defines ($commonDefines + $productionDefine + $localeDefine)
+                -Defines ($commonDefines + $productionDefine + $localeDefine) `
+                -IconDefines $iconDefines
             if ($arch -eq 'x86') {
                 Set-PeVersion -Path $muiPath -Major 4 -Minor 0
             }
@@ -512,6 +540,7 @@ foreach ($language in $selectedLanguages) {
         -Arch 'x86' `
         -OutputDir $x86Output `
         -Defines ('/DWINVER=0x0400 /D_WIN32_WINNT=0x0400 /D_WIN32_WINDOWS=0x0400' + $productionDefine + $localeDefine) `
+        -IconDefines (Get-LocaleIconDefines -Locale $language.Locale) `
         -CompilerOptions '/arch:IA32' `
         -Subsystem '5.01' `
         -OsVersion '5.01'
@@ -533,6 +562,7 @@ foreach ($language in $selectedLanguages) {
         -Arch 'x64' `
         -OutputDir $x64Output `
         -Defines ('/DUNICODE /D_UNICODE /DWINVER=0x0600 /D_WIN32_WINNT=0x0600' + $productionDefine + $localeDefine) `
+        -IconDefines (Get-LocaleIconDefines -Locale $language.Locale) `
         -Optimization '/O1' `
         -CompilerOptions '/Gy /Gw' `
         -LinkerOptions '/OPT:REF /OPT:ICF' `
