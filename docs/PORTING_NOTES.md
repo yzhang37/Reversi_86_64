@@ -75,6 +75,11 @@ Examples:
   mouse coordinates, `ClientToScreen`, and invalidation rectangles; convert X
   only at that API boundary.
 - Do not reverse the board array or swap visible opening pieces for RTL.
+- Mouse hover over a board cell updates the selected cell used by keyboard
+  navigation. Direction keys must continue from the currently visible hover
+  square in both LTR and RTL layouts. Before direction keys or Space act, sync
+  from the current cursor position if it is still over the board; off-window or
+  off-board positions must not overwrite the last valid selected cell.
 
 ## x86 Modern Dispatch
 

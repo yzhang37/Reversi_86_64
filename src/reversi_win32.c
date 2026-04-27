@@ -1333,6 +1333,16 @@ static int PointToCell(HWND hwnd, int x, int y, int *row, int *col)
     return OnBoard(*row, *col);
 }
 
+static int TrackMouseSelection(HWND hwnd, int x, int y, int *row, int *col)
+{
+    if (!PointToCell(hwnd, x, y, row, col)) {
+        return 0;
+    }
+    g_game.selected_row = *row;
+    g_game.selected_col = *col;
+    return 1;
+}
+
 static void ToggleScratchBoard(HWND hwnd)
 {
     g_scratchBoard = !g_scratchBoard;
@@ -1591,6 +1601,19 @@ static void MoveCursorToCell(HWND hwnd, int row, int col)
     SetCursorPos(pt.x, pt.y);
 }
 
+static void SyncSelectionFromCursor(HWND hwnd)
+{
+    POINT pt;
+    int row;
+    int col;
+
+    if (IsGameBusy() || !GetCursorPos(&pt)) {
+        return;
+    }
+    ScreenToClient(hwnd, &pt);
+    TrackMouseSelection(hwnd, pt.x, pt.y, &row, &col);
+}
+
 static void MoveSelection(HWND hwnd, int dr, int dc)
 {
     int row = g_game.selected_row;
@@ -1599,6 +1622,10 @@ static void MoveSelection(HWND hwnd, int dr, int dc)
     if (IsGameBusy()) {
         return;
     }
+
+    SyncSelectionFromCursor(hwnd);
+    row = g_game.selected_row;
+    col = g_game.selected_col;
     if (!OnBoard(row, col)) {
         row = 0;
         col = 0;
@@ -1628,6 +1655,7 @@ static void HandleKey(HWND hwnd, WPARAM key)
         ShowHint(hwnd);
         break;
     case VK_SPACE:
+        SyncSelectionFromCursor(hwnd);
         if (g_scratchBoard && OnBoard(g_game.selected_row, g_game.selected_col)) {
             ScratchBoardClick(hwnd, g_game.selected_row, g_game.selected_col);
         } else {
@@ -1782,18 +1810,21 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         return 0;
 
     case WM_MOUSEMOVE: {
-        int row;
-        int col;
+        int row = 0;
+        int col = 0;
+        int on_cell = 0;
+        if (!IsGameBusy()) {
+            on_cell = TrackMouseSelection(
+                hwnd, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), &row, &col);
+        }
         if (g_hintBlankCursor) {
             SetCursor(NULL);
         } else if (IsGameBusy()) {
             SetCursor(APP_LOAD_CURSOR(NULL, IDC_WAIT));
-        } else if (g_scratchBoard &&
-            PointToCell(hwnd, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), &row, &col)) {
+        } else if (g_scratchBoard && on_cell) {
             SetCursor(LoadLegalMoveCursor());
         } else if (!g_game.game_over && g_game.turn == RED && !g_game.must_pass &&
-            PointToCell(hwnd, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam), &row, &col) &&
-            CollectFlips(row, col, RED, NULL, 0) > 0) {
+            on_cell && CollectFlips(row, col, RED, NULL, 0) > 0) {
             SetCursor(LoadLegalMoveCursor());
         } else {
             SetCursor(APP_LOAD_CURSOR(NULL, IDC_ARROW));
@@ -1806,15 +1837,18 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             POINT pt;
             GetCursorPos(&pt);
             ScreenToClient(hwnd, &pt);
-            int row;
-            int col;
+            int row = 0;
+            int col = 0;
+            int on_cell = 0;
+            if (!IsGameBusy()) {
+                on_cell = TrackMouseSelection(hwnd, pt.x, pt.y, &row, &col);
+            }
             if (g_hintBlankCursor) {
                 SetCursor(NULL);
             } else if (IsGameBusy()) {
                 SetCursor(APP_LOAD_CURSOR(NULL, IDC_WAIT));
             } else if (!g_game.game_over && g_game.turn == RED && !g_game.must_pass &&
-                PointToCell(hwnd, pt.x, pt.y, &row, &col) &&
-                CollectFlips(row, col, RED, NULL, 0) > 0) {
+                on_cell && CollectFlips(row, col, RED, NULL, 0) > 0) {
                 SetCursor(LoadLegalMoveCursor());
             } else {
                 SetCursor(APP_LOAD_CURSOR(NULL, IDC_ARROW));

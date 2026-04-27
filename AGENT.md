@@ -196,6 +196,12 @@ shift xyzzy
   disabled.
 - Direction keys move the board cursor one square at a time and wrap across
   edges. They are not limited to legal moves.
+- Mouse hover over any board cell updates the selected board cell. Keyboard
+  movement starts from the current visible hover cell, not only from the last
+  clicked cell. Direction keys and Space also resync from the current cursor
+  position before acting, matching the original REVERSI.asm current-cursor
+  model. Keep this true for both LTR and RTL layouts, and treat off-window or
+  off-board cursor positions as "no new cell" rather than invalid row/col data.
 - Message boxes use native MessageBox style, with owner-centered placement for
   game-window-owned prompts.
 - Registry settings live under:
