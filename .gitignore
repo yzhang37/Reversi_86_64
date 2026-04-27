@@ -1,10 +1,11 @@
-*.GID
+*.[gG][iI][dD]
 build/
 decompiled/
 tools/cache/
 tools/vendor/
 /references/vendor/
 *.[eE][xX][eE]
+help/**/*.[hH][lL][pP]
 /*.[cC][hH][mM]
 /*.[hH][lL][pP]
 /*.[cC][nN][tT]

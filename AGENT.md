@@ -37,6 +37,8 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 - Source layout and Maintainable Code Golf rules are in
   `docs/CODE_STRUCTURE.md`.
 - Porting and behavior rules are in `docs/PORTING_NOTES.md`.
+- Implementation points that may need later cleanup are tracked in
+  `docs/maintenance/IMPLEMENTATION_RISK_REVIEW.md`.
 - WinHelp-specific rules are in `docs/winhelp/`.
 - Optional third-party tools are restored with:
 
@@ -105,6 +107,12 @@ powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1
   `4.0.0.0`.
 - Keep icons, version metadata, menus, about text, and string resources in the
   resource file. Do not hard-code normal user-facing text in C.
+- This project currently uses builtin multi-language RC resources, not MUI
+  satellite files. Windows 95-era resource loading cannot be trusted to fall
+  back to en-US when a localized `STRINGTABLE` block exists but omits a string
+  id. Keep invariant resource names, file names, registry paths, and registry
+  value names duplicated in each language rcinc unless the project later moves
+  to a MUI packaging model.
 - Hidden debug context menu exception: the debug menu labels are hardcoded in
   English in C and are not localized.
 

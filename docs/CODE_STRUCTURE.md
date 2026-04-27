@@ -56,6 +56,13 @@ src/lang/reversi_*.rcinc       Other localized resources.
 Normal user-facing strings belong in RC resources. Debug-only text may stay in
 C when the feature is intentionally hidden and not localized.
 
+This is a builtin multi-language RC build, not a MUI satellite-resource build.
+Do not rely on Windows 95-era resource loading to fall back to en-US when a
+localized `STRINGTABLE` block exists but omits a particular string id. Keep
+file names, registry value names, internal profile keys, and resource lookup
+names duplicated in each language rcinc for compatibility. If the project later
+moves to MUI files, the resource packaging rules can be revisited.
+
 ## Tooling Layout
 
 Keep repository-authored tools in `tools/`. Put downloaded archives and

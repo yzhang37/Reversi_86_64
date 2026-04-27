@@ -1,4 +1,4 @@
-# Dirty / Risky Implementation Notes
+# Implementation Risk Review
 
 This file tracks implementation points that may be considered too clever, too internal, or worth cleaning up later.
 
