@@ -822,19 +822,18 @@ static int MirrorBoardView(void)
 
 static int VisualColForLogical(int col)
 {
-    return MirrorBoardView() ? (BOARD_N - 1 - col) : col;
+    return col;
 }
 
 static int LogicalColForVisual(int col)
 {
-    return MirrorBoardView() ? (BOARD_N - 1 - col) : col;
+    return col;
 }
 
 static RECT CellRect(const Layout *layout, int row, int col)
 {
     RECT rc;
-    int visual_col = VisualColForLogical(col);
-    rc.left = layout->board.left + visual_col * layout->cell_w;
+    rc.left = layout->board.left + col * layout->cell_w;
     rc.top = layout->board.top + row * layout->cell_h;
     rc.right = rc.left + layout->cell_w;
     rc.bottom = rc.top + layout->cell_h;
@@ -1276,7 +1275,7 @@ static int PointToCell(HWND hwnd, int x, int y, int *row, int *col)
         return 0;
     }
 
-    *col = LogicalColForVisual((x - layout.board.left) / layout.cell_w);
+    *col = (x - layout.board.left) / layout.cell_w;
     *row = (y - layout.board.top) / layout.cell_h;
     return OnBoard(*row, *col);
 }
