@@ -56,6 +56,8 @@ powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1
   Microsoft game samples, CHM/HLP/CNT files, WinHelp viewers, GID caches,
   comparison executables, and similar external material. Keep those out of the
   repository and use tracked notes/manifests when the knowledge matters.
+- `decompiled/` is ignored local state for reverse-engineering artifacts. Keep
+  files like `REVERSI.asm` there rather than in source root.
 
 ## Maintainable Code Golf
 
@@ -110,6 +112,9 @@ powershell -ExecutionPolicy Bypass -File .\tools\bootstrap-tools.ps1
   the user asks again.
 - Version info currently targets the Windows 95 / Windows NT 4.0 generation:
   `4.0.0.0`.
+- `REVERSI.asm` and related disassembly artifacts should be stored under
+  `decompiled/` for audit only; they are not part of released binaries or
+  tracked repo content.
 - Keep icons, version metadata, menus, about text, and string resources in the
   resource file. Do not hard-code normal user-facing text in C.
 - Before changing any RC resource, string table, menu, version metadata,

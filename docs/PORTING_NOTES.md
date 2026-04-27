@@ -5,8 +5,8 @@ Reversi port.
 
 ## Original Program Baseline
 
-- Treat the 16-bit `REVERSI.EXE`, `REVERSI.asm`, and IDA database as behavioral
-  references.
+- Treat the 16-bit `REVERSI.EXE`, `decompiled/REVERSI.asm`, and IDA database as
+  behavioral references.
 - When visuals or interaction differ, inspect the original code path instead
   of guessing from screenshots.
 - The goal is not a modern reinterpretation. It is a faithful native port with

@@ -73,6 +73,11 @@ Each executable contains only its selected locale resources. For example,
 `build\zh-CN\x86\REVERSI.exe` contains Simplified Chinese resources, while
 `build\en-US\x64\REVERSI.exe` contains English resources.
 
+Reference reverse-engineering snapshots (for example `REVERSI.asm`) are kept under
+`decompiled/` in local working trees and are excluded from release artifacts and
+tracked distribution. The build and release pipeline uses source files, resource
+shards, and help inputs from tracked files only.
+
 Optional self-test:
 
 ```powershell
